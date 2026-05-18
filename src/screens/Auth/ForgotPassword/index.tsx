@@ -14,7 +14,14 @@ export const ForgotPasswordScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Forgot Password?</Text>
       <Text style={styles.subtitle}>Enter your email and we&apos;ll send reset instructions.</Text>
-      <Input label="Email" value={email} onChangeText={setEmail} placeholder="your@email.com" keyboardType="email-address" autoCapitalize="none" />
+      <Input
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        placeholder="your@email.com"
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
       <Button title="Send Reset Link" onPress={handleSubmit} fullWidth />
     </View>
   );

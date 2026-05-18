@@ -22,7 +22,11 @@ export const LoginScreen = () => {
   const navigation = useNavigation<NavProp>();
   const {login, isLoading, error} = useAuth();
 
-  const {control, handleSubmit, formState: {errors}} = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: {errors},
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {email: '', password: ''},
   });
@@ -101,6 +105,11 @@ const styles = StyleSheet.create({
   subtitle: {fontSize: 14, color: Colors.textSecondary, marginBottom: Spacing[8]},
   forgotBtn: {alignSelf: 'flex-end', marginBottom: Spacing[4]},
   loginBtn: {marginTop: Spacing[2]},
-  footer: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: Spacing[6]},
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing[6],
+  },
   footerText: {fontSize: 14, color: Colors.textSecondary},
 });

@@ -18,7 +18,25 @@ export const OnboardingScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: Colors.primary, padding: Spacing[8], justifyContent: 'center', alignItems: 'center'},
-  title: {fontSize: 32, fontWeight: '700', color: Colors.white, textAlign: 'center', marginBottom: Spacing[4]},
-  subtitle: {fontSize: 16, color: Colors.white, textAlign: 'center', marginBottom: Spacing[12], opacity: 0.85},
+  container: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    padding: Spacing[8],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.white,
+    textAlign: 'center',
+    marginBottom: Spacing[4],
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.white,
+    textAlign: 'center',
+    marginBottom: Spacing[12],
+    opacity: 0.85,
+  },
 });

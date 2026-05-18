@@ -43,11 +43,7 @@ export const Input: React.FC<InputProps> = ({
         </Text>
       )}
       <View
-        style={[
-          styles.inputContainer,
-          isFocused && styles.focused,
-          !!error && styles.errorBorder,
-        ]}>
+        style={[styles.inputContainer, isFocused && styles.focused, !!error && styles.errorBorder]}>
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
         <TextInput
           style={[styles.input, leftIcon ? styles.inputWithLeft : null]}

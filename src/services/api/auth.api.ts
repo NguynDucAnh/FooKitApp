@@ -19,8 +19,7 @@ export interface AuthTokens {
 }
 
 export const authApi = {
-  login: (payload: LoginPayload) =>
-    apiClient.post<ApiResponse<AuthTokens>>('/auth/login', payload),
+  login: (payload: LoginPayload) => apiClient.post<ApiResponse<AuthTokens>>('/auth/login', payload),
 
   register: (payload: RegisterPayload) =>
     apiClient.post<ApiResponse<AuthTokens>>('/auth/register', payload),

@@ -7,8 +7,7 @@ export const useTheme = () => {
   const themePreference = useAppSelector(state => state.app.theme);
 
   const isDark =
-    themePreference === 'dark' ||
-    (themePreference === 'system' && systemScheme === 'dark');
+    themePreference === 'dark' || (themePreference === 'system' && systemScheme === 'dark');
 
   return {
     isDark,
