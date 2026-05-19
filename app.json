@@ -1,4 +1,27 @@
 {
-  "name": "MyMobileApp",
-  "displayName": "MyMobileApp"
+  "expo": {
+    "name": "FooKitApp",
+    "slug": "fookitapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "fookitapp",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#6C63FF"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
 }
