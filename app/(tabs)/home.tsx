@@ -1,4 +1,5 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
+import { StyleSheet, SafeAreaView, View, ScrollView, Text, Image } from 'react-native';
 import { HomeScreen } from '../../src/components/HomeScreen';
 import { RecipeDetailScreen } from '../../src/components/RecipeDetailScreen';
 import { BottomNav } from '../../src/components/BottomNav';
@@ -27,63 +28,122 @@ export default function App() {
   };
 
   return (
-    <div className="size-full bg-white overflow-auto">
-      {currentView === 'home' && activeTab === 'home' && (
-        <HomeScreen onRecipeClick={handleRecipeClick} />
-      )}
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.screen}>
+        {currentView === 'home' && activeTab === 'home' && (
+          <HomeScreen onRecipeClick={handleRecipeClick} />
+        )}
 
-      {currentView === 'detail' && selectedRecipe && (
-        <RecipeDetailScreen recipe={selectedRecipe} onBack={handleBackToHome} />
-      )}
+        {currentView === 'detail' && selectedRecipe && (
+          <RecipeDetailScreen recipe={selectedRecipe} onBack={handleBackToHome} />
+        )}
 
-      {activeTab === 'discover' && (
-        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white pb-24 px-6 pt-12">
-          <h1 className="text-3xl font-bold mb-4">Discover</h1>
-          <p className="text-gray-600">Explore new recipes and cooking techniques...</p>
-        </div>
-      )}
+        {activeTab === 'discover' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>Discover</Text>
+            <Text style={styles.placeholderText}>Explore new recipes and cooking techniques...</Text>
+          </ScrollView>
+        )}
 
-      {activeTab === 'favorites' && (
-        <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-white pb-24 px-6 pt-12">
-          <h1 className="text-3xl font-bold mb-4">My Favorites</h1>
-          <p className="text-gray-600">Your saved recipes appear here...</p>
-        </div>
-      )}
+        {activeTab === 'favorites' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>My Favorites</Text>
+            <Text style={styles.placeholderText}>Your saved recipes appear here...</Text>
+          </ScrollView>
+        )}
 
-      {activeTab === 'planner' && (
-        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white pb-24 px-6 pt-12">
-          <h1 className="text-3xl font-bold mb-4">Meal Planner</h1>
-          <p className="text-gray-600">Plan your weekly meals...</p>
-        </div>
-      )}
+        {activeTab === 'planner' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>Meal Planner</Text>
+            <Text style={styles.placeholderText}>Plan your weekly meals...</Text>
+          </ScrollView>
+        )}
 
-      {activeTab === 'profile' && (
-        <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pb-24 px-6 pt-12">
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-24 h-24 bg-green-300 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4">
-              <img
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop"
-                alt="User"
-                className="w-full h-full object-cover"
+        {activeTab === 'profile' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <View style={styles.profileHeader}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop' }}
+                style={styles.profileAvatar}
               />
-            </div>
-            <h1 className="text-2xl font-bold">John Doe</h1>
-            <p className="text-gray-600">Home Chef</p>
-          </div>
-          <div className="space-y-4">
-            <div className="bg-white p-4 rounded-2xl shadow-sm">
-              <p className="text-gray-600">Recipes Cooked</p>
-              <p className="text-2xl font-bold text-green-500">42</p>
-            </div>
-            <div className="bg-white p-4 rounded-2xl shadow-sm">
-              <p className="text-gray-600">Favorite Cuisine</p>
-              <p className="text-2xl font-bold text-green-500">Asian Food</p>
-            </div>
-          </div>
-        </div>
-      )}
+              <Text style={styles.profileName}>John Doe</Text>
+              <Text style={styles.profileSubtitle}>Home Chef</Text>
+            </View>
+            <View style={styles.profileStatCard}>
+              <Text style={styles.profileStatLabel}>Recipes Cooked</Text>
+              <Text style={styles.profileStatValue}>42</Text>
+            </View>
+            <View style={styles.profileStatCard}>
+              <Text style={styles.profileStatLabel}>Favorite Cuisine</Text>
+              <Text style={styles.profileStatValue}>Asian Food</Text>
+            </View>
+          </ScrollView>
+        )}
+      </View>
 
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
-    </div>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
+  },
+  screen: {
+    flex: 1,
+    paddingBottom: 90
+  },
+  placeholderContent: {
+    padding: 24,
+    paddingBottom: 140
+  },
+  placeholderTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 12,
+    color: '#064E3B'
+  },
+  placeholderText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#475569'
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 24
+  },
+  profileAvatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    marginBottom: 16
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+    color: '#111827'
+  },
+  profileSubtitle: {
+    fontSize: 16,
+    color: '#6B7280'
+  },
+  profileStatCard: {
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: 24,
+    marginBottom: 16
+  },
+  profileStatLabel: {
+    fontSize: 14,
+    color: '#475569',
+    marginBottom: 6
+  },
+  profileStatValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#10B981'
+  }
+});

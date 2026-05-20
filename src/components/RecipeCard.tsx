@@ -1,4 +1,5 @@
-import { Clock, Flame, Heart, ChevronRight } from 'lucide-react';
+import { StyleSheet, View, Text, Image, Pressable } from 'react-native';
+import { Clock, Flame, Heart, ChevronRight } from 'lucide-react-native';
 import { Recipe } from '../data/recipes';
 
 interface RecipeCardProps {
@@ -9,54 +10,141 @@ interface RecipeCardProps {
 
 export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProps) {
   return (
-    <div className="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-shadow cursor-pointer">
-      <div className="relative" onClick={onClick}>
-        <img
-          src={recipe.image}
-          alt={recipe.name}
-          className="w-full h-48 object-cover"
-        />
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onFavoriteToggle?.(recipe.id);
-          }}
-          className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+    <Pressable style={styles.card} onPress={onClick} android_ripple={{ color: '#F3F4F6' }}>
+      <View style={styles.imageWrapper}>
+        <Image source={{ uri: recipe.image }} style={styles.image} />
+        <Pressable
+          style={styles.favoriteButton}
+          onPress={() => onFavoriteToggle?.(recipe.id)}
+          android_ripple={{ color: '#E5E7EB' }}
         >
-          <Heart
-            className={`w-5 h-5 ${recipe.isFavorite ? 'fill-red-500 stroke-red-500' : 'stroke-gray-600'}`}
-          />
-        </button>
-        <div className="absolute bottom-3 left-3 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-          {recipe.difficulty}
-        </div>
-      </div>
+          <Heart size={18} color={recipe.isFavorite ? '#DC2626' : '#4B5563'} />
+        </Pressable>
+        <View style={styles.difficultyBadge}>
+          <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
+        </View>
+      </View>
 
-      <div className="p-4" onClick={onClick}>
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2">{recipe.name}</h3>
+      <View style={styles.cardContent}>
+        <Text style={styles.cardTitle} numberOfLines={2}>
+          {recipe.name}
+        </Text>
 
-        <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-          <div className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            <span>{recipe.time} min</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Flame className="w-4 h-4" />
-            <span>{recipe.calories} cal</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-yellow-500">★</span>
-            <span>{recipe.rating}</span>
-          </div>
-        </div>
+        <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <Clock size={14} color="#4B5563" />
+            <Text style={styles.metaText}>{recipe.time} min</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Flame size={14} color="#4B5563" />
+            <Text style={styles.metaText}>{recipe.calories} cal</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <Text style={styles.ratingStar}>★</Text>
+            <Text style={styles.metaText}>{recipe.rating}</Text>
+          </View>
+        </View>
 
-        <div className="flex items-center justify-between">
-          <span className="text-green-600 font-bold text-lg">${recipe.budget}</span>
-          <button className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors">
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
-    </div>
+        <View style={styles.bottomRow}>
+          <Text style={styles.priceText}>${recipe.budget}</Text>
+          <View style={styles.chevronButton}>
+            <ChevronRight size={18} color="#FFFFFF" />
+          </View>
+        </View>
+      </View>
+    </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 18,
+    elevation: 5,
+    marginBottom: 16
+  },
+  imageWrapper: {
+    position: 'relative'
+  },
+  image: {
+    width: '100%',
+    height: 180
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  difficultyBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    backgroundColor: '#10B981',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999
+  },
+  difficultyText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12
+  },
+  cardContent: {
+    padding: 16
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 10
+  },
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 14
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12
+  },
+  metaText: {
+    color: '#4B5563',
+    fontSize: 12,
+    marginLeft: 6
+  },
+  ratingStar: {
+    color: '#F59E0B',
+    fontSize: 12,
+    marginRight: 4
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  priceText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#10B981'
+  },
+  chevronButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center'
+  }
+});

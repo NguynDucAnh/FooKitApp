@@ -1,4 +1,5 @@
-import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react';
+import { StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
+import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
 import { Recipe } from '../data/recipes';
 
 interface RecipeDetailScreenProps {
@@ -8,153 +9,359 @@ interface RecipeDetailScreenProps {
 
 export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) {
   return (
-    <div className="min-h-screen bg-white pb-24">
-      <div className="relative h-80">
-        <img
-          src={recipe.image}
-          alt={recipe.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-
-        <button
-          onClick={onBack}
-          className="absolute top-6 left-6 bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6 text-gray-800" />
-        </button>
-
-        <div className="absolute top-6 right-6 flex gap-3">
-          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors">
-            <Heart className={`w-6 h-6 ${recipe.isFavorite ? 'fill-red-500 stroke-red-500' : 'stroke-gray-800'}`} />
-          </button>
-          <button className="bg-white/90 backdrop-blur-sm p-3 rounded-full hover:bg-white transition-colors">
-            <Share2 className="w-6 h-6 text-gray-800" />
-          </button>
-        </div>
-
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="flex gap-2 mb-3">
-            {recipe.category.slice(0, 2).map((cat) => (
-              <span key={cat} className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                {cat}
-              </span>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
+        <View style={styles.heroOverlay} />
+        <Pressable style={styles.backButton} onPress={onBack} android_ripple={{ color: '#E5E7EB' }}>
+          <ArrowLeft size={20} color="#111827" />
+        </Pressable>
+        <View style={styles.heroActions}>
+          <Pressable style={[styles.iconButton, styles.heroActionButton]} android_ripple={{ color: '#E5E7EB' }}>
+            <Heart size={20} color={recipe.isFavorite ? '#DC2626' : '#111827'} />
+          </Pressable>
+          <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
+            <Share2 size={20} color="#111827" />
+          </Pressable>
+        </View>
+        <View style={styles.heroFooter}>
+          <View style={styles.categoriesRow}>
+            {recipe.category.slice(0, 2).map((cat, index) => (
+              <View key={cat} style={[styles.categoryBadge, index > 0 && styles.categoryBadgeSpacing]}>
+                <Text style={styles.categoryBadgeText}>{cat}</Text>
+              </View>
             ))}
-          </div>
-          <h1 className="text-white text-3xl font-bold mb-2">{recipe.name}</h1>
-          <div className="flex items-center gap-1 text-white">
-            <Star className="w-5 h-5 fill-yellow-400 stroke-yellow-400" />
-            <span className="font-bold">{recipe.rating}</span>
-            <span className="text-white/80 ml-1">(128 reviews)</span>
-          </div>
-        </div>
-      </div>
+          </View>
+          <Text style={styles.recipeTitle}>{recipe.name}</Text>
+          <View style={styles.ratingRow}>
+            <Star size={18} color="#F59E0B" />
+            <Text style={styles.ratingText}>{recipe.rating}</Text>
+            <Text style={styles.ratingSubtext}>(128 reviews)</Text>
+          </View>
+        </View>
+      </ImageBackground>
 
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-green-50 p-4 rounded-2xl text-center">
-            <Clock className="w-6 h-6 text-green-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Time</p>
-            <p className="font-bold text-gray-800">{recipe.time} min</p>
-          </div>
-          <div className="bg-yellow-50 p-4 rounded-2xl text-center">
-            <Flame className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Calories</p>
-            <p className="font-bold text-gray-800">{recipe.calories}</p>
-          </div>
-          <div className="bg-green-50 p-4 rounded-2xl text-center">
-            <DollarSign className="w-6 h-6 text-green-500 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Budget</p>
-            <p className="font-bold text-gray-800">${recipe.budget}</p>
-          </div>
-          <div className="bg-yellow-50 p-4 rounded-2xl text-center">
-            <span className="text-2xl mx-auto mb-2 block">👨‍🍳</span>
-            <p className="text-sm text-gray-600">Level</p>
-            <p className="font-bold text-gray-800">{recipe.difficulty}</p>
-          </div>
-        </div>
+      <View style={styles.body}>
+        <View style={styles.statsGrid}>
+          <View style={styles.statsCard}>
+            <Clock size={18} color="#16A34A" />
+            <Text style={styles.statsLabel}>Time</Text>
+            <Text style={styles.statsValue}>{recipe.time} min</Text>
+          </View>
+          <View style={styles.statsCard}>
+            <Flame size={18} color="#F59E0B" />
+            <Text style={styles.statsLabel}>Calories</Text>
+            <Text style={styles.statsValue}>{recipe.calories}</Text>
+          </View>
+          <View style={styles.statsCard}>
+            <DollarSign size={18} color="#16A34A" />
+            <Text style={styles.statsLabel}>Budget</Text>
+            <Text style={styles.statsValue}>${recipe.budget}</Text>
+          </View>
+          <View style={styles.statsCard}>
+            <Text style={styles.statsEmoji}>👨‍🍳</Text>
+            <Text style={styles.statsLabel}>Level</Text>
+            <Text style={styles.statsValue}>{recipe.difficulty}</Text>
+          </View>
+        </View>
 
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Required Tools</h2>
-          <div className="flex gap-3 flex-wrap">
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Required Tools</Text>
+          <View style={styles.wrapRow}>
             {recipe.tools.map((tool) => (
-              <div key={tool} className="bg-gray-100 px-4 py-2 rounded-full text-gray-700 font-medium">
-                {tool}
-              </div>
+              <View key={tool} style={styles.tag}>
+                <Text style={styles.tagText}>{tool}</Text>
+              </View>
             ))}
-          </div>
-        </section>
+          </View>
+        </View>
 
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Nutrition Facts</h2>
-          <div className="bg-gradient-to-br from-green-50 to-yellow-50 p-6 rounded-2xl">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex justify-between items-center pb-3 border-b border-green-200">
-                <span className="text-gray-600">Protein</span>
-                <span className="font-bold text-gray-800">{recipe.nutrition.protein}g</span>
-              </div>
-              <div className="flex justify-between items-center pb-3 border-b border-green-200">
-                <span className="text-gray-600">Carbs</span>
-                <span className="font-bold text-gray-800">{recipe.nutrition.carbs}g</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Fat</span>
-                <span className="font-bold text-gray-800">{recipe.nutrition.fat}g</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Fiber</span>
-                <span className="font-bold text-gray-800">{recipe.nutrition.fiber}g</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Nutrition Facts</Text>
+          <View style={styles.nutritionCard}>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Protein</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.protein}g</Text>
+            </View>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Carbs</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.carbs}g</Text>
+            </View>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Fat</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.fat}g</Text>
+            </View>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Fiber</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.fiber}g</Text>
+            </View>
+          </View>
+        </View>
 
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Ingredients</h2>
-          <div className="space-y-3">
-            {recipe.ingredients.map((ingredient, index) => (
-              <div key={index} className="flex items-start gap-3 bg-gray-50 p-4 rounded-xl">
-                <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                  {index + 1}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-800">{ingredient.name}</p>
-                  <p className="text-sm text-gray-600">{ingredient.amount}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ingredients</Text>
+          {recipe.ingredients.map((ingredient, index) => (
+            <View key={index} style={styles.ingredientRow}>
+              <View style={styles.ingredientIndex}>
+                <Text style={styles.ingredientIndexText}>{index + 1}</Text>
+              </View>
+              <View style={styles.ingredientTextWrap}>
+                <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                <Text style={styles.ingredientAmount}>{ingredient.amount}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
 
-        <section className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Instructions</h2>
-          <div className="space-y-4">
-            {recipe.instructions.map((instruction, index) => (
-              <div key={index} className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-yellow-400 text-white rounded-full flex items-center justify-center font-bold">
-                    {index + 1}
-                  </div>
-                </div>
-                <div className="flex-1 pt-2">
-                  <p className="text-gray-700 leading-relaxed">{instruction}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Instructions</Text>
+          {recipe.instructions.map((instruction, index) => (
+            <View key={index} style={styles.instructionRow}>
+              <View style={styles.instructionIndex}>
+                <Text style={styles.instructionIndexText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.instructionText}>{instruction}</Text>
+            </View>
+          ))}
+        </View>
 
-        <div className="fixed bottom-20 left-0 right-0 px-6 py-4 bg-white border-t border-gray-200">
-          <div className="flex gap-3 max-w-lg mx-auto">
-            <button className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-lg transition-shadow">
-              Start Cooking
-            </button>
-            <button className="bg-gray-100 text-gray-800 p-4 rounded-2xl hover:bg-gray-200 transition-colors">
-              <BookmarkPlus className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        <View style={styles.bottomBar}>
+          <Pressable style={[styles.actionButton, styles.actionButtonMargin]} android_ripple={{ color: '#D1FAE5' }}>
+            <Text style={styles.actionButtonText}>Start Cooking</Text>
+          </Pressable>
+          <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
+            <BookmarkPlus size={20} color="#111827" />
+          </Pressable>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
+  },
+  contentContainer: {
+    paddingBottom: 140
+  },
+  heroImage: {
+    width: '100%',
+    height: 260,
+    justifyContent: 'space-between'
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.28)'
+  },
+  backButton: {
+    margin: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  heroActions: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    flexDirection: 'row'
+  },
+  heroActionButton: {
+    marginRight: 10
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  heroFooter: {
+    margin: 20
+  },
+  categoriesRow: {
+    flexDirection: 'row',
+    marginBottom: 10
+  },
+  categoryBadge: {
+    backgroundColor: '#10B981',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999
+  },
+  categoryBadgeSpacing: {
+    marginLeft: 8
+  },
+  categoryBadgeText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12
+  },
+  recipeTitle: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 10
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  ratingText: {
+    marginLeft: 6,
+    color: '#FFFFFF',
+    fontWeight: '700'
+  },
+  ratingSubtext: {
+    marginLeft: 6,
+    color: 'rgba(255,255,255,0.85)'
+  },
+  body: {
+    padding: 20
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 24
+  },
+  statsCard: {
+    width: '48%',
+    backgroundColor: '#ECFDF5',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12
+  },
+  statsLabel: {
+    color: '#475569',
+    marginTop: 8,
+    marginBottom: 4
+  },
+  statsValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827'
+  },
+  statsEmoji: {
+    fontSize: 20
+  },
+  section: {
+    marginBottom: 24
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 12
+  },
+  wrapRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap'
+  },
+  tag: {
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10
+  },
+  tagText: {
+    color: '#374151',
+    fontWeight: '600'
+  },
+  nutritionCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 24,
+    padding: 18
+  },
+  nutritionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D1FAE5'
+  },
+  nutritionLabel: {
+    color: '#475569'
+  },
+  nutritionValue: {
+    fontWeight: '700',
+    color: '#111827'
+  },
+  ingredientRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12
+  },
+  ingredientIndex: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  ingredientIndexText: {
+    color: '#FFFFFF',
+    fontWeight: '700'
+  },
+  ingredientTextWrap: {
+    flex: 1
+  },
+  ingredientName: {
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4
+  },
+  ingredientAmount: {
+    color: '#6B7280'
+  },
+  instructionRow: {
+    flexDirection: 'row',
+    marginBottom: 14
+  },
+  instructionIndex: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  instructionIndexText: {
+    color: '#FFFFFF',
+    fontWeight: '700'
+  },
+  instructionText: {
+    flex: 1,
+    color: '#374151',
+    lineHeight: 22
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    marginTop: 10,
+    marginBottom: 30
+  },
+  actionButtonMargin: {
+    marginRight: 12
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#10B981',
+    borderRadius: 20,
+    paddingVertical: 16,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700'
+  }
+});

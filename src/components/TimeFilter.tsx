@@ -1,3 +1,5 @@
+﻿import { ScrollView, Pressable, Text, StyleSheet } from 'react-native';
+
 interface TimeFilterProps {
   filters: { label: string; value: number }[];
   selectedTime: number | null;
@@ -6,23 +8,49 @@ interface TimeFilterProps {
 
 export function TimeFilter({ filters, selectedTime, onSelect }: TimeFilterProps) {
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scroll}>
       {filters.map((filter) => {
         const isSelected = selectedTime === filter.value;
         return (
-          <button
+          <Pressable
             key={filter.value}
-            onClick={() => onSelect(filter.value)}
-            className={`px-5 py-2.5 rounded-full font-medium whitespace-nowrap transition-all ${
-              isSelected
-                ? 'bg-green-500 text-white shadow-lg'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-green-300'
-            }`}
+            onPress={() => onSelect(filter.value)}
+            style={[styles.filterButton, isSelected ? styles.filterButtonActive : styles.filterButtonInactive]}
+            android_ripple={{ color: '#D1FAE5' }}
           >
-            {filter.label}
-          </button>
+            <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>{filter.label}</Text>
+          </Pressable>
         );
       })}
-    </div>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scroll: {
+    paddingVertical: 6
+  },
+  filterButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginRight: 12,
+    backgroundColor: '#FFFFFF'
+  },
+  filterButtonActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981'
+  },
+  filterButtonInactive: {
+    backgroundColor: '#FFFFFF'
+  },
+  filterText: {
+    color: '#374151',
+    fontWeight: '600'
+  },
+  filterTextActive: {
+    color: '#FFFFFF'
+  }
+});

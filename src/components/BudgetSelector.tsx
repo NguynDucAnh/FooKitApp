@@ -1,3 +1,5 @@
+﻿import { View, Pressable, Text, StyleSheet } from 'react-native';
+
 interface BudgetSelectorProps {
   options: { label: string; value: number }[];
   selectedBudget: number | null;
@@ -6,23 +8,53 @@ interface BudgetSelectorProps {
 
 export function BudgetSelector({ options, selectedBudget, onSelect }: BudgetSelectorProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <View style={styles.grid}>
       {options.map((option) => {
         const isSelected = selectedBudget === option.value;
         return (
-          <button
+          <Pressable
             key={option.value}
-            onClick={() => onSelect(option.value)}
-            className={`p-4 rounded-2xl font-medium transition-all ${
-              isSelected
-                ? 'bg-gradient-to-br from-green-500 to-yellow-400 text-white shadow-lg scale-105'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-green-300'
-            }`}
+            onPress={() => onSelect(option.value)}
+            style={[styles.option, isSelected ? styles.optionActive : styles.optionInactive]}
+            android_ripple={{ color: '#D1FAE5' }}
           >
-            {option.label}
-          </button>
+            <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>{option.label}</Text>
+          </Pressable>
         );
       })}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -8
+  },
+  option: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    margin: 8,
+    minWidth: '45%',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  optionActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981'
+  },
+  optionInactive: {
+    backgroundColor: '#FFFFFF'
+  },
+  optionText: {
+    color: '#374151',
+    fontWeight: '600'
+  },
+  optionTextActive: {
+    color: '#FFFFFF'
+  }
+});
