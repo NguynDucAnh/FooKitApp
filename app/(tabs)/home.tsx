@@ -1,83 +1,149 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { useAppDispatch, useAppSelector } from '../../src/store';
-import { addItem } from '../../src/store/slices/cartSlice';
-import ProductCard from '../../src/components/ProductCard';
-import { COLORS } from '../../src/constants';
-import { MOCK_PRODUCTS } from '../../src/constants/mockData';
-import { Product } from '../../src/types';
-import api from '../../src/services/api';
+﻿import { useState } from 'react';
+import { StyleSheet, SafeAreaView, View, ScrollView, Text, Image } from 'react-native';
+import { HomeScreen } from '../../src/components/HomeScreen';
+import { RecipeDetailScreen } from '../../src/components/RecipeDetailScreen';
+import { BottomNav } from '../../src/components/BottomNav';
+import { Recipe } from '../../src/data/recipes';
 
-export default function HomeScreen() {
-  const dispatch = useAppDispatch();
-  const user = useAppSelector(s => s.auth.user);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+export default function App() {
+  const [currentView, setCurrentView] = useState<'home' | 'detail'>('home');
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [activeTab, setActiveTab] = useState('home');
 
-  useEffect(() => {
-    api.get('/products')
-      .then(res => setProducts(res.data?.data ?? res.data))
-      .catch(() => setProducts(MOCK_PRODUCTS))
-      .finally(() => setLoading(false));
-  }, []);
+  const handleRecipeClick = (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+    setCurrentView('detail');
+  };
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setSelectedRecipe(null);
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'home') {
+      setCurrentView('home');
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Xin chào, {user?.name ?? 'Bạn'} 👋</Text>
-        <Text style={styles.subGreeting}>Hôm nay bạn muốn mua gì?</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.screen}>
+        {currentView === 'home' && activeTab === 'home' && (
+          <HomeScreen onRecipeClick={handleRecipeClick} />
+        )}
+
+        {currentView === 'detail' && selectedRecipe && (
+          <RecipeDetailScreen recipe={selectedRecipe} onBack={handleBackToHome} />
+        )}
+
+        {activeTab === 'discover' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>Discover</Text>
+            <Text style={styles.placeholderText}>Explore new recipes and cooking techniques...</Text>
+          </ScrollView>
+        )}
+
+        {activeTab === 'favorites' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>My Favorites</Text>
+            <Text style={styles.placeholderText}>Your saved recipes appear here...</Text>
+          </ScrollView>
+        )}
+
+        {activeTab === 'planner' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <Text style={styles.placeholderTitle}>Meal Planner</Text>
+            <Text style={styles.placeholderText}>Plan your weekly meals...</Text>
+          </ScrollView>
+        )}
+
+        {activeTab === 'profile' && (
+          <ScrollView contentContainerStyle={styles.placeholderContent}>
+            <View style={styles.profileHeader}>
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop' }}
+                style={styles.profileAvatar}
+              />
+              <Text style={styles.profileName}>John Doe</Text>
+              <Text style={styles.profileSubtitle}>Home Chef</Text>
+            </View>
+            <View style={styles.profileStatCard}>
+              <Text style={styles.profileStatLabel}>Recipes Cooked</Text>
+              <Text style={styles.profileStatValue}>42</Text>
+            </View>
+            <View style={styles.profileStatCard}>
+              <Text style={styles.profileStatLabel}>Favorite Cuisine</Text>
+              <Text style={styles.profileStatValue}>Asian Food</Text>
+            </View>
+          </ScrollView>
+        )}
       </View>
 
-      {/* Search */}
-      <TextInput
-        style={styles.search}
-        placeholder="🔍  Tìm kiếm sản phẩm..."
-        placeholderTextColor={COLORS.textGray}
-        value={search}
-        onChangeText={setSearch}
-      />
-
-      {/* List */}
-      {loading ? (
-        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 48 }} />
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <ProductCard
-              product={item}
-              onPress={() => router.push({ pathname: '/product/[id]', params: { id: item.id } })}
-              onAddToCart={() => dispatch(addItem(item))}
-            />
-          )}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={styles.empty}>Không tìm thấy sản phẩm</Text>}
-        />
-      )}
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
-  header: { backgroundColor: COLORS.white, padding: 20, paddingBottom: 14 },
-  greeting: { fontSize: 22, fontWeight: '700', color: COLORS.text },
-  subGreeting: { fontSize: 14, color: COLORS.textGray, marginTop: 2 },
-  search: {
-    margin: 14, padding: 12, backgroundColor: COLORS.white,
-    borderRadius: 10, borderWidth: 1, borderColor: COLORS.border,
-    fontSize: 14, color: COLORS.text,
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
   },
-  list: { paddingHorizontal: 14, paddingBottom: 24 },
-  empty: { textAlign: 'center', marginTop: 40, color: COLORS.textGray, fontSize: 14 },
+  screen: {
+    flex: 1,
+    paddingBottom: 90
+  },
+  placeholderContent: {
+    padding: 24,
+    paddingBottom: 140
+  },
+  placeholderTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 12,
+    color: '#064E3B'
+  },
+  placeholderText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#475569'
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 24
+  },
+  profileAvatar: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    marginBottom: 16
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+    color: '#111827'
+  },
+  profileSubtitle: {
+    fontSize: 16,
+    color: '#6B7280'
+  },
+  profileStatCard: {
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: 24,
+    marginBottom: 16
+  },
+  profileStatLabel: {
+    fontSize: 14,
+    color: '#475569',
+    marginBottom: 6
+  },
+  profileStatValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#10B981'
+  }
 });

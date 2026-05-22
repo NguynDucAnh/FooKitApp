@@ -1,0 +1,367 @@
+import { StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
+import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
+import { Recipe } from '../data/recipes';
+
+interface RecipeDetailScreenProps {
+  recipe: Recipe;
+  onBack: () => void;
+}
+
+export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) {
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
+        <View style={styles.heroOverlay} />
+        <Pressable style={styles.backButton} onPress={onBack} android_ripple={{ color: '#E5E7EB' }}>
+          <ArrowLeft size={20} color="#111827" />
+        </Pressable>
+        <View style={styles.heroActions}>
+          <Pressable style={[styles.iconButton, styles.heroActionButton]} android_ripple={{ color: '#E5E7EB' }}>
+            <Heart size={20} color={recipe.isFavorite ? '#DC2626' : '#111827'} />
+          </Pressable>
+          <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
+            <Share2 size={20} color="#111827" />
+          </Pressable>
+        </View>
+        <View style={styles.heroFooter}>
+          <View style={styles.categoriesRow}>
+            {recipe.category.slice(0, 2).map((cat, index) => (
+              <View key={cat} style={[styles.categoryBadge, index > 0 && styles.categoryBadgeSpacing]}>
+                <Text style={styles.categoryBadgeText}>{cat}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={styles.recipeTitle}>{recipe.name}</Text>
+          <View style={styles.ratingRow}>
+            <Star size={18} color="#F59E0B" />
+            <Text style={styles.ratingText}>{recipe.rating}</Text>
+            <Text style={styles.ratingSubtext}>(128 reviews)</Text>
+          </View>
+        </View>
+      </ImageBackground>
+
+      <View style={styles.body}>
+        <View style={styles.statsGrid}>
+          <View style={styles.statsCard}>
+            <Clock size={18} color="#16A34A" />
+            <Text style={styles.statsLabel}>Time</Text>
+            <Text style={styles.statsValue}>{recipe.time} min</Text>
+          </View>
+          <View style={styles.statsCard}>
+            <Flame size={18} color="#F59E0B" />
+            <Text style={styles.statsLabel}>Calories</Text>
+            <Text style={styles.statsValue}>{recipe.calories}</Text>
+          </View>
+          <View style={styles.statsCard}>
+            <DollarSign size={18} color="#16A34A" />
+            <Text style={styles.statsLabel}>Budget</Text>
+            <Text style={styles.statsValue}>${recipe.budget}</Text>
+          </View>
+          <View style={styles.statsCard}>
+            <Text style={styles.statsEmoji}>👨‍🍳</Text>
+            <Text style={styles.statsLabel}>Level</Text>
+            <Text style={styles.statsValue}>{recipe.difficulty}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Required Tools</Text>
+          <View style={styles.wrapRow}>
+            {recipe.tools.map((tool) => (
+              <View key={tool} style={styles.tag}>
+                <Text style={styles.tagText}>{tool}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Nutrition Facts</Text>
+          <View style={styles.nutritionCard}>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Protein</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.protein}g</Text>
+            </View>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Carbs</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.carbs}g</Text>
+            </View>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Fat</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.fat}g</Text>
+            </View>
+            <View style={styles.nutritionRow}>
+              <Text style={styles.nutritionLabel}>Fiber</Text>
+              <Text style={styles.nutritionValue}>{recipe.nutrition.fiber}g</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ingredients</Text>
+          {recipe.ingredients.map((ingredient, index) => (
+            <View key={index} style={styles.ingredientRow}>
+              <View style={styles.ingredientIndex}>
+                <Text style={styles.ingredientIndexText}>{index + 1}</Text>
+              </View>
+              <View style={styles.ingredientTextWrap}>
+                <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                <Text style={styles.ingredientAmount}>{ingredient.amount}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Instructions</Text>
+          {recipe.instructions.map((instruction, index) => (
+            <View key={index} style={styles.instructionRow}>
+              <View style={styles.instructionIndex}>
+                <Text style={styles.instructionIndexText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.instructionText}>{instruction}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.bottomBar}>
+          <Pressable style={[styles.actionButton, styles.actionButtonMargin]} android_ripple={{ color: '#D1FAE5' }}>
+            <Text style={styles.actionButtonText}>Start Cooking</Text>
+          </Pressable>
+          <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
+            <BookmarkPlus size={20} color="#111827" />
+          </Pressable>
+        </View>
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF'
+  },
+  contentContainer: {
+    paddingBottom: 140
+  },
+  heroImage: {
+    width: '100%',
+    height: 260,
+    justifyContent: 'space-between'
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.28)'
+  },
+  backButton: {
+    margin: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  heroActions: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    flexDirection: 'row'
+  },
+  heroActionButton: {
+    marginRight: 10
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  heroFooter: {
+    margin: 20
+  },
+  categoriesRow: {
+    flexDirection: 'row',
+    marginBottom: 10
+  },
+  categoryBadge: {
+    backgroundColor: '#10B981',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999
+  },
+  categoryBadgeSpacing: {
+    marginLeft: 8
+  },
+  categoryBadgeText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 12
+  },
+  recipeTitle: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 10
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  ratingText: {
+    marginLeft: 6,
+    color: '#FFFFFF',
+    fontWeight: '700'
+  },
+  ratingSubtext: {
+    marginLeft: 6,
+    color: 'rgba(255,255,255,0.85)'
+  },
+  body: {
+    padding: 20
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 24
+  },
+  statsCard: {
+    width: '48%',
+    backgroundColor: '#ECFDF5',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12
+  },
+  statsLabel: {
+    color: '#475569',
+    marginTop: 8,
+    marginBottom: 4
+  },
+  statsValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827'
+  },
+  statsEmoji: {
+    fontSize: 20
+  },
+  section: {
+    marginBottom: 24
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 12
+  },
+  wrapRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap'
+  },
+  tag: {
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10
+  },
+  tagText: {
+    color: '#374151',
+    fontWeight: '600'
+  },
+  nutritionCard: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 24,
+    padding: 18
+  },
+  nutritionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D1FAE5'
+  },
+  nutritionLabel: {
+    color: '#475569'
+  },
+  nutritionValue: {
+    fontWeight: '700',
+    color: '#111827'
+  },
+  ingredientRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12
+  },
+  ingredientIndex: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  ingredientIndexText: {
+    color: '#FFFFFF',
+    fontWeight: '700'
+  },
+  ingredientTextWrap: {
+    flex: 1
+  },
+  ingredientName: {
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4
+  },
+  ingredientAmount: {
+    color: '#6B7280'
+  },
+  instructionRow: {
+    flexDirection: 'row',
+    marginBottom: 14
+  },
+  instructionIndex: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  instructionIndexText: {
+    color: '#FFFFFF',
+    fontWeight: '700'
+  },
+  instructionText: {
+    flex: 1,
+    color: '#374151',
+    lineHeight: 22
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    marginTop: 10,
+    marginBottom: 30
+  },
+  actionButtonMargin: {
+    marginRight: 12
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#10B981',
+    borderRadius: 20,
+    paddingVertical: 16,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700'
+  }
+});
