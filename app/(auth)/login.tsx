@@ -1,33 +1,40 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { useAppDispatch, useAppSelector } from '../../src/store';
-import { login } from '../../src/store/slices/authSlice';
 import Input from '../../src/components/Input';
 import Button from '../../src/components/Button';
 import { COLORS } from '../../src/constants';
+import { authApi } from '../../src/services/api';
 
 export default function LoginScreen() {
-  const dispatch = useAppDispatch();
-  const { loading } = useAppSelector(s => s.auth);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  //async function handleLogin() {
- //   if (!email || !password) return Alert.alert('Lỗi', 'Vui lòng điền đầy đủ');
- //   const result = await dispatch(login({ email, password }));
- //   if (login.fulfilled.match(result)) router.replace('/(tabs)/home');
- //   else Alert.alert('Thất bại', String(result.payload ?? 'Vui lòng thử lại'));
- // }
-async function handleLogin() {
-  router.replace('/(tabs)/home');
-}
+  async function handleLogin() {
+    if (!username || !password) {
+      return Alert.alert('Lỗi', 'Vui lòng điền đầy đủ tên người dùng và mật khẩu');
+    }
+    
+    setLoading(true);
+    try {
+      const result = await authApi.login(username, password);
+      Alert.alert('Thành công', 'Đăng nhập thành công!', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)/home') }
+      ]);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+      Alert.alert('Lỗi đăng nhập', errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Chào mừng 👋</Text>
         <Text style={styles.sub}>Đăng nhập để tiếp tục mua sắm</Text>
-        <Input label="Email" value={email} onChangeText={setEmail} placeholder="email@example.com" keyboardType="email-address" autoCapitalize="none" />
+        <Input label="Tên người dùng" value={username} onChangeText={setUsername} placeholder="tuananh99" autoCapitalize="none" />
         <Input label="Mật khẩu" value={password} onChangeText={setPassword} placeholder="Mật khẩu" secureTextEntry />
         <Button title="Đăng nhập" onPress={handleLogin} loading={loading} style={styles.btn} />
         <TouchableOpacity onPress={() => router.push('/(auth)/register')} style={styles.link}>
