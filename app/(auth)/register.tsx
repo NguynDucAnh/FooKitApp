@@ -1,25 +1,42 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { useAppDispatch, useAppSelector } from '../../src/store';
-import { register } from '../../src/store/slices/authSlice';
 import Input from '../../src/components/Input';
 import Button from '../../src/components/Button';
 import { COLORS } from '../../src/constants';
+import { authApi } from '../../src/services/api';
 
 export default function RegisterScreen() {
-  const dispatch = useAppDispatch();
-  const { loading } = useAppSelector(s => s.auth);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function handleRegister() {
-    if (!name || !email || !password) return Alert.alert('Lỗi', 'Vui lòng điền đầy đủ');
-    if (password.length < 6) return Alert.alert('Lỗi', 'Mật khẩu ít nhất 6 ký tự');
-    const result = await dispatch(register({ name, email, password }));
-    if (register.fulfilled.match(result)) router.replace('/(tabs)/home');
-    else Alert.alert('Thất bại', String(result.payload ?? 'Vui lòng thử lại'));
+    if (!username || !password || !confirmPassword) {
+      return Alert.alert('Lỗi', 'Vui lòng điền đầy đủ tất cả thông tin');
+    }
+    
+    if (password !== confirmPassword) {
+      return Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp');
+    }
+    
+    if (password.length < 6) {
+      return Alert.alert('Lỗi', 'Mật khẩu ít nhất 6 ký tự');
+    }
+    
+    setLoading(true);
+    try {
+      const result = await authApi.register(username, password, confirmPassword);
+      Alert.alert('Thành công', 'Đăng ký tài khoản thành công!', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)/home') }
+      ]);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      Alert.alert('Lỗi đăng ký', errorMessage);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -27,9 +44,9 @@ export default function RegisterScreen() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Tạo tài khoản</Text>
         <Text style={styles.sub}>Tham gia mua sắm cùng chúng tôi</Text>
-        <Input label="Họ và tên" value={name} onChangeText={setName} placeholder="Nguyễn Văn A" />
-        <Input label="Email" value={email} onChangeText={setEmail} placeholder="email@example.com" keyboardType="email-address" autoCapitalize="none" />
+        <Input label="Tên người dùng" value={username} onChangeText={setUsername} placeholder="example_user" autoCapitalize="none" />
         <Input label="Mật khẩu" value={password} onChangeText={setPassword} placeholder="Tối thiểu 6 ký tự" secureTextEntry />
+        <Input label="Xác nhận mật khẩu" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Nhập lại mật khẩu" secureTextEntry />
         <Button title="Đăng ký" onPress={handleRegister} loading={loading} style={styles.btn} />
         <TouchableOpacity onPress={() => router.back()} style={styles.link}>
           <Text style={styles.linkText}>Đã có tài khoản? <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Đăng nhập</Text></Text>
