@@ -1,16 +1,16 @@
-// src/services/api.ts
-// Axios instance chung (auth, cart, orders)
-// ✅ Fixed: dùng SecureStore thay AsyncStorage để đọc accessToken
+// src/services/foodApi.ts
+// Axios instance dành riêng cho Food endpoints
+// Dùng expo-secure-store để lấy token (an toàn hơn AsyncStorage)
 
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const api = axios.create({
+const foodApi = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://10.0.2.2:8080',
-  timeout: 10000,
+  timeout: 15000,
 });
 
-api.interceptors.request.use(async (config) => {
+foodApi.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -18,4 +18,4 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-export default api;
+export default foodApi;
