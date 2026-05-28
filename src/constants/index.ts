@@ -1,4 +1,4 @@
-export const API_URL = 'https://your-api.com/api';
+export const API_URL = 'http://localhost:5000';
 
 export const COLORS = {
   primary: '#6C63FF',
