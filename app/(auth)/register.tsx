@@ -27,7 +27,7 @@ export default function RegisterScreen() {
     
     setLoading(true);
     try {
-      const result = await authApi.register(username, password, confirmPassword);
+      await authApi.register(username, password, confirmPassword);
       Alert.alert('Thành công', 'Đăng ký tài khoản thành công!', [
         { text: 'OK', onPress: () => router.replace('/(tabs)/home') }
       ]);

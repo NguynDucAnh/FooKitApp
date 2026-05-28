@@ -1,4 +1,11 @@
-import { Product } from '../types';
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  description: string;
+  stock: number;
+}
 
 export const MOCK_PRODUCTS: Product[] = [
   { id: '1', name: 'Áo thun basic trắng', price: 150000, image: 'https://picsum.photos/400/300?random=1', description: 'Áo thun cotton 100%, thoáng mát, phù hợp mặc hàng ngày.', stock: 10 },
