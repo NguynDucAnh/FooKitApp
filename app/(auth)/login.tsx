@@ -18,7 +18,7 @@ export default function LoginScreen() {
     
     setLoading(true);
     try {
-      const result = await authApi.login(username, password);
+      await authApi.login(username, password);
       Alert.alert('Thành công', 'Đăng nhập thành công!', [
         { text: 'OK', onPress: () => router.replace('/(tabs)/home') }
       ]);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { COLORS } from '../constants';
-import { Product } from '../types';
+import { Product } from '../constants/mockData';
 
 interface Props { product: Product; onPress: () => void; onAddToCart: () => void; }
 

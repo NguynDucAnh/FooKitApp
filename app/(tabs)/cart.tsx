@@ -1,65 +1,88 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppDispatch, useAppSelector } from '../../src/store';
-import { removeItem, changeQty, clearCart } from '../../src/store/slices/cartSlice';
 import Button from '../../src/components/Button';
 import { COLORS } from '../../src/constants';
 import api from '../../src/services/api';
 
+interface CartItem {
+  product: {
+    id: string;
+    name: string;
+    price: number;
+  };
+  quantity: number;
+}
+
 export default function CartScreen() {
-  const dispatch = useAppDispatch();
-  const items = useAppSelector(s => s.cart.items);
-  const total = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   async function handleOrder() {
     try {
-      await api.post('/orders', { items: items.map(i => ({ productId: i.product.id, quantity: i.quantity })) });
-      dispatch(clearCart());
-      Alert.alert('🎉 Đặt hàng thành công!', 'Đơn hàng đang được xử lý.');
+      await api.post('/orders', {
+        items: items.map(item => ({ productId: item.product.id, quantity: item.quantity })),
+      });
+      setItems([]);
+      Alert.alert('Dat hang thanh cong', 'Don hang dang duoc xu ly.');
     } catch {
-      // Demo mode - không có API thật
-      dispatch(clearCart());
-      Alert.alert('🎉 Đặt hàng thành công!', '(Demo) Đơn hàng đã được ghi nhận.');
+      setItems([]);
+      Alert.alert('Dat hang thanh cong', '(Demo) Don hang da duoc ghi nhan.');
     }
+  }
+
+  function decreaseQuantity(item: CartItem) {
+    setItems(current =>
+      item.quantity > 1
+        ? current.map(cartItem =>
+            cartItem.product.id === item.product.id
+              ? { ...cartItem, quantity: cartItem.quantity - 1 }
+              : cartItem
+          )
+        : current.filter(cartItem => cartItem.product.id !== item.product.id)
+    );
+  }
+
+  function increaseQuantity(item: CartItem) {
+    setItems(current =>
+      current.map(cartItem =>
+        cartItem.product.id === item.product.id
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      )
+    );
   }
 
   if (items.length === 0) {
     return (
       <SafeAreaView style={styles.emptyWrap}>
-        <Text style={styles.emptyIcon}>🛒</Text>
-        <Text style={styles.emptyTitle}>Giỏ hàng trống</Text>
-        <Text style={styles.emptySub}>Hãy thêm sản phẩm vào giỏ hàng nhé!</Text>
+        <Text style={styles.emptyIcon}>Cart</Text>
+        <Text style={styles.emptyTitle}>Gio hang trong</Text>
+        <Text style={styles.emptySub}>Hay them san pham vao gio hang.</Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Giỏ hàng ({items.length})</Text>
+      <Text style={styles.title}>Gio hang ({items.length})</Text>
 
       <FlatList
         data={items}
-        keyExtractor={i => i.product.id}
+        keyExtractor={item => item.product.id}
         contentContainerStyle={{ padding: 14, paddingBottom: 8 }}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.info}>
               <Text style={styles.name} numberOfLines={2}>{item.product.name}</Text>
-              <Text style={styles.price}>{item.product.price.toLocaleString('vi-VN')}đ</Text>
+              <Text style={styles.price}>{item.product.price.toLocaleString('vi-VN')}d</Text>
             </View>
             <View style={styles.qtyRow}>
-              <TouchableOpacity style={styles.qBtn}
-                onPress={() =>
-                  item.quantity > 1
-                    ? dispatch(changeQty({ id: item.product.id, qty: item.quantity - 1 }))
-                    : dispatch(removeItem(item.product.id))
-                }>
-                <Text style={styles.qBtnText}>−</Text>
+              <TouchableOpacity style={styles.qBtn} onPress={() => decreaseQuantity(item)}>
+                <Text style={styles.qBtnText}>-</Text>
               </TouchableOpacity>
               <Text style={styles.qty}>{item.quantity}</Text>
-              <TouchableOpacity style={styles.qBtn}
-                onPress={() => dispatch(changeQty({ id: item.product.id, qty: item.quantity + 1 }))}>
+              <TouchableOpacity style={styles.qBtn} onPress={() => increaseQuantity(item)}>
                 <Text style={styles.qBtnText}>+</Text>
               </TouchableOpacity>
             </View>
@@ -69,10 +92,10 @@ export default function CartScreen() {
 
       <View style={styles.footer}>
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Tổng tiền</Text>
-          <Text style={styles.totalValue}>{total.toLocaleString('vi-VN')}đ</Text>
+          <Text style={styles.totalLabel}>Tong tien</Text>
+          <Text style={styles.totalValue}>{total.toLocaleString('vi-VN')}d</Text>
         </View>
-        <Button title="Đặt hàng ngay 🛍" onPress={handleOrder} />
+        <Button title="Dat hang ngay" onPress={handleOrder} />
       </View>
     </SafeAreaView>
   );
@@ -81,7 +104,7 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surface },
-  emptyIcon: { fontSize: 64, marginBottom: 12 },
+  emptyIcon: { fontSize: 32, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text },
   emptySub: { fontSize: 14, color: COLORS.textGray, marginTop: 6 },
   title: { fontSize: 20, fontWeight: '700', color: COLORS.text, padding: 20, backgroundColor: COLORS.white },
