@@ -1,32 +1,31 @@
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../constants';
+import axiosClient from './axiosClient';
+import { authService } from './authService';
 
-const api = axios.create({ baseURL: API_URL, timeout: 10000 });
-
-api.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-// Auth API endpoints
 export const authApi = {
   login: async (username: string, password: string) => {
-    const response = await api.post('/api/Auth/login', { username, password });
-    if (response.data.token) {
-      await AsyncStorage.setItem('token', response.data.token);
-    }
-    return response.data;
+    const result = await authService.login({ username, password });
+    return {
+      token: result.tokens.accessToken,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+      user: result.user,
+    };
   },
-  
+
   register: async (username: string, password: string, confirmPassword: string) => {
-    const response = await api.post('/api/Auth/register', { username, password, confirmPassword });
-    if (response.data.token) {
-      await AsyncStorage.setItem('token', response.data.token);
-    }
-    return response.data;
+    const result = await authService.register({ username, password, confirmPassword });
+    return {
+      token: result.tokens.accessToken,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+      user: result.user,
+    };
   },
+
+  googleLogin: authService.googleLogin,
+  logout: authService.logout,
+  setCredentials: authService.setCredentials,
+  linkGoogle: authService.linkGoogle,
 };
 
-export default api;
+export default axiosClient;

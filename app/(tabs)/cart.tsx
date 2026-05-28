@@ -24,10 +24,10 @@ export default function CartScreen() {
         items: items.map(item => ({ productId: item.product.id, quantity: item.quantity })),
       });
       setItems([]);
-      Alert.alert('Dat hang thanh cong', 'Don hang dang duoc xu ly.');
+      Alert.alert('Đặt hàng thành công', 'Đơn hàng đang được xử lý.');
     } catch {
       setItems([]);
-      Alert.alert('Dat hang thanh cong', '(Demo) Don hang da duoc ghi nhan.');
+      Alert.alert('Đặt hàng thành công', '(Demo) Đơn hàng đã được ghi nhận.');
     }
   }
 
@@ -56,16 +56,16 @@ export default function CartScreen() {
   if (items.length === 0) {
     return (
       <SafeAreaView style={styles.emptyWrap}>
-        <Text style={styles.emptyIcon}>Cart</Text>
-        <Text style={styles.emptyTitle}>Gio hang trong</Text>
-        <Text style={styles.emptySub}>Hay them san pham vao gio hang.</Text>
+        <Text style={styles.emptyIcon}>Giỏ</Text>
+        <Text style={styles.emptyTitle}>Giỏ hàng trống</Text>
+        <Text style={styles.emptySub}>Hãy thêm sản phẩm vào giỏ hàng.</Text>
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Gio hang ({items.length})</Text>
+      <Text style={styles.title}>Giỏ hàng ({items.length})</Text>
 
       <FlatList
         data={items}
@@ -75,7 +75,7 @@ export default function CartScreen() {
           <View style={styles.card}>
             <View style={styles.info}>
               <Text style={styles.name} numberOfLines={2}>{item.product.name}</Text>
-              <Text style={styles.price}>{item.product.price.toLocaleString('vi-VN')}d</Text>
+              <Text style={styles.price}>{item.product.price.toLocaleString('vi-VN')}đ</Text>
             </View>
             <View style={styles.qtyRow}>
               <TouchableOpacity style={styles.qBtn} onPress={() => decreaseQuantity(item)}>
@@ -92,10 +92,10 @@ export default function CartScreen() {
 
       <View style={styles.footer}>
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Tong tien</Text>
-          <Text style={styles.totalValue}>{total.toLocaleString('vi-VN')}d</Text>
+          <Text style={styles.totalLabel}>Tổng tiền</Text>
+          <Text style={styles.totalValue}>{total.toLocaleString('vi-VN')}đ</Text>
         </View>
-        <Button title="Dat hang ngay" onPress={handleOrder} />
+        <Button title="Đặt hàng ngay" onPress={handleOrder} />
       </View>
     </SafeAreaView>
   );

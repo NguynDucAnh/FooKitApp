@@ -4,9 +4,11 @@ import { router } from 'expo-router';
 import Input from '../../src/components/Input';
 import Button from '../../src/components/Button';
 import { COLORS } from '../../src/constants';
-import { authApi } from '../../src/services/api';
+import { useAuth } from '../../src/hooks/useAuth';
+import { getAuthErrorMessage } from '../../src/utils/authErrors';
 
 export default function RegisterScreen() {
+  const { register } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,12 +29,12 @@ export default function RegisterScreen() {
     
     setLoading(true);
     try {
-      await authApi.register(username, password, confirmPassword);
+      await register({ username, password, confirmPassword });
       Alert.alert('Thành công', 'Đăng ký tài khoản thành công!', [
         { text: 'OK', onPress: () => router.replace('/(tabs)/home') }
       ]);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      const errorMessage = getAuthErrorMessage(error);
       Alert.alert('Lỗi đăng ký', errorMessage);
     } finally {
       setLoading(false);

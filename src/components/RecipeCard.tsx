@@ -33,11 +33,11 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
             <Clock size={14} color="#4B5563" />
-            <Text style={styles.metaText}>{recipe.time} min</Text>
+            <Text style={styles.metaText}>{recipe.time} phút</Text>
           </View>
           <View style={styles.metaItem}>
             <Flame size={14} color="#4B5563" />
-            <Text style={styles.metaText}>{recipe.calories} cal</Text>
+            <Text style={styles.metaText}>{recipe.calories} calo</Text>
           </View>
           <View style={styles.metaItem}>
             <Text style={styles.ratingStar}>★</Text>
@@ -46,7 +46,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
         </View>
 
         <View style={styles.bottomRow}>
-          <Text style={styles.priceText}>${recipe.budget}</Text>
+          <Text style={styles.priceText}>{recipe.budget.toLocaleString('vi-VN')} đ</Text>
           <View style={styles.chevronButton}>
             <ChevronRight size={18} color="#FFFFFF" />
           </View>
