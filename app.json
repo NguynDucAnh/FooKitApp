@@ -8,9 +8,11 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.fookitapp.mobile",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.fookitapp.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#6C63FF"
       }

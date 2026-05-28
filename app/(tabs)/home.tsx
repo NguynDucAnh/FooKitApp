@@ -1,8 +1,10 @@
 ﻿import { useState } from 'react';
 import { StyleSheet, SafeAreaView, View, ScrollView, Text, Image } from 'react-native';
+import { router } from 'expo-router';
 import { HomeScreen } from '../../src/components/HomeScreen';
 import { RecipeDetailScreen } from '../../src/components/RecipeDetailScreen';
 import { BottomNav } from '../../src/components/BottomNav';
+import SubscriptionDashboard from '../../src/components/subscription/SubscriptionDashboard';
 import { Recipe } from '../../src/data/recipes';
 
 export default function App() {
@@ -21,6 +23,11 @@ export default function App() {
   };
 
   const handleTabChange = (tab: string) => {
+    if (tab === 'profile') {
+      router.push('/(tabs)/profile');
+      return;
+    }
+
     setActiveTab(tab);
     if (tab === 'home') {
       setCurrentView('home');
@@ -39,23 +46,20 @@ export default function App() {
         )}
 
         {activeTab === 'discover' && (
-          <ScrollView contentContainerStyle={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Discover</Text>
-            <Text style={styles.placeholderText}>Explore new recipes and cooking techniques...</Text>
-          </ScrollView>
+          <SubscriptionDashboard />
         )}
 
         {activeTab === 'favorites' && (
           <ScrollView contentContainerStyle={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>My Favorites</Text>
-            <Text style={styles.placeholderText}>Your saved recipes appear here...</Text>
+            <Text style={styles.placeholderTitle}>Món yêu thích</Text>
+            <Text style={styles.placeholderText}>Các công thức bạn đã lưu sẽ xuất hiện tại đây.</Text>
           </ScrollView>
         )}
 
         {activeTab === 'planner' && (
           <ScrollView contentContainerStyle={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Meal Planner</Text>
-            <Text style={styles.placeholderText}>Plan your weekly meals...</Text>
+            <Text style={styles.placeholderTitle}>Lên kế hoạch bữa ăn</Text>
+            <Text style={styles.placeholderText}>Sắp xếp thực đơn hằng tuần của bạn tại đây.</Text>
           </ScrollView>
         )}
 
@@ -66,16 +70,16 @@ export default function App() {
                 source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop' }}
                 style={styles.profileAvatar}
               />
-              <Text style={styles.profileName}>John Doe</Text>
-              <Text style={styles.profileSubtitle}>Home Chef</Text>
+              <Text style={styles.profileName}>Người dùng</Text>
+              <Text style={styles.profileSubtitle}>Đầu bếp tại gia</Text>
             </View>
             <View style={styles.profileStatCard}>
-              <Text style={styles.profileStatLabel}>Recipes Cooked</Text>
+              <Text style={styles.profileStatLabel}>Công thức đã nấu</Text>
               <Text style={styles.profileStatValue}>42</Text>
             </View>
             <View style={styles.profileStatCard}>
-              <Text style={styles.profileStatLabel}>Favorite Cuisine</Text>
-              <Text style={styles.profileStatValue}>Asian Food</Text>
+              <Text style={styles.profileStatLabel}>Ẩm thực yêu thích</Text>
+              <Text style={styles.profileStatValue}>Món Á</Text>
             </View>
           </ScrollView>
         )}

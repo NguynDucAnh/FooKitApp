@@ -14,7 +14,7 @@ interface HomeScreenProps {
 
 export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [selectedBudget, setSelectedBudget] = useState<number | null>(null);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState<number | null>(null);
@@ -47,7 +47,7 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
         isFavorite: favoriteRecipes.has(recipe.id)
       }))
       .filter((recipe) => {
-        const matchesCategory = selectedCategory === 'All' || recipe.category.includes(selectedCategory);
+        const matchesCategory = selectedCategory === 'Tất cả' || recipe.category.includes(selectedCategory);
         const matchesBudget = !selectedBudget || recipe.budget <= selectedBudget;
         const matchesTools = selectedTools.length === 0 || selectedTools.some((tool) => recipe.tools.includes(tool));
         const matchesTime = !selectedTime || recipe.time <= selectedTime;
@@ -65,8 +65,8 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.headerSection}>
         <View>
-          <Text style={styles.heading}>Good Morning! 👋</Text>
-          <Text style={styles.subheading}>What would you like to cook today?</Text>
+          <Text style={styles.heading}>Chào buổi sáng!</Text>
+          <Text style={styles.subheading}>Hôm nay bạn muốn nấu món gì?</Text>
         </View>
 
         <View style={styles.headerRight}>
@@ -86,7 +86,7 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Search recipes or ingredients..."
+          placeholder="Tìm công thức hoặc nguyên liệu..."
           placeholderTextColor="#9CA3AF"
           style={styles.searchInput}
         />
@@ -99,10 +99,10 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
       >
         <View style={styles.featuredOverlay} />
         <View style={styles.featuredContent}>
-          <Text style={styles.featuredLabel}>🔥 Recipe of the Day</Text>
+          <Text style={styles.featuredLabel}>Công thức hôm nay</Text>
           <Text style={styles.featuredTitle}>{featuredRecipe?.name}</Text>
           <Pressable style={styles.primaryButton} android_ripple={{ color: '#D1FAE5' }}>
-            <Text style={styles.primaryButtonText}>Cook Now →</Text>
+            <Text style={styles.primaryButtonText}>Nấu ngay</Text>
           </Pressable>
         </View>
       </ImageBackground>
@@ -110,18 +110,18 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Sparkles color="#16A34A" size={18} />
-          <Text style={styles.sectionTitle}>AI Recipe Suggestion</Text>
+          <Text style={styles.sectionTitle}>Gợi ý công thức bằng AI</Text>
         </View>
         <View style={styles.card}>
-          <Text style={styles.cardText}>Cook with ingredients you already have!</Text>
+          <Text style={styles.cardText}>Nấu với những nguyên liệu bạn đang có.</Text>
           <Pressable style={styles.secondaryButton} android_ripple={{ color: '#D1FAE5' }}>
-            <Text style={styles.secondaryButtonText}>Find Recipes</Text>
+            <Text style={styles.secondaryButtonText}>Tìm công thức</Text>
           </Pressable>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Select Your Budget</Text>
+        <Text style={styles.sectionTitle}>Chọn ngân sách</Text>
         <BudgetSelector
           options={budgetOptions}
           selectedBudget={selectedBudget}
@@ -130,12 +130,12 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Available Cooking Tools</Text>
+        <Text style={styles.sectionTitle}>Dụng cụ nấu ăn có sẵn</Text>
         <ToolSelector tools={cookingTools} selectedTools={selectedTools} onToggle={handleToolToggle} />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Cooking Time</Text>
+        <Text style={styles.sectionTitle}>Thời gian nấu</Text>
         <TimeFilter
           filters={timeFilters}
           selectedTime={selectedTime}
@@ -144,7 +144,7 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Categories</Text>
+        <Text style={styles.sectionTitle}>Danh mục</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
           {categories.map((category) => (
             <CategoryChip
@@ -161,7 +161,7 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
         <View style={styles.sectionHeaderLarge}>
           <View style={styles.sectionHeaderTitle}>
             <TrendingUp color="#16A34A" size={18} />
-            <Text style={[styles.sectionTitle, styles.sectionTitleWithIcon]}>Trending This Week</Text>
+            <Text style={[styles.sectionTitle, styles.sectionTitleWithIcon]}>Xu hướng tuần này</Text>
           </View>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
@@ -181,7 +181,7 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
         <View style={styles.sectionHeaderLarge}>
           <View style={styles.sectionHeaderTitle}>
             <Clock color="#16A34A" size={18} />
-            <Text style={[styles.sectionTitle, styles.sectionTitleWithIcon]}>Recently Viewed</Text>
+            <Text style={[styles.sectionTitle, styles.sectionTitleWithIcon]}>Xem gần đây</Text>
           </View>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
@@ -198,22 +198,22 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
         <View style={styles.quickActionsRow}>
           <Pressable style={[styles.quickActionButton, styles.quickActionPrimary]} android_ripple={{ color: '#D1FAE5' }}>
             <CalendarDays color="#FFFFFF" size={20} />
-            <Text style={styles.quickActionText}>Meal Planner</Text>
+            <Text style={styles.quickActionText}>Lập kế hoạch</Text>
           </Pressable>
           <Pressable style={[styles.quickActionButton, styles.quickActionSecondary]} android_ripple={{ color: '#D1FAE5' }}>
             <ShoppingCart color="#FFFFFF" size={20} />
-            <Text style={styles.quickActionText}>Shopping List</Text>
+            <Text style={styles.quickActionText}>Danh sách mua sắm</Text>
           </Pressable>
         </View>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>
-          {selectedCategory === 'All' ? 'All Recipes' : selectedCategory} ({filteredRecipes.length})
+          {selectedCategory === 'Tất cả' ? 'Tất cả công thức' : selectedCategory} ({filteredRecipes.length})
         </Text>
         <View style={styles.recipesGrid}>
           {filteredRecipes.map((recipe) => (
@@ -227,8 +227,8 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
         </View>
         {filteredRecipes.length === 0 && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateTitle}>No recipes found matching your filters.</Text>
-            <Text style={styles.emptyStateSubtitle}>Try adjusting your selection above.</Text>
+            <Text style={styles.emptyStateTitle}>Không tìm thấy công thức phù hợp.</Text>
+            <Text style={styles.emptyStateSubtitle}>Hãy thử điều chỉnh bộ lọc phía trên.</Text>
           </View>
         )}
       </View>

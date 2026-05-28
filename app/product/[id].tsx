@@ -27,15 +27,15 @@ export default function ProductDetailScreen() {
       <ScrollView>
         <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
         <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.price}>{product.price.toLocaleString('vi-VN')}d</Text>
-        <Text style={styles.stock}>Con lai: {product.stock} san pham</Text>
-        <Text style={styles.descTitle}>Mo ta san pham</Text>
+        <Text style={styles.price}>{product.price.toLocaleString('vi-VN')}đ</Text>
+        <Text style={styles.stock}>Còn lại: {product.stock} sản phẩm</Text>
+        <Text style={styles.descTitle}>Mô tả sản phẩm</Text>
         <Text style={styles.desc}>{product.description}</Text>
       </ScrollView>
 
       <SafeAreaView style={styles.footer}>
-        <Button title="Quay lai" onPress={() => router.back()} outline style={styles.btnBack} />
-        <Button title="Them vao gio" onPress={() => router.back()} style={styles.btnAdd} />
+        <Button title="Quay lại" onPress={() => router.back()} outline style={styles.btnBack} />
+        <Button title="Thêm vào giỏ" onPress={() => router.back()} style={styles.btnAdd} />
       </SafeAreaView>
     </SafeAreaView>
   );

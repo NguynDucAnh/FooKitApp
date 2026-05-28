@@ -12,11 +12,11 @@ interface Order {
 }
 
 const STATUS: Record<string, string> = {
-  pending:   '⏳ Chờ xác nhận',
-  confirmed: '✅ Đã xác nhận',
-  shipping:  '🚚 Đang giao hàng',
-  delivered: '🎉 Đã nhận hàng',
-  cancelled: '❌ Đã hủy',
+  pending: 'Chờ xác nhận',
+  confirmed: 'Đã xác nhận',
+  shipping: 'Đang giao hàng',
+  delivered: 'Đã nhận hàng',
+  cancelled: 'Đã hủy',
 };
 
 export default function OrdersScreen() {
@@ -37,13 +37,13 @@ export default function OrdersScreen() {
       <Text style={styles.title}>Đơn hàng của tôi</Text>
       {orders.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={{ fontSize: 56 }}>📦</Text>
+          <Text style={styles.emptyIcon}>Hộp</Text>
           <Text style={styles.emptyText}>Chưa có đơn hàng nào</Text>
         </View>
       ) : (
         <FlatList
           data={orders}
-          keyExtractor={o => o.id}
+          keyExtractor={order => order.id}
           contentContainerStyle={{ padding: 14 }}
           renderItem={({ item }) => (
             <View style={styles.card}>
@@ -63,13 +63,14 @@ export default function OrdersScreen() {
 
 const MOCK_ORDERS: Order[] = [
   { id: 'abc123def456', total: 500000, status: 'delivered', createdAt: '2024-12-01' },
-  { id: 'xyz789ghi012', total: 270000, status: 'shipping',  createdAt: '2025-01-15' },
+  { id: 'xyz789ghi012', total: 270000, status: 'shipping', createdAt: '2025-01-15' },
 ];
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
   title: { fontSize: 20, fontWeight: '700', color: COLORS.text, padding: 20, backgroundColor: COLORS.white },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  emptyIcon: { fontSize: 32, color: COLORS.textGray },
   emptyText: { fontSize: 16, color: COLORS.textGray },
   card: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, marginBottom: 10 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },

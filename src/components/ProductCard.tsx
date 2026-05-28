@@ -3,7 +3,11 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { COLORS } from '../constants';
 import { Product } from '../constants/mockData';
 
-interface Props { product: Product; onPress: () => void; onAddToCart: () => void; }
+interface Props {
+  product: Product;
+  onPress: () => void;
+  onAddToCart: () => void;
+}
 
 export default function ProductCard({ product, onPress, onAddToCart }: Props) {
   return (

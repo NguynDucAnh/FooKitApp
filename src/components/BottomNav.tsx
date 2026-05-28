@@ -7,11 +7,11 @@ interface BottomNavProps {
 }
 
 const tabs = [
-  { id: 'home', label: 'Home', icon: Home },
-  { id: 'discover', label: 'Discover', icon: Compass },
-  { id: 'favorites', label: 'Favorites', icon: Heart },
-  { id: 'planner', label: 'Planner', icon: CalendarDays },
-  { id: 'profile', label: 'Profile', icon: User }
+  { id: 'home', label: 'Trang chủ', icon: Home },
+  { id: 'discover', label: 'Gói cước', icon: Compass },
+  { id: 'favorites', label: 'Yêu thích', icon: Heart },
+  { id: 'planner', label: 'Kế hoạch', icon: CalendarDays },
+  { id: 'profile', label: 'Tài khoản', icon: User }
 ];
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {

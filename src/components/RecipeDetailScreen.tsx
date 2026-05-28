@@ -35,7 +35,7 @@ export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) 
           <View style={styles.ratingRow}>
             <Star size={18} color="#F59E0B" />
             <Text style={styles.ratingText}>{recipe.rating}</Text>
-            <Text style={styles.ratingSubtext}>(128 reviews)</Text>
+            <Text style={styles.ratingSubtext}>(128 đánh giá)</Text>
           </View>
         </View>
       </ImageBackground>
@@ -44,28 +44,28 @@ export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) 
         <View style={styles.statsGrid}>
           <View style={styles.statsCard}>
             <Clock size={18} color="#16A34A" />
-            <Text style={styles.statsLabel}>Time</Text>
-            <Text style={styles.statsValue}>{recipe.time} min</Text>
+            <Text style={styles.statsLabel}>Thời gian</Text>
+            <Text style={styles.statsValue}>{recipe.time} phút</Text>
           </View>
           <View style={styles.statsCard}>
             <Flame size={18} color="#F59E0B" />
-            <Text style={styles.statsLabel}>Calories</Text>
+            <Text style={styles.statsLabel}>Calo</Text>
             <Text style={styles.statsValue}>{recipe.calories}</Text>
           </View>
           <View style={styles.statsCard}>
             <DollarSign size={18} color="#16A34A" />
-            <Text style={styles.statsLabel}>Budget</Text>
-            <Text style={styles.statsValue}>${recipe.budget}</Text>
+            <Text style={styles.statsLabel}>Chi phí</Text>
+            <Text style={styles.statsValue}>{recipe.budget.toLocaleString('vi-VN')} đ</Text>
           </View>
           <View style={styles.statsCard}>
             <Text style={styles.statsEmoji}>👨‍🍳</Text>
-            <Text style={styles.statsLabel}>Level</Text>
+            <Text style={styles.statsLabel}>Độ khó</Text>
             <Text style={styles.statsValue}>{recipe.difficulty}</Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Required Tools</Text>
+          <Text style={styles.sectionTitle}>Dụng cụ cần có</Text>
           <View style={styles.wrapRow}>
             {recipe.tools.map((tool) => (
               <View key={tool} style={styles.tag}>
@@ -76,29 +76,29 @@ export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) 
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Nutrition Facts</Text>
+          <Text style={styles.sectionTitle}>Thông tin dinh dưỡng</Text>
           <View style={styles.nutritionCard}>
             <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Protein</Text>
+              <Text style={styles.nutritionLabel}>Chất đạm</Text>
               <Text style={styles.nutritionValue}>{recipe.nutrition.protein}g</Text>
             </View>
             <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Carbs</Text>
+              <Text style={styles.nutritionLabel}>Tinh bột</Text>
               <Text style={styles.nutritionValue}>{recipe.nutrition.carbs}g</Text>
             </View>
             <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Fat</Text>
+              <Text style={styles.nutritionLabel}>Chất béo</Text>
               <Text style={styles.nutritionValue}>{recipe.nutrition.fat}g</Text>
             </View>
             <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Fiber</Text>
+              <Text style={styles.nutritionLabel}>Chất xơ</Text>
               <Text style={styles.nutritionValue}>{recipe.nutrition.fiber}g</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ingredients</Text>
+          <Text style={styles.sectionTitle}>Nguyên liệu</Text>
           {recipe.ingredients.map((ingredient, index) => (
             <View key={index} style={styles.ingredientRow}>
               <View style={styles.ingredientIndex}>
@@ -113,7 +113,7 @@ export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) 
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Instructions</Text>
+          <Text style={styles.sectionTitle}>Cách thực hiện</Text>
           {recipe.instructions.map((instruction, index) => (
             <View key={index} style={styles.instructionRow}>
               <View style={styles.instructionIndex}>
@@ -126,7 +126,7 @@ export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) 
 
         <View style={styles.bottomBar}>
           <Pressable style={[styles.actionButton, styles.actionButtonMargin]} android_ripple={{ color: '#D1FAE5' }}>
-            <Text style={styles.actionButtonText}>Start Cooking</Text>
+            <Text style={styles.actionButtonText}>Bắt đầu nấu</Text>
           </Pressable>
           <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
             <BookmarkPlus size={20} color="#111827" />
