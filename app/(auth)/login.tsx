@@ -43,6 +43,7 @@ export default function LoginScreen() {
       router.replace('/(tabs)/home');
     } catch (error) {
       Alert.alert('Lỗi đăng nhập Google', getGoogleSignInErrorMessage(error));
+      router.replace('/(auth)/login');
     } finally {
       setGoogleLoading(false);
     }
