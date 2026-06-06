@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { CheckCircle2, CreditCard } from 'lucide-react-native';
 import Button from '../Button';
 import { COLORS } from '../../constants';
 import { SubscriptionPlan } from '../../types/subscription';
@@ -7,6 +8,7 @@ import { SubscriptionPlan } from '../../types/subscription';
 interface Props {
   plan: SubscriptionPlan;
   currentPlanName?: string;
+  loading?: boolean;
   onSelect: (plan: SubscriptionPlan) => void;
 }
 
@@ -19,30 +21,48 @@ function getPlanLabel(planName: string) {
   return planName.toLowerCase() === 'free' ? 'Miễn phí' : planName;
 }
 
-export default function PricingCard({ plan, currentPlanName, onSelect }: Props) {
+export default function PricingCard({ plan, currentPlanName, loading, onSelect }: Props) {
   const isCurrent = currentPlanName?.toLowerCase() === plan.planName.toLowerCase();
   const isPremium = plan.planName.toLowerCase() === 'premium' || !!plan.recommended;
   const features = plan.features?.length ? plan.features : DEFAULT_FEATURES[plan.planName] ?? DEFAULT_FEATURES.Free;
+  const isPaid = plan.price > 0;
+  const currency = plan.currency ?? 'VND';
+  const periodLabel = plan.durationInDays ? `/${plan.durationInDays} ngày` : '/tháng';
 
   return (
     <View style={[styles.card, isPremium && styles.recommendedCard]}>
-      {isPremium && <Text style={styles.recommended}>Khuyên dùng</Text>}
-      <Text style={styles.name}>{getPlanLabel(plan.planName)}</Text>
+      <View style={styles.topRow}>
+        <View>
+          {isPremium && <Text style={styles.recommended}>Khuyên dùng</Text>}
+          <Text style={styles.name}>{getPlanLabel(plan.planName)}</Text>
+        </View>
+        {isPaid && (
+          <View style={styles.paymentBadge}>
+            <CreditCard size={15} color={COLORS.accent} />
+            <Text style={styles.paymentBadgeText}>VNPay</Text>
+          </View>
+        )}
+      </View>
+
       <View style={styles.priceRow}>
-        <Text style={styles.price}>{plan.price.toLocaleString('vi-VN')} đ</Text>
-        <Text style={styles.period}>/tháng</Text>
+        <Text style={styles.price}>{plan.price.toLocaleString('vi-VN')} {currency === 'VND' ? 'đ' : currency}</Text>
+        <Text style={styles.period}>{periodLabel}</Text>
       </View>
       <Text style={styles.description}>{plan.description ?? 'Gói linh hoạt cho nhu cầu hằng ngày.'}</Text>
 
       <View style={styles.features}>
         {features.map(feature => (
-          <Text key={feature} style={styles.feature}>✓ {feature}</Text>
+          <View key={feature} style={styles.featureRow}>
+            <CheckCircle2 size={16} color={COLORS.primary} />
+            <Text style={styles.feature}>{feature}</Text>
+          </View>
         ))}
       </View>
 
       <Button
-        title={isCurrent ? 'Gói hiện tại' : plan.price === 0 ? 'Bắt đầu miễn phí' : 'Nâng cấp'}
+        title={isCurrent ? 'Gói hiện tại' : isPaid ? 'Thanh toán VNPay' : 'Bắt đầu miễn phí'}
         onPress={() => onSelect(plan)}
+        loading={loading}
         disabled={isCurrent}
         outline={!isPremium}
         style={styles.button}
@@ -54,10 +74,10 @@ export default function PricingCard({ plan, currentPlanName, onSelect }: Props) 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     marginBottom: 12,
   },
   recommendedCard: {
@@ -67,16 +87,38 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 3,
   },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
   recommended: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#F7FBF2',
     color: COLORS.primary,
-    borderRadius: 999,
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
     fontSize: 12,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  paymentBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFE0B8',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  paymentBadgeText: {
+    color: COLORS.accent,
+    fontSize: 12,
+    fontWeight: '800',
   },
   name: {
     fontSize: 20,
@@ -105,10 +147,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   features: {
-    gap: 8,
+    gap: 9,
     marginTop: 16,
   },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   feature: {
+    flex: 1,
     color: COLORS.text,
     fontSize: 14,
   },

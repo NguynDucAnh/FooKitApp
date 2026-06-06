@@ -17,6 +17,10 @@ function getPlanLabel(planName?: string) {
   return planName?.toLowerCase() === 'free' ? 'Miễn phí' : planName ?? 'Miễn phí';
 }
 
+function formatDate(date?: string) {
+  return date ? new Date(date).toLocaleDateString('vi-VN') : null;
+}
+
 export default function CurrentPlanCard({ subscription, loading, onUpgrade, onCancel }: Props) {
   if (loading) {
     return (
@@ -27,7 +31,8 @@ export default function CurrentPlanCard({ subscription, loading, onUpgrade, onCa
   }
 
   const isPremium = !!subscription?.isPremium;
-  const periodEnd = subscription?.currentPeriodEnd ?? subscription?.expiresAt;
+  const startDate = formatDate(subscription?.startDate);
+  const periodEnd = formatDate(subscription?.endDate ?? subscription?.currentPeriodEnd ?? subscription?.expiresAt);
 
   return (
     <View style={[styles.card, isPremium && styles.premiumCard]}>
@@ -47,10 +52,16 @@ export default function CurrentPlanCard({ subscription, loading, onUpgrade, onCa
           : 'Bạn đang dùng gói miễn phí. Nâng cấp để mở khóa trải nghiệm cá nhân hóa.'}
       </Text>
 
-      {periodEnd && (
-        <Text style={[styles.period, isPremium && styles.premiumMuted]}>
-          Có hiệu lực đến {new Date(periodEnd).toLocaleDateString('vi-VN')}
-        </Text>
+      {(startDate || periodEnd || typeof subscription?.daysRemaining === 'number') && (
+        <View style={styles.metaBox}>
+          {startDate && <Text style={[styles.period, isPremium && styles.premiumMuted]}>Bắt đầu: {startDate}</Text>}
+          {periodEnd && <Text style={[styles.period, isPremium && styles.premiumMuted]}>Hết hạn: {periodEnd}</Text>}
+          {typeof subscription?.daysRemaining === 'number' && (
+            <Text style={[styles.period, isPremium && styles.premiumMuted]}>
+              Còn lại: {subscription.daysRemaining} ngày
+            </Text>
+          )}
+        </View>
       )}
 
       {subscription?.cancelAtPeriodEnd && (
@@ -71,15 +82,15 @@ export default function CurrentPlanCard({ subscription, loading, onUpgrade, onCa
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 8,
     padding: 18,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
   },
   premiumCard: {
-    backgroundColor: '#111827',
-    borderColor: '#374151',
+    backgroundColor: COLORS.primaryDark,
+    borderColor: COLORS.primaryDark,
   },
   header: {
     flexDirection: 'row',
@@ -103,8 +114,11 @@ const styles = StyleSheet.create({
     color: COLORS.textGray,
     lineHeight: 21,
   },
+  metaBox: {
+    marginTop: 12,
+    gap: 5,
+  },
   period: {
-    marginTop: 10,
     fontSize: 13,
     color: COLORS.textGray,
   },
@@ -118,7 +132,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   premiumMuted: {
-    color: '#D1D5DB',
+    color: '#E8F4DF',
   },
   actions: {
     marginTop: 18,
