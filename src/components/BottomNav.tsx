@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { Home, Compass, Heart, CalendarDays, User } from 'lucide-react-native';
+import { COLORS } from '../constants';
 
 interface BottomNavProps {
   activeTab: string;
@@ -11,7 +12,7 @@ const tabs = [
   { id: 'discover', label: 'Gói cước', icon: Compass },
   { id: 'favorites', label: 'Yêu thích', icon: Heart },
   { id: 'planner', label: 'Kế hoạch', icon: CalendarDays },
-  { id: 'profile', label: 'Tài khoản', icon: User }
+  { id: 'profile', label: 'Tài khoản', icon: User },
 ];
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
@@ -23,11 +24,11 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         return (
           <Pressable
             key={tab.id}
-            style={[styles.tabButton, isActive && styles.tabButtonActive]}
+            style={styles.tabButton}
             onPress={() => onTabChange(tab.id)}
-            android_ripple={{ color: '#D1FAE5' }}
+            android_ripple={{ color: '#E5F3DA' }}
           >
-            <Icon size={24} color={isActive ? '#10B981' : '#6B7280'} />
+            <Icon size={23} color={isActive ? COLORS.primary : COLORS.textGray} />
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
           </Pressable>
         );
@@ -42,9 +43,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: COLORS.border,
     paddingVertical: 10,
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -53,24 +54,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowOffset: { width: 0, height: -2 },
     shadowRadius: 10,
-    elevation: 8
+    elevation: 8,
   },
   tabButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    minWidth: 62,
   },
   tabLabel: {
     marginTop: 4,
     fontSize: 11,
-    color: '#6B7280'
+    color: COLORS.textGray,
   },
   tabLabelActive: {
-    color: '#10B981',
-    fontWeight: '700'
+    color: COLORS.primary,
+    fontWeight: '800',
   },
-  tabButtonActive: {
-    opacity: 1
-  }
 });

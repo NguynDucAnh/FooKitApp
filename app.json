@@ -20,7 +20,13 @@
     "plugins": [
       "expo-router",
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Fookit cần quyền truy cập thư viện ảnh để bạn chọn ảnh đại diện."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

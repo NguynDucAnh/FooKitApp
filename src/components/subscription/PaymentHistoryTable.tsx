@@ -14,6 +14,10 @@ interface Props {
   onRetry: () => void;
 }
 
+function getPaymentDate(item: PaymentHistoryItem) {
+  return item.paidAt ?? item.paymentDate ?? item.createdAt;
+}
+
 export default function PaymentHistoryTable({ items, loading, error, sortKey, onSortChange, onRetry }: Props) {
   if (loading) {
     return (
@@ -64,13 +68,15 @@ export default function PaymentHistoryTable({ items, loading, error, sortKey, on
       ) : (
         <View style={styles.rows}>
           {items.map((item, index) => {
-            const date = item.paymentDate ?? item.createdAt;
+            const date = getPaymentDate(item);
+            const title = item.planName ?? item.transactionRef ?? item.invoiceId ?? `Giao dịch #${index + 1}`;
             return (
-              <View key={item.id ?? item.invoiceId ?? `${item.status}-${index}`} style={styles.row}>
+              <View key={item.id ?? item.transactionRef ?? item.invoiceId ?? `${item.status}-${index}`} style={styles.row}>
                 <View style={styles.rowTop}>
-                  <View>
-                    <Text style={styles.invoice}>{item.invoiceId ?? `Hóa đơn #${index + 1}`}</Text>
+                  <View style={styles.rowInfo}>
+                    <Text style={styles.invoice}>{title}</Text>
                     <Text style={styles.date}>{date ? new Date(date).toLocaleDateString('vi-VN') : 'Chưa có ngày'}</Text>
+                    {item.transactionRef && <Text style={styles.ref}>Mã GD: {item.transactionRef}</Text>}
                   </View>
                   <Text style={styles.amount}>{item.amount.toLocaleString('vi-VN')}đ</Text>
                 </View>
@@ -87,10 +93,10 @@ export default function PaymentHistoryTable({ items, loading, error, sortKey, on
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 18,
+    borderRadius: 8,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     marginBottom: 16,
   },
   header: {
@@ -108,10 +114,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sortChip: {
-    borderRadius: 999,
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.surface,
   },
   sortChipActive: {
     backgroundColor: COLORS.primary,
@@ -148,8 +154,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   row: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    borderRadius: 8,
     padding: 12,
   },
   rowTop: {
@@ -159,6 +165,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 10,
   },
+  rowInfo: {
+    flex: 1,
+  },
   invoice: {
     color: COLORS.text,
     fontWeight: '800',
@@ -167,6 +176,11 @@ const styles = StyleSheet.create({
     color: COLORS.textGray,
     fontSize: 12,
     marginTop: 4,
+  },
+  ref: {
+    color: COLORS.textGray,
+    fontSize: 12,
+    marginTop: 3,
   },
   amount: {
     color: COLORS.text,

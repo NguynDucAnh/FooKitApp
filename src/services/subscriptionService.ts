@@ -15,6 +15,26 @@ function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
     : response.data as T;
 }
 
+function getStringField(source: unknown, keys: string[]) {
+  if (!source || typeof source !== 'object') return undefined;
+
+  const record = source as Record<string, unknown>;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+
+  return undefined;
+}
+
+function normalizePlan(plan: SubscriptionPlan) {
+  return {
+    ...plan,
+    id: getStringField(plan, ['id', 'Id', 'ID', 'planId', 'PlanId', 'planID', 'subscriptionPlanId', 'SubscriptionPlanId']) ?? plan.id,
+    planId: getStringField(plan, ['planId', 'PlanId', 'planID', 'id', 'Id', 'ID', 'subscriptionPlanId', 'SubscriptionPlanId']) ?? plan.planId,
+  };
+}
+
 export const subscriptionService = {
   async getMySubscription() {
     const response = await axiosClient.get<ApiEnvelope<MySubscription>>(`${BASE_URL}/my-subscription`);
@@ -23,7 +43,7 @@ export const subscriptionService = {
 
   async getPlans() {
     const response = await axiosClient.get<ApiEnvelope<SubscriptionPlan[]>>(`${BASE_URL}/plans`);
-    return unwrap<SubscriptionPlan[]>(response);
+    return unwrap<SubscriptionPlan[]>(response).map(normalizePlan);
   },
 
   async getPaymentHistory() {

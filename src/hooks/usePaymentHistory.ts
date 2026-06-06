@@ -31,8 +31,8 @@ export function usePaymentHistory() {
       if (sortKey === 'amount') return b.amount - a.amount;
       if (sortKey === 'status') return a.status.localeCompare(b.status);
 
-      const dateA = new Date(a.paymentDate ?? a.createdAt ?? 0).getTime();
-      const dateB = new Date(b.paymentDate ?? b.createdAt ?? 0).getTime();
+      const dateA = new Date(a.paidAt ?? a.paymentDate ?? a.createdAt ?? 0).getTime();
+      const dateB = new Date(b.paidAt ?? b.paymentDate ?? b.createdAt ?? 0).getTime();
       return dateB - dateA;
     });
   }, [items, sortKey]);

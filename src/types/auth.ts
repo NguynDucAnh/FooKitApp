@@ -5,6 +5,12 @@ export interface AuthUser {
   email: string;
   phone?: string;
   address?: string;
+  avatarUrl?: string;
+  cookingGoal?: string;
+  dietaryPreference?: string;
+  allergies?: string;
+  favoriteCuisine?: string;
+  weeklyBudget?: string;
   hasCredentials?: boolean;
   isGoogleAccount?: boolean;
 }
