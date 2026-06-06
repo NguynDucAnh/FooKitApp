@@ -5,12 +5,14 @@ export const GOOGLE_WEB_CLIENT_ID = '77582852441-eqf23tvkj9pskj42c0b15pj499imolb
 export const GOOGLE_REDIRECT_URI = 'https://auth.expo.io/@thuy1412/fookitapp';
 
 export const COLORS = {
-  primary: '#6C63FF',
-  background: '#FFFFFF',
-  surface: '#F5F5F5',
-  text: '#212121',
-  textGray: '#757575',
-  border: '#E0E0E0',
-  error: '#F44336',
+  primary: '#5CA63A',
+  primaryDark: '#255C26',
+  accent: '#F68B1E',
+  background: '#FFF8E8',
+  surface: '#F7FBF2',
+  text: '#1F2F1E',
+  textGray: '#6F7B68',
+  border: '#DDEED0',
+  error: '#D84A2B',
   white: '#FFFFFF',
 };

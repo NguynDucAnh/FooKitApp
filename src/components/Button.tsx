@@ -26,7 +26,7 @@ export default function Button({ title, onPress, loading, disabled, outline, sty
 }
 
 const styles = StyleSheet.create({
-  btn: { padding: 14, borderRadius: 10, alignItems: 'center' },
+  btn: { padding: 14, borderRadius: 8, alignItems: 'center' },
   filled: { backgroundColor: COLORS.primary },
   outline: { borderWidth: 1.5, borderColor: COLORS.primary },
   dim: { opacity: 0.5 },
