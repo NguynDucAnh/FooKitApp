@@ -21,12 +21,14 @@ import { COLORS } from '../../src/constants';
 import { useAuth } from '../../src/hooks/useAuth';
 import { getGoogleSignInErrorMessage, startGoogleAuthSessionAsync } from '../../src/services/googleAuth';
 import { AuthUser } from '../../src/types/auth';
+import { getAuthErrorMessage } from '../../src/utils/authErrors';
 
 const brandLogo = require('../../img/logo fookit 2.jpg');
 
 const EMPTY_USER: AuthUser = {
   username: '',
   name: 'Người dùng',
+  fullName: 'Người dùng',
   email: '',
   phone: '',
   address: '',
@@ -46,44 +48,28 @@ const QUICK_LINKS = [
 ];
 
 export default function ProfileScreen() {
-  const { currentUser, linkGoogle, logout, updateLocalUser } = useAuth();
+  const { changePassword, currentUser, linkGoogle, logout, updateLocalUser, updateProfile } = useAuth();
   const [form, setForm] = useState<AuthUser>(currentUser ?? EMPTY_USER);
-  const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingFoodProfile, setSavingFoodProfile] = useState(false);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
-    setForm({ ...EMPTY_USER, ...(currentUser ?? {}) });
+    const nextUser = { ...EMPTY_USER, ...(currentUser ?? {}) };
+    setForm({
+      ...nextUser,
+      name: nextUser.fullName ?? nextUser.name,
+      fullName: nextUser.fullName ?? nextUser.name,
+    });
   }, [currentUser]);
 
   const avatarSource = useMemo(() => {
     return form.avatarUrl?.trim() ? { uri: form.avatarUrl.trim() } : brandLogo;
   }, [form.avatarUrl]);
-
-  async function handleSaveProfile() {
-    setSaving(true);
-    try {
-      const nextUser: AuthUser = {
-        ...form,
-        username: form.username.trim(),
-        name: form.name.trim() || form.username.trim() || 'Người dùng',
-        email: form.email.trim(),
-        phone: form.phone?.trim(),
-        address: form.address?.trim(),
-        avatarUrl: form.avatarUrl?.trim(),
-        cookingGoal: form.cookingGoal?.trim(),
-        dietaryPreference: form.dietaryPreference?.trim(),
-        allergies: form.allergies?.trim(),
-        favoriteCuisine: form.favoriteCuisine?.trim(),
-        weeklyBudget: form.weeklyBudget?.trim(),
-      };
-
-      await updateLocalUser(nextUser);
-      setForm(nextUser);
-      Alert.alert('Đã cập nhật', 'Hồ sơ ẩm thực của bạn đã được lưu trên máy.');
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function handlePickAvatar() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -102,6 +88,90 @@ export default function ProfileScreen() {
     if (result.canceled || !result.assets[0]?.uri) return;
 
     setForm(current => ({ ...current, avatarUrl: result.assets[0].uri }));
+  }
+
+  async function handleSaveAccount() {
+    const fullName = (form.fullName ?? form.name).trim();
+    if (!fullName) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên hiển thị.');
+      return;
+    }
+
+    setSavingProfile(true);
+    try {
+      const nextUser = await updateProfile(
+        { fullName },
+        {
+          avatarUrl: form.avatarUrl?.trim(),
+          cookingGoal: form.cookingGoal?.trim(),
+          dietaryPreference: form.dietaryPreference?.trim(),
+          allergies: form.allergies?.trim(),
+          favoriteCuisine: form.favoriteCuisine?.trim(),
+          weeklyBudget: form.weeklyBudget?.trim(),
+          phone: form.phone?.trim(),
+          address: form.address?.trim(),
+        }
+      );
+      setForm({ ...EMPTY_USER, ...nextUser });
+      Alert.alert('Đã cập nhật', 'Thông tin hồ sơ đã được đồng bộ với tài khoản của bạn.');
+    } catch (error) {
+      Alert.alert('Không thể cập nhật hồ sơ', getAuthErrorMessage(error));
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
+  async function handleSaveFoodProfile() {
+    setSavingFoodProfile(true);
+    try {
+      const nextUser: AuthUser = {
+        ...form,
+        name: (form.fullName ?? form.name).trim() || form.username || 'Người dùng',
+        fullName: (form.fullName ?? form.name).trim() || form.username || 'Người dùng',
+        avatarUrl: form.avatarUrl?.trim(),
+        cookingGoal: form.cookingGoal?.trim(),
+        dietaryPreference: form.dietaryPreference?.trim(),
+        allergies: form.allergies?.trim(),
+        favoriteCuisine: form.favoriteCuisine?.trim(),
+        weeklyBudget: form.weeklyBudget?.trim(),
+      };
+
+      await updateLocalUser(nextUser);
+      setForm(nextUser);
+      Alert.alert('Đã lưu', 'Hồ sơ ẩm thực đã được lưu trên thiết bị.');
+    } finally {
+      setSavingFoodProfile(false);
+    }
+  }
+
+  async function handleChangePassword() {
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      Alert.alert('Mật khẩu không khớp', 'Mật khẩu mới và xác nhận mật khẩu mới chưa giống nhau.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert('Mật khẩu quá ngắn', 'Mật khẩu mới cần ít nhất 6 ký tự.');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await changePassword({ currentPassword, newPassword, confirmNewPassword });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      Alert.alert('Đã đổi mật khẩu', 'Bạn có thể dùng mật khẩu mới trong lần đăng nhập tiếp theo.');
+    } catch (error) {
+      Alert.alert('Không thể đổi mật khẩu', getAuthErrorMessage(error));
+    } finally {
+      setChangingPassword(false);
+    }
   }
 
   function handleLogout() {
@@ -135,8 +205,9 @@ export default function ProfileScreen() {
     openHomeTab(tab);
   }
 
-  const displayName = form.name || form.username || 'Người dùng';
+  const displayName = form.fullName || form.name || form.username || 'Người dùng';
   const handle = form.username ? `@${form.username}` : 'Hồ sơ ẩm thực cá nhân';
+  const isAdmin = !!currentUser?.isAdmin;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -187,10 +258,11 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Thông tin tài khoản</Text>
-          <Input label="Tên hiển thị" value={form.name} onChangeText={name => setForm(current => ({ ...current, name }))} placeholder="Nguyễn Tuấn Anh" />
-          <Input label="Tên đăng nhập" value={form.username} onChangeText={username => setForm(current => ({ ...current, username }))} placeholder="tuananh99" autoCapitalize="none" />
-          <Input label="Email" value={form.email} onChangeText={email => setForm(current => ({ ...current, email }))} placeholder="email@example.com" keyboardType="email-address" autoCapitalize="none" />
+          <Input label="Tên hiển thị" value={form.fullName ?? form.name} onChangeText={fullName => setForm(current => ({ ...current, fullName, name: fullName }))} placeholder="Nguyễn Văn A" />
+          <Input label="Tên đăng nhập" value={form.username} editable={false} placeholder="tuananh99" autoCapitalize="none" />
+          <Input label="Email" value={form.email} editable={false} placeholder="email@example.com" keyboardType="email-address" autoCapitalize="none" />
           <Input label="Số điện thoại" value={form.phone} onChangeText={phone => setForm(current => ({ ...current, phone }))} placeholder="090..." keyboardType="phone-pad" />
+          <Button title="Cập nhật hồ sơ" onPress={handleSaveAccount} loading={savingProfile} style={styles.saveBtn} />
         </View>
 
         <View style={styles.section}>
@@ -200,7 +272,7 @@ export default function ProfileScreen() {
           <Input label="Dị ứng / món cần tránh" value={form.allergies} onChangeText={allergies => setForm(current => ({ ...current, allergies }))} placeholder="Hải sản, đậu phộng, cay..." />
           <Input label="Ẩm thực yêu thích" value={form.favoriteCuisine} onChangeText={favoriteCuisine => setForm(current => ({ ...current, favoriteCuisine }))} placeholder="Món Việt, món Hàn, món Nhật..." />
           <Input label="Ngân sách mỗi tuần" value={form.weeklyBudget} onChangeText={weeklyBudget => setForm(current => ({ ...current, weeklyBudget }))} placeholder="500k/tuần" />
-          <Button title="Lưu hồ sơ" onPress={handleSaveProfile} loading={saving} style={styles.saveBtn} />
+          <Button title="Lưu hồ sơ ẩm thực" onPress={handleSaveFoodProfile} loading={savingFoodProfile} outline style={styles.saveBtn} />
         </View>
 
         <View style={styles.section}>
@@ -224,11 +296,16 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bảo mật tài khoản</Text>
+          <Input label="Mật khẩu hiện tại" value={currentPassword} onChangeText={setCurrentPassword} placeholder="OldPassword123" secureTextEntry />
+          <Input label="Mật khẩu mới" value={newPassword} onChangeText={setNewPassword} placeholder="NewPassword123" secureTextEntry />
+          <Input label="Xác nhận mật khẩu mới" value={confirmNewPassword} onChangeText={setConfirmNewPassword} placeholder="Nhập lại mật khẩu mới" secureTextEntry />
+          <Button title="Đổi mật khẩu" onPress={handleChangePassword} loading={changingPassword} style={styles.securityBtn} />
           <Button title="Thiết lập tên đăng nhập/mật khẩu" onPress={() => router.push('/(auth)/set-credentials')} outline style={styles.securityBtn} />
           <Button title="Liên kết Google" onPress={handleLinkGoogle} loading={linkingGoogle} outline style={styles.securityBtn} />
+          {isAdmin && <Button title="Bảng quản trị" onPress={() => router.push('/(tabs)/admin')} outline style={styles.securityBtn} />}
           <View style={styles.securityHint}>
             <ShieldCheck size={16} color={COLORS.primary} />
-            <Text style={styles.securityHintText}>Thông tin hồ sơ đang được lưu cục bộ trên thiết bị của bạn.</Text>
+            <Text style={styles.securityHintText}>Tên hiển thị và mật khẩu được đồng bộ với tài khoản. Hồ sơ ẩm thực đang lưu trên thiết bị.</Text>
           </View>
         </View>
 

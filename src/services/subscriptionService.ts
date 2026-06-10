@@ -6,7 +6,7 @@ import {
   SubscriptionPlan,
 } from '../types/subscription';
 
-const BASE_URL = '/api/Subscription';
+const BASE_URL = '/api/Subscriptions';
 
 function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
   const payload = response.data as ApiEnvelope<T>;

@@ -21,7 +21,11 @@ export const paymentService = {
       `${BASE_URL}/create`,
       payload
     );
-    return unwrap<CreatePaymentResponse>(response);
+    const payment = unwrap<CreatePaymentResponse>(response);
+    return {
+      ...payment,
+      paymentUrl: payment.paymentUrl?.trim(),
+    };
   },
 
   async verifyVNPayReturn(queryString: string) {
