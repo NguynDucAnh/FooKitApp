@@ -9,6 +9,7 @@ import {
   SetCredentialsRequest,
 } from '../types/auth';
 import { clearAuthStorage, saveStoredUser, saveTokens } from '../utils/tokenStorage';
+import { getRolesFromJwt, hasAdminRole } from '../utils/jwt';
 
 const AUTH_BASE = '/api/Auth';
 
@@ -27,17 +28,31 @@ function getTokens(response: AuthResponse): AuthTokens {
   };
 }
 
-function getUser(response: AuthResponse, fallbackUsername: string): AuthUser {
+function normalizeRoles(user: Partial<AuthUser>, token?: string) {
+  const responseRoles = [
+    ...(Array.isArray(user.roles) ? user.roles : []),
+    ...(user.role ? [user.role] : []),
+  ];
+  const roles = responseRoles.length ? responseRoles : getRolesFromJwt(token);
+  return roles;
+}
+
+function getUser(response: AuthResponse, fallbackUsername: string, token?: string): AuthUser {
   const data = getResponseData(response) as AuthResponse | Partial<AuthUser>;
   const user = (response.user ?? ('user' in data ? data.user : data) ?? {}) as Partial<AuthUser>;
+  const roles = normalizeRoles(user, token);
 
   return {
     id: user.id,
     username: user.username ?? fallbackUsername,
-    name: user.name ?? user.username ?? fallbackUsername,
+    name: user.name ?? user.fullName ?? user.username ?? fallbackUsername,
+    fullName: user.fullName ?? user.name,
     email: user.email ?? '',
     phone: user.phone ?? '',
     address: user.address ?? '',
+    role: user.role ?? roles[0],
+    roles,
+    isAdmin: user.isAdmin ?? hasAdminRole(roles),
     hasCredentials: user.hasCredentials,
     isGoogleAccount: user.isGoogleAccount,
   };
@@ -45,7 +60,7 @@ function getUser(response: AuthResponse, fallbackUsername: string): AuthUser {
 
 async function persistAuth(response: AuthResponse, fallbackUsername: string) {
   const tokens = getTokens(response);
-  const user = getUser(response, fallbackUsername);
+  const user = getUser(response, fallbackUsername, tokens.accessToken);
 
   if (tokens.accessToken) {
     await saveTokens(tokens);

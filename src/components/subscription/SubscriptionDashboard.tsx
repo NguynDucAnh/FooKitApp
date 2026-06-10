@@ -21,6 +21,39 @@ function getPlanId(plan: SubscriptionPlan) {
   return plan.id ?? plan.planId;
 }
 
+function getVNPayUrlIssue(paymentUrl: string) {
+  try {
+    const url = new URL(paymentUrl);
+    const requiredParams = [
+      'vnp_Amount',
+      'vnp_Command',
+      'vnp_CreateDate',
+      'vnp_CurrCode',
+      'vnp_IpAddr',
+      'vnp_Locale',
+      'vnp_OrderInfo',
+      'vnp_ReturnUrl',
+      'vnp_TmnCode',
+      'vnp_TxnRef',
+      'vnp_Version',
+      'vnp_SecureHash',
+    ];
+    const missingParams = requiredParams.filter(param => !url.searchParams.get(param));
+
+    if (!url.hostname.includes('vnpayment.vn')) {
+      return 'paymentUrl không phải domain VNPay.';
+    }
+
+    if (missingParams.length > 0) {
+      return `paymentUrl thiếu tham số: ${missingParams.join(', ')}.`;
+    }
+
+    return null;
+  } catch {
+    return 'paymentUrl không phải URL hợp lệ.';
+  }
+}
+
 export default function SubscriptionDashboard() {
   const { subscription, loading, error, refreshSubscription, cancelSubscription } = useSubscription();
   const { plans, loading: plansLoading, error: plansError, refetch: refetchPlans } = usePlans();
@@ -65,7 +98,7 @@ export default function SubscriptionDashboard() {
     if (!planId) {
       Alert.alert(
         'Chưa thể thanh toán',
-        'Gói này chưa có planId từ API. Hãy tải lại bảng giá hoặc kiểm tra response /api/Subscription/plans.'
+        'Gói này chưa có planId từ API. Hãy tải lại bảng giá hoặc kiểm tra response /api/Subscriptions/plans.'
       );
       return;
     }
@@ -76,6 +109,11 @@ export default function SubscriptionDashboard() {
 
       if (!payment.paymentUrl) {
         throw new Error('Backend chưa trả về paymentUrl.');
+      }
+
+      const paymentUrlIssue = getVNPayUrlIssue(payment.paymentUrl);
+      if (paymentUrlIssue) {
+        throw new Error(`${paymentUrlIssue} Vui lòng kiểm tra phần tạo URL VNPay ở backend.`);
       }
 
       const result = await WebBrowser.openBrowserAsync(payment.paymentUrl, {

@@ -2,6 +2,7 @@ export interface AuthUser {
   id?: string;
   username: string;
   name: string;
+  fullName?: string;
   email: string;
   phone?: string;
   address?: string;
@@ -11,6 +12,9 @@ export interface AuthUser {
   allergies?: string;
   favoriteCuisine?: string;
   weeklyBudget?: string;
+  role?: string;
+  roles?: string[];
+  isAdmin?: boolean;
   hasCredentials?: boolean;
   isGoogleAccount?: boolean;
 }
@@ -44,6 +48,23 @@ export interface SetCredentialsRequest {
   username: string;
   password: string;
   confirmPassword: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName: string;
+}
+
+export interface UpdateProfileResponse {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }
 
 export interface AuthResponse {
