@@ -35,7 +35,17 @@ export interface AdminUser {
   Id?: string;
   userId?: string;
   UserId?: string;
+  userID?: string;
+  UserID?: string;
   user_id?: string;
+  accountId?: string;
+  AccountId?: string;
+  applicationUserId?: string;
+  ApplicationUserId?: string;
+  identityUserId?: string;
+  IdentityUserId?: string;
+  aspNetUserId?: string;
+  AspNetUserId?: string;
   username: string;
   email: string;
   fullName?: string;

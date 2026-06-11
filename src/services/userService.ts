@@ -17,13 +17,35 @@ function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
     : response.data as T;
 }
 
+function getStringField(source: unknown, keys: string[]) {
+  if (!source || typeof source !== 'object') return undefined;
+
+  const record = source as Record<string, unknown>;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+
+  return undefined;
+}
+
+function normalizeProfile(profile: UpdateProfileResponse): UpdateProfileResponse {
+  return {
+    ...profile,
+    id: getStringField(profile, ['id', 'Id', 'userId', 'user_id']) ?? profile.id,
+    username: getStringField(profile, ['username', 'userName', 'UserName']) ?? profile.username,
+    email: getStringField(profile, ['email', 'Email']) ?? profile.email,
+    fullName: getStringField(profile, ['fullName', 'FullName', 'full_name', 'name']) ?? profile.fullName,
+  };
+}
+
 export const userService = {
   async updateProfile(payload: UpdateProfileRequest) {
     const response = await axiosClient.put<ApiEnvelope<UpdateProfileResponse> | UpdateProfileResponse>(
       `${BASE_URL}/profile`,
-      payload
+      { fullName: payload.fullName }
     );
-    return unwrap<UpdateProfileResponse>(response);
+    return normalizeProfile(unwrap<UpdateProfileResponse>(response));
   },
 
   async changePassword(payload: ChangePasswordRequest) {

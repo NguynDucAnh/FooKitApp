@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text } from 'react-native';
 import { router } from 'expo-router';
 import Button from '../../src/components/Button';
@@ -8,20 +8,36 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
 
 export default function SetCredentialsScreen() {
-  const { setCredentials } = useAuth();
+  const { currentUser, loading: authLoading, setCredentials } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const canSetCredentials = !!currentUser?.isGoogleAccount && !currentUser?.hasCredentials;
+
+  useEffect(() => {
+    if (authLoading || canSetCredentials) return;
+
+    Alert.alert(
+      'Không khả dụng',
+      'Chức năng này chỉ dành cho tài khoản đăng nhập bằng Google chưa thiết lập tên đăng nhập và mật khẩu.',
+      [{ text: 'OK', onPress: () => router.replace('/(tabs)/profile') }]
+    );
+  }, [authLoading, canSetCredentials]);
 
   async function handleSubmit() {
+    if (!canSetCredentials) {
+      Alert.alert('Không khả dụng', 'Chỉ tài khoản đăng nhập bằng Google mới có thể thiết lập tài khoản nội bộ.');
+      return;
+    }
+
     if (!username.trim()) return Alert.alert('Lỗi', 'Vui lòng nhập tên đăng nhập.');
     if (password.length < 6) return Alert.alert('Lỗi', 'Mật khẩu tối thiểu 6 ký tự.');
     if (password !== confirmPassword) return Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp.');
 
     setLoading(true);
     try {
-      await setCredentials({ username, password, confirmPassword });
+      await setCredentials({ username: username.trim(), password, confirmPassword });
       Alert.alert('Thành công', 'Đã thiết lập tài khoản đăng nhập.', [
         { text: 'OK', onPress: () => router.replace('/(tabs)/profile') },
       ]);
@@ -40,7 +56,7 @@ export default function SetCredentialsScreen() {
         <Input label="Tên đăng nhập" value={username} onChangeText={setUsername} placeholder="my_new_username" autoCapitalize="none" />
         <Input label="Mật khẩu" value={password} onChangeText={setPassword} placeholder="MyPassword123" secureTextEntry />
         <Input label="Xác nhận mật khẩu" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Nhập lại mật khẩu" secureTextEntry />
-        <Button title="Lưu thông tin" onPress={handleSubmit} loading={loading} style={styles.btn} />
+        <Button title="Lưu thông tin" onPress={handleSubmit} loading={loading || authLoading} style={styles.btn} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

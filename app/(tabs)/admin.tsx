@@ -95,6 +95,7 @@ export default function AdminDashboardScreen() {
       setUsers(result.items);
       setUsersTotal(result.totalCount);
       setUsersPage(page);
+      return result;
     } catch (error) {
       Alert.alert('Không thể tải người dùng', getAuthErrorMessage(error));
     } finally {
@@ -204,6 +205,14 @@ export default function AdminDashboardScreen() {
       await loadUsers(usersPage);
       Alert.alert('Đã cấp Premium', `${user.username} đã được cấp ${daysToGrant} ngày Premium.`);
     } catch (error) {
+      const status = (error as any)?.response?.status;
+      if (status === 404) {
+        Alert.alert(
+          'Không tìm thấy người dùng',
+          `API grant-premium trả 404 cho userId: ${user.id}\nUsername: ${user.username}\nVui lòng kiểm tra BE có tìm user theo đúng id này không.`
+        );
+        return;
+      }
       Alert.alert('Không thể cấp Premium', getAuthErrorMessage(error));
     } finally {
       setActionLoading(false);
@@ -220,7 +229,22 @@ export default function AdminDashboardScreen() {
     setActionLoading(true);
     try {
       await adminService.toggleBan(user.id, { isActive: nextIsActive });
-      await loadUsers(usersPage);
+      setUsers(current => current.map(item => item.id === user.id ? { ...item, isActive: nextIsActive } : item));
+
+      const refreshedUsers = await loadUsers(usersPage);
+      if (!refreshedUsers) return;
+
+      const refreshedUser = refreshedUsers?.items.find(item => item.id === user.id);
+      const didChange = refreshedUser ? refreshedUser.isActive === nextIsActive : false;
+
+      if (!didChange) {
+        Alert.alert(
+          nextIsActive ? 'BE chưa bỏ cấm tài khoản' : 'BE chưa cấm tài khoản',
+          `${user.username} đã gọi API thành công nhưng dữ liệu tải lại vẫn là ${refreshedUser?.isActive ? 'Active' : 'Inactive'}. Vui lòng kiểm tra xử lý toggle-ban ở backend.`
+        );
+        return;
+      }
+
       Alert.alert(
         nextIsActive ? 'Đã bỏ cấm tài khoản' : 'Đã cấm tài khoản',
         `${user.username} hiện ${nextIsActive ? 'có thể đăng nhập và sử dụng ứng dụng' : 'đã bị tạm khóa khỏi hệ thống'}.`

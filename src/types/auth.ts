@@ -1,8 +1,12 @@
 export interface AuthUser {
   id?: string;
+  Id?: string;
+  user_id?: string;
   username: string;
+  userName?: string;
   name: string;
   fullName?: string;
+  full_name?: string;
   email: string;
   phone?: string;
   address?: string;
@@ -16,7 +20,9 @@ export interface AuthUser {
   roles?: string[];
   isAdmin?: boolean;
   hasCredentials?: boolean;
+  has_credentials?: boolean;
   isGoogleAccount?: boolean;
+  is_google_account?: boolean;
 }
 
 export interface AuthTokens {
@@ -56,9 +62,17 @@ export interface UpdateProfileRequest {
 
 export interface UpdateProfileResponse {
   id: string;
+  Id?: string;
+  userId?: string;
+  user_id?: string;
   username: string;
+  userName?: string;
+  UserName?: string;
   email: string;
-  fullName: string;
+  fullName?: string;
+  FullName?: string;
+  full_name?: string;
+  name?: string;
 }
 
 export interface ChangePasswordRequest {

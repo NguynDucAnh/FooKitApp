@@ -208,6 +208,7 @@ export default function ProfileScreen() {
   const displayName = form.fullName || form.name || form.username || 'Người dùng';
   const handle = form.username ? `@${form.username}` : 'Hồ sơ ẩm thực cá nhân';
   const isAdmin = !!currentUser?.isAdmin;
+  const canSetGoogleCredentials = !!currentUser?.isGoogleAccount && !currentUser?.hasCredentials;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -300,7 +301,9 @@ export default function ProfileScreen() {
           <Input label="Mật khẩu mới" value={newPassword} onChangeText={setNewPassword} placeholder="NewPassword123" secureTextEntry />
           <Input label="Xác nhận mật khẩu mới" value={confirmNewPassword} onChangeText={setConfirmNewPassword} placeholder="Nhập lại mật khẩu mới" secureTextEntry />
           <Button title="Đổi mật khẩu" onPress={handleChangePassword} loading={changingPassword} style={styles.securityBtn} />
-          <Button title="Thiết lập tên đăng nhập/mật khẩu" onPress={() => router.push('/(auth)/set-credentials')} outline style={styles.securityBtn} />
+          {canSetGoogleCredentials && (
+            <Button title="Thiết lập tên đăng nhập/mật khẩu" onPress={() => router.push('/(auth)/set-credentials')} outline style={styles.securityBtn} />
+          )}
           <Button title="Liên kết Google" onPress={handleLinkGoogle} loading={linkingGoogle} outline style={styles.securityBtn} />
           {isAdmin && <Button title="Bảng quản trị" onPress={() => router.push('/(tabs)/admin')} outline style={styles.securityBtn} />}
           <View style={styles.securityHint}>

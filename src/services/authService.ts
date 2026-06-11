@@ -37,24 +37,59 @@ function normalizeRoles(user: Partial<AuthUser>, token?: string) {
   return roles;
 }
 
+function getStringField(source: unknown, keys: string[]) {
+  if (!source || typeof source !== 'object') return undefined;
+
+  const record = source as Record<string, unknown>;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+
+  return undefined;
+}
+
+function getBooleanField(source: unknown, keys: string[]) {
+  if (!source || typeof source !== 'object') return undefined;
+
+  const record = source as Record<string, unknown>;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') return true;
+      if (normalized === 'false') return false;
+    }
+    if (typeof value === 'number') {
+      if (value === 1) return true;
+      if (value === 0) return false;
+    }
+  }
+
+  return undefined;
+}
+
 function getUser(response: AuthResponse, fallbackUsername: string, token?: string): AuthUser {
   const data = getResponseData(response) as AuthResponse | Partial<AuthUser>;
   const user = (response.user ?? ('user' in data ? data.user : data) ?? {}) as Partial<AuthUser>;
   const roles = normalizeRoles(user, token);
+  const fullName = getStringField(user, ['fullName', 'FullName', 'full_name', 'name']);
+  const username = getStringField(user, ['username', 'userName', 'UserName']) ?? fallbackUsername;
 
   return {
-    id: user.id,
-    username: user.username ?? fallbackUsername,
-    name: user.name ?? user.fullName ?? user.username ?? fallbackUsername,
-    fullName: user.fullName ?? user.name,
-    email: user.email ?? '',
+    id: getStringField(user, ['id', 'Id', 'user_id']) ?? user.id,
+    username,
+    name: fullName ?? username,
+    fullName: fullName ?? username,
+    email: getStringField(user, ['email', 'Email']) ?? '',
     phone: user.phone ?? '',
     address: user.address ?? '',
     role: user.role ?? roles[0],
     roles,
     isAdmin: user.isAdmin ?? hasAdminRole(roles),
-    hasCredentials: user.hasCredentials,
-    isGoogleAccount: user.isGoogleAccount,
+    hasCredentials: getBooleanField(user, ['hasCredentials', 'has_credentials']),
+    isGoogleAccount: getBooleanField(user, ['isGoogleAccount', 'is_google_account']),
   };
 }
 
