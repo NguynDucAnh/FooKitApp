@@ -69,7 +69,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async googleLogin(payload) {
       const result = await authService.googleLogin(payload);
       setAccessToken(result.tokens.accessToken);
-      setCurrentUser(result.user);
+      const nextUser = { ...result.user, isGoogleAccount: true };
+      await saveStoredUser(nextUser);
+      setCurrentUser(nextUser);
     },
 
     async logout() {
@@ -86,6 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async setCredentials(payload) {
       await authService.setCredentials(payload);
+      if (currentUser) {
+        const nextUser = {
+          ...currentUser,
+          username: payload.username.trim(),
+          hasCredentials: true,
+        };
+        await saveStoredUser(nextUser);
+        setCurrentUser(nextUser);
+      }
     },
 
     async linkGoogle(payload) {
@@ -94,18 +105,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async updateProfile(payload, localDraft) {
       const updatedProfile = await userService.updateProfile(payload);
+      const nextFullName = updatedProfile.fullName ?? payload.fullName;
       const nextUser: AuthUser = {
         ...(currentUser ?? {
-          username: updatedProfile.username,
-          name: updatedProfile.fullName,
-          email: updatedProfile.email,
+          username: updatedProfile.username ?? '',
+          name: nextFullName,
+          email: updatedProfile.email ?? '',
         }),
         ...localDraft,
-        id: updatedProfile.id,
-        username: updatedProfile.username,
-        email: updatedProfile.email,
-        name: updatedProfile.fullName,
-        fullName: updatedProfile.fullName,
+        id: updatedProfile.id ?? currentUser?.id,
+        username: updatedProfile.username ?? currentUser?.username ?? '',
+        email: updatedProfile.email ?? currentUser?.email ?? '',
+        name: nextFullName,
+        fullName: nextFullName,
       };
 
       await saveStoredUser(nextUser);

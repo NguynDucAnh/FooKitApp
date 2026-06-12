@@ -20,6 +20,7 @@ import { BottomNav } from '../../src/components/BottomNav';
 import { COLORS } from '../../src/constants';
 import { useAuth } from '../../src/hooks/useAuth';
 import { getGoogleSignInErrorMessage, startGoogleAuthSessionAsync } from '../../src/services/googleAuth';
+import { userService } from '../../src/services/userService';
 import { AuthUser } from '../../src/types/auth';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
 
@@ -47,11 +48,43 @@ const QUICK_LINKS = [
   { icon: CalendarDays, label: 'Kế hoạch bữa ăn', description: 'Sắp xếp thực đơn theo tuần.', tab: 'planner' },
 ];
 
+const DIET_OPTIONS = [
+  { id: 1, label: 'Cân bằng' },
+  { id: 2, label: 'Ăn chay' },
+  { id: 3, label: 'Thuần chay' },
+  { id: 4, label: 'Ít carb' },
+  { id: 5, label: 'Giàu đạm' },
+  { id: 6, label: 'Keto' },
+];
+
+function parseList(value: string) {
+  return value
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function formatBudget(value: number) {
+  return value > 0 ? value.toLocaleString('vi-VN') : '';
+}
+
+function parseBudget(value: string) {
+  const normalized = value.replace(/[^\d]/g, '');
+  return normalized ? Number(normalized) : 0;
+}
+
 export default function ProfileScreen() {
-  const { changePassword, currentUser, linkGoogle, logout, updateLocalUser, updateProfile } = useAuth();
+  const { changePassword, currentUser, linkGoogle, logout, updateProfile } = useAuth();
   const [form, setForm] = useState<AuthUser>(currentUser ?? EMPTY_USER);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [loadingFoodProfile, setLoadingFoodProfile] = useState(false);
   const [savingFoodProfile, setSavingFoodProfile] = useState(false);
+  const [dietForm, setDietForm] = useState({
+    diets: [] as number[],
+    allergies: '',
+    favoriteCuisines: '',
+    weeklyBudget: '',
+  });
   const [linkingGoogle, setLinkingGoogle] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -66,6 +99,29 @@ export default function ProfileScreen() {
       fullName: nextUser.fullName ?? nextUser.name,
     });
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    async function loadDietaryProfile() {
+      setLoadingFoodProfile(true);
+      try {
+        const profile = await userService.getDietaryProfile();
+        setDietForm({
+          diets: profile.diets,
+          allergies: profile.allergies.join(', '),
+          favoriteCuisines: profile.favoriteCuisines.join(', '),
+          weeklyBudget: formatBudget(profile.weeklyBudget),
+        });
+      } catch (error) {
+        Alert.alert('Không thể tải hồ sơ ẩm thực', getAuthErrorMessage(error));
+      } finally {
+        setLoadingFoodProfile(false);
+      }
+    }
+
+    loadDietaryProfile();
+  }, [currentUser?.id, currentUser?.username]);
 
   const avatarSource = useMemo(() => {
     return form.avatarUrl?.trim() ? { uri: form.avatarUrl.trim() } : brandLogo;
@@ -103,11 +159,6 @@ export default function ProfileScreen() {
         { fullName },
         {
           avatarUrl: form.avatarUrl?.trim(),
-          cookingGoal: form.cookingGoal?.trim(),
-          dietaryPreference: form.dietaryPreference?.trim(),
-          allergies: form.allergies?.trim(),
-          favoriteCuisine: form.favoriteCuisine?.trim(),
-          weeklyBudget: form.weeklyBudget?.trim(),
           phone: form.phone?.trim(),
           address: form.address?.trim(),
         }
@@ -128,17 +179,18 @@ export default function ProfileScreen() {
         ...form,
         name: (form.fullName ?? form.name).trim() || form.username || 'Người dùng',
         fullName: (form.fullName ?? form.name).trim() || form.username || 'Người dùng',
-        avatarUrl: form.avatarUrl?.trim(),
-        cookingGoal: form.cookingGoal?.trim(),
-        dietaryPreference: form.dietaryPreference?.trim(),
-        allergies: form.allergies?.trim(),
-        favoriteCuisine: form.favoriteCuisine?.trim(),
-        weeklyBudget: form.weeklyBudget?.trim(),
       };
 
-      await updateLocalUser(nextUser);
+      await userService.updateDietaryProfile({
+        diets: dietForm.diets,
+        allergies: parseList(dietForm.allergies),
+        favoriteCuisines: parseList(dietForm.favoriteCuisines),
+        weeklyBudget: parseBudget(dietForm.weeklyBudget),
+      });
       setForm(nextUser);
-      Alert.alert('Đã lưu', 'Hồ sơ ẩm thực đã được lưu trên thiết bị.');
+      Alert.alert('Đã lưu', 'Hồ sơ ẩm thực đã được đồng bộ với tài khoản của bạn.');
+    } catch (error) {
+      Alert.alert('Không thể lưu hồ sơ ẩm thực', getAuthErrorMessage(error));
     } finally {
       setSavingFoodProfile(false);
     }
@@ -205,9 +257,20 @@ export default function ProfileScreen() {
     openHomeTab(tab);
   }
 
+  function toggleDiet(dietId: number) {
+    setDietForm(current => ({
+      ...current,
+      diets: current.diets.includes(dietId)
+        ? current.diets.filter(id => id !== dietId)
+        : [...current.diets, dietId],
+    }));
+  }
+
   const displayName = form.fullName || form.name || form.username || 'Người dùng';
   const handle = form.username ? `@${form.username}` : 'Hồ sơ ẩm thực cá nhân';
   const isAdmin = !!currentUser?.isAdmin;
+  const canSetGoogleCredentials = !!currentUser?.isGoogleAccount && !currentUser?.hasCredentials;
+  const selectedDietLabels = DIET_OPTIONS.filter(option => dietForm.diets.includes(option.id)).map(option => option.label);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -241,17 +304,17 @@ export default function ProfileScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <ChefHat size={18} color={COLORS.primary} />
-            <Text style={styles.statValue}>{form.favoriteCuisine || 'Chưa chọn'}</Text>
+            <Text style={styles.statValue} numberOfLines={2}>{dietForm.favoriteCuisines || 'Chưa chọn'}</Text>
             <Text style={styles.statLabel}>Ẩm thực thích</Text>
           </View>
           <View style={styles.statCard}>
             <Utensils size={18} color={COLORS.primary} />
-            <Text style={styles.statValue}>{form.dietaryPreference || 'Linh hoạt'}</Text>
+            <Text style={styles.statValue} numberOfLines={2}>{selectedDietLabels.join(', ') || 'Linh hoạt'}</Text>
             <Text style={styles.statLabel}>Chế độ ăn</Text>
           </View>
           <View style={styles.statCard}>
             <Wallet size={18} color={COLORS.primary} />
-            <Text style={styles.statValue}>{form.weeklyBudget || 'Chưa đặt'}</Text>
+            <Text style={styles.statValue}>{dietForm.weeklyBudget ? `${dietForm.weeklyBudget} đ` : 'Chưa đặt'}</Text>
             <Text style={styles.statLabel}>Ngân sách</Text>
           </View>
         </View>
@@ -267,11 +330,22 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Hồ sơ ẩm thực</Text>
-          <Input label="Mục tiêu ăn uống" value={form.cookingGoal} onChangeText={cookingGoal => setForm(current => ({ ...current, cookingGoal }))} placeholder="Ăn healthy, tiết kiệm, tăng cơ..." />
-          <Input label="Chế độ ăn" value={form.dietaryPreference} onChangeText={dietaryPreference => setForm(current => ({ ...current, dietaryPreference }))} placeholder="Eat clean, ít carb, ăn chay..." />
-          <Input label="Dị ứng / món cần tránh" value={form.allergies} onChangeText={allergies => setForm(current => ({ ...current, allergies }))} placeholder="Hải sản, đậu phộng, cay..." />
-          <Input label="Ẩm thực yêu thích" value={form.favoriteCuisine} onChangeText={favoriteCuisine => setForm(current => ({ ...current, favoriteCuisine }))} placeholder="Món Việt, món Hàn, món Nhật..." />
-          <Input label="Ngân sách mỗi tuần" value={form.weeklyBudget} onChangeText={weeklyBudget => setForm(current => ({ ...current, weeklyBudget }))} placeholder="500k/tuần" />
+          {loadingFoodProfile && <Text style={styles.helperText}>Đang tải hồ sơ ẩm thực...</Text>}
+          <Text style={styles.inputLabel}>Chế độ ăn</Text>
+          <View style={styles.chipWrap}>
+            {DIET_OPTIONS.map(option => {
+              const active = dietForm.diets.includes(option.id);
+              return (
+                <Pressable key={option.id} style={[styles.dietChip, active && styles.dietChipActive]} onPress={() => toggleDiet(option.id)}>
+                  <Text style={[styles.dietChipText, active && styles.dietChipTextActive]}>{option.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Input label="Dị ứng / món cần tránh" value={dietForm.allergies} onChangeText={allergies => setDietForm(current => ({ ...current, allergies }))} placeholder="Peanut, Dairy, Seafood..." />
+          <Input label="Ẩm thực yêu thích" value={dietForm.favoriteCuisines} onChangeText={favoriteCuisines => setDietForm(current => ({ ...current, favoriteCuisines }))} placeholder="Vietnamese, Japanese..." />
+          <Input label="Ngân sách mỗi tuần" value={dietForm.weeklyBudget} onChangeText={weeklyBudget => setDietForm(current => ({ ...current, weeklyBudget }))} placeholder="500000" keyboardType="number-pad" />
+          <Text style={styles.helperText}>Các danh sách cách nhau bằng dấu phẩy. Dữ liệu này sẽ được dùng để cá nhân hóa gợi ý món ăn.</Text>
           <Button title="Lưu hồ sơ ẩm thực" onPress={handleSaveFoodProfile} loading={savingFoodProfile} outline style={styles.saveBtn} />
         </View>
 
@@ -300,12 +374,14 @@ export default function ProfileScreen() {
           <Input label="Mật khẩu mới" value={newPassword} onChangeText={setNewPassword} placeholder="NewPassword123" secureTextEntry />
           <Input label="Xác nhận mật khẩu mới" value={confirmNewPassword} onChangeText={setConfirmNewPassword} placeholder="Nhập lại mật khẩu mới" secureTextEntry />
           <Button title="Đổi mật khẩu" onPress={handleChangePassword} loading={changingPassword} style={styles.securityBtn} />
-          <Button title="Thiết lập tên đăng nhập/mật khẩu" onPress={() => router.push('/(auth)/set-credentials')} outline style={styles.securityBtn} />
+          {canSetGoogleCredentials && (
+            <Button title="Thiết lập tên đăng nhập/mật khẩu" onPress={() => router.push('/(auth)/set-credentials')} outline style={styles.securityBtn} />
+          )}
           <Button title="Liên kết Google" onPress={handleLinkGoogle} loading={linkingGoogle} outline style={styles.securityBtn} />
           {isAdmin && <Button title="Bảng quản trị" onPress={() => router.push('/(tabs)/admin')} outline style={styles.securityBtn} />}
           <View style={styles.securityHint}>
             <ShieldCheck size={16} color={COLORS.primary} />
-            <Text style={styles.securityHintText}>Tên hiển thị và mật khẩu được đồng bộ với tài khoản. Hồ sơ ẩm thực đang lưu trên thiết bị.</Text>
+            <Text style={styles.securityHintText}>Tên hiển thị, mật khẩu và hồ sơ ẩm thực được đồng bộ với tài khoản của bạn.</Text>
           </View>
         </View>
 
@@ -341,6 +417,13 @@ const styles = StyleSheet.create({
   statLabel: { color: COLORS.textGray, fontSize: 11, marginTop: 3 },
   section: { backgroundColor: COLORS.white, borderRadius: 8, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: COLORS.border },
   sectionTitle: { fontSize: 17, fontWeight: '900', color: COLORS.text, marginBottom: 14 },
+  inputLabel: { color: COLORS.text, fontSize: 13, fontWeight: '800', marginBottom: 8 },
+  helperText: { color: COLORS.textGray, fontSize: 12, lineHeight: 17, marginBottom: 12 },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
+  dietChip: { borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9 },
+  dietChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  dietChipText: { color: COLORS.text, fontSize: 13, fontWeight: '700' },
+  dietChipTextActive: { color: COLORS.white },
   saveBtn: { marginTop: 8 },
   securityBtn: { marginBottom: 10 },
   menuRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderTopWidth: 1, borderTopColor: COLORS.border },
