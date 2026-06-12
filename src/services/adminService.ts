@@ -2,18 +2,24 @@ import axiosClient from './axiosClient';
 import { ApiEnvelope } from '../types/subscription';
 import {
   AdminOverview,
+  AdminAffiliateLink,
   AdminSubscriptionPlan,
   AdminUser,
   ApiUsageItem,
+  CreateAffiliateLinkRequest,
   CreateAdminUserRequest,
   CreatedAdminUser,
   CreateSubscriptionPlanRequest,
+  GetAffiliateLinksParams,
   GetAdminPlansParams,
   GetApiUsageParams,
   GetUsersParams,
   GrantPremiumRequest,
   PaginatedResult,
+  SyncAffiliateLinksRequest,
+  ToggleAffiliateLinkRequest,
   ToggleBanRequest,
+  UpdateAffiliateLinkRequest,
   UpdateSubscriptionPlanRequest,
 } from '../types/admin';
 
@@ -102,6 +108,11 @@ function normalizePlansResult(result: PaginatedResult<AdminSubscriptionPlan>) {
 }
 
 function normalizeUser(user: AdminUser): AdminUser {
+  const subscriptionStatus = user.subscriptionStatus ?? user.subscription_status ?? null;
+  const isPremium = getBooleanField(user, ['isPremium', 'IsPremium', 'is_premium'])
+    ?? getBooleanField(subscriptionStatus, ['isPremium', 'is_premium'])
+    ?? false;
+
   return {
     ...user,
     id: getStringField(user, [
@@ -122,9 +133,18 @@ function normalizeUser(user: AdminUser): AdminUser {
       'aspNetUserId',
       'AspNetUserId',
     ]) ?? user.id,
-    fullName: getStringField(user, ['fullName', 'FullName', 'full_name']) ?? user.fullName,
+    fullName: getStringField(user, ['fullName', 'FullName', 'full_name']) ?? user.fullName ?? null,
+    email: getStringField(user, ['email', 'Email']) ?? user.email ?? null,
     isActive: getBooleanField(user, ['isActive', 'IsActive', 'is_active']) ?? false,
-    isPremium: getBooleanField(user, ['isPremium', 'IsPremium', 'is_premium']) ?? false,
+    isPremium,
+    subscriptionStatus: subscriptionStatus ? {
+      ...subscriptionStatus,
+      isPremium: getBooleanField(subscriptionStatus, ['isPremium', 'is_premium']) ?? isPremium,
+      planName: getStringField(subscriptionStatus, ['planName', 'plan_name']),
+      endDate: getStringField(subscriptionStatus, ['endDate', 'end_date']),
+    } : null,
+    createdAt: getStringField(user, ['createdAt', 'created_at']),
+    avatarUrl: getStringField(user, ['avatarUrl', 'avatar_url']) ?? null,
   };
 }
 
@@ -135,6 +155,36 @@ function normalizeUsersResult(result: PaginatedResult<AdminUser>) {
     totalCount: getNumberField(result, ['totalCount', 'TotalCount', 'total_count']) ?? items.length,
     items: items.map(normalizeUser),
   };
+}
+
+function normalizeAffiliateLink(link: AdminAffiliateLink): AdminAffiliateLink {
+  return {
+    ...link,
+    id: getStringField(link, ['id', 'Id', 'ID']) ?? link.id,
+    ingredientId: getStringField(link, ['ingredientId', 'IngredientId', 'ingredient_id', 'standardIngredientId', 'StandardIngredientId']) ?? link.ingredientId,
+    productName: getStringField(link, ['productName', 'ProductName']) ?? link.productName,
+    productUrl: getStringField(link, ['productUrl', 'ProductUrl']) ?? link.productUrl,
+    price: getNumberField(link, ['price', 'Price', 'currentPriceAmount', 'CurrentPriceAmount']) ?? link.price ?? 0,
+    currentPriceAmount: getNumberField(link, ['currentPriceAmount', 'CurrentPriceAmount', 'price', 'Price']) ?? link.currentPriceAmount,
+    currentPriceCurrency: getStringField(link, ['currentPriceCurrency', 'CurrentPriceCurrency']) ?? link.currentPriceCurrency ?? 'VND',
+    platform: getStringField(link, ['platform', 'Platform']) ?? link.platform,
+    isActive: getBooleanField(link, ['isActive', 'IsActive', 'is_active']) ?? false,
+  };
+}
+
+function normalizeAffiliateLinksResult(result: PaginatedResult<AdminAffiliateLink>) {
+  const items = getArrayField<AdminAffiliateLink>(result, ['items', 'Items', 'data', 'Data']) ?? [];
+  return {
+    ...result,
+    totalCount: getNumberField(result, ['totalCount', 'TotalCount', 'total_count']) ?? items.length,
+    items: items.map(normalizeAffiliateLink),
+  };
+}
+
+function toUrlEncodedForm(payload: Record<string, string | number | boolean | null | undefined>) {
+  return Object.entries(payload)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value == null ? '' : String(value))}`)
+    .join('&');
 }
 
 export const adminService = {
@@ -169,7 +219,15 @@ export const adminService = {
   },
 
   async grantPremium(userId: string, payload: GrantPremiumRequest) {
-    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/Admin/users/${userId}/grant-premium`, payload);
+    const body = toUrlEncodedForm({
+      plan_id: payload.plan_id,
+      reason: payload.reason ?? '',
+    });
+
+    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/Admin/users/${userId}/grant-premium`, body.toString(), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      transformRequest: [data => data],
+    });
     return response.data;
   },
 
@@ -210,6 +268,34 @@ export const adminService = {
 
   async deletePlan(id: string) {
     const response = await axiosClient.delete<ApiEnvelope<null> | null>(`/api/Subscriptions/admin/plans/${id}`);
+    return response.data;
+  },
+
+  async getAffiliateLinks(params: GetAffiliateLinksParams) {
+    const response = await axiosClient.get<ApiEnvelope<PaginatedResult<AdminAffiliateLink>> | PaginatedResult<AdminAffiliateLink>>(
+      '/api/AffiliateLinks',
+      { params }
+    );
+    return normalizeAffiliateLinksResult(unwrap<PaginatedResult<AdminAffiliateLink>>(response));
+  },
+
+  async createAffiliateLink(payload: CreateAffiliateLinkRequest) {
+    const response = await axiosClient.post<ApiEnvelope<AdminAffiliateLink> | AdminAffiliateLink>('/api/AffiliateLinks', payload);
+    return normalizeAffiliateLink(unwrap<AdminAffiliateLink>(response));
+  },
+
+  async updateAffiliateLink(id: string, payload: UpdateAffiliateLinkRequest) {
+    const response = await axiosClient.put<ApiEnvelope<AdminAffiliateLink> | AdminAffiliateLink>(`/api/AffiliateLinks/${id}`, payload);
+    return normalizeAffiliateLink(unwrap<AdminAffiliateLink>(response));
+  },
+
+  async toggleAffiliateLink(id: string, payload: ToggleAffiliateLinkRequest) {
+    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/AffiliateLinks/${id}/toggle-status`, payload);
+    return response.data;
+  },
+
+  async syncAffiliateLinks(payload: SyncAffiliateLinksRequest) {
+    const response = await axiosClient.post<ApiEnvelope<null> | null>('/api/AffiliateLinks/sync', payload);
     return response.data;
   },
 };

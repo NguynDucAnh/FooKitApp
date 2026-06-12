@@ -81,6 +81,13 @@ export interface ChangePasswordRequest {
   confirmNewPassword: string;
 }
 
+export interface DietaryProfile {
+  diets: number[];
+  allergies: string[];
+  favoriteCuisines: string[];
+  weeklyBudget: number;
+}
+
 export interface AuthResponse {
   accessToken?: string;
   refreshToken?: string;

@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
+import { Linking, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
 import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
 import { Recipe } from '../data/recipes';
 
@@ -107,6 +107,13 @@ export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) 
               <View style={styles.ingredientTextWrap}>
                 <Text style={styles.ingredientName}>{ingredient.name}</Text>
                 <Text style={styles.ingredientAmount}>{ingredient.amount}</Text>
+                {ingredient.affiliateProduct && (
+                  <Pressable style={styles.affiliateBox} onPress={() => Linking.openURL(ingredient.affiliateProduct!.productUrl)}>
+                    <Text style={styles.affiliateLabel}>Mua gợi ý</Text>
+                    <Text style={styles.affiliateName}>{ingredient.affiliateProduct.productName}</Text>
+                    <Text style={styles.affiliatePrice}>{ingredient.affiliateProduct.price.toLocaleString('vi-VN')} đ</Text>
+                  </Pressable>
+                )}
               </View>
             </View>
           ))}
@@ -306,7 +313,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#10B981',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    marginRight: 12
   },
   ingredientIndexText: {
     color: '#FFFFFF',
@@ -322,6 +330,31 @@ const styles = StyleSheet.create({
   },
   ingredientAmount: {
     color: '#6B7280'
+  },
+  affiliateBox: {
+    marginTop: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#BBF7D0'
+  },
+  affiliateLabel: {
+    color: '#16A34A',
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 3
+  },
+  affiliateName: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '700'
+  },
+  affiliatePrice: {
+    color: '#047857',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 3
   },
   instructionRow: {
     flexDirection: 'row',

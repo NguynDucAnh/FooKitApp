@@ -1,17 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Activity, ArrowLeft, Crown, Edit3, ShieldOff, Trash2, Users, Wallet } from 'lucide-react-native';
+import { Activity, ArrowLeft, Crown, Edit3, Link as LinkIcon, ShieldOff, Trash2, Users, Wallet } from 'lucide-react-native';
 import Button from '../../src/components/Button';
 import Input from '../../src/components/Input';
 import { COLORS } from '../../src/constants';
 import { adminService } from '../../src/services/adminService';
-import { AdminOverview, AdminSubscriptionPlan, AdminUser, ApiUsageItem } from '../../src/types/admin';
+import { AdminAffiliateLink, AdminOverview, AdminSubscriptionPlan, AdminUser, ApiUsageItem } from '../../src/types/admin';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
 import { useAuth } from '../../src/hooks/useAuth';
 
-type AdminTab = 'overview' | 'users' | 'plans' | 'usage';
+type AdminTab = 'overview' | 'users' | 'plans' | 'affiliate' | 'usage';
 
 const PAGE_SIZE = 8;
 
@@ -32,6 +32,17 @@ const emptyPlanForm = {
   isActive: true,
 };
 
+const emptyAffiliateForm = {
+  id: '',
+  standardIngredientId: '',
+  productName: '',
+  productUrl: '',
+  currentPriceAmount: '',
+  currentPriceCurrency: 'VND',
+  platform: 'Shopee',
+  isActive: true,
+};
+
 function formatMoney(value?: number) {
   return `${(value ?? 0).toLocaleString('vi-VN')} đ`;
 }
@@ -47,24 +58,33 @@ export default function AdminDashboardScreen() {
   const [usage, setUsage] = useState<ApiUsageItem[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [plans, setPlans] = useState<AdminSubscriptionPlan[]>([]);
+  const [affiliateLinks, setAffiliateLinks] = useState<AdminAffiliateLink[]>([]);
   const [usersTotal, setUsersTotal] = useState(0);
   const [plansTotal, setPlansTotal] = useState(0);
+  const [affiliateTotal, setAffiliateTotal] = useState(0);
   const [usersPage, setUsersPage] = useState(1);
   const [plansPage, setPlansPage] = useState(1);
+  const [affiliatePage, setAffiliatePage] = useState(1);
   const [userSearch, setUserSearch] = useState('');
   const [planSearch, setPlanSearch] = useState('');
   const [planActiveFilter, setPlanActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [affiliateActiveFilter, setAffiliateActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [affiliateIngredientId, setAffiliateIngredientId] = useState('');
+  const [syncIngredientId, setSyncIngredientId] = useState('');
+  const [forceSyncAll, setForceSyncAll] = useState(false);
   const [usageStartDate, setUsageStartDate] = useState('');
   const [usageEndDate, setUsageEndDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [userForm, setUserForm] = useState(emptyUserForm);
-  const [premiumDays, setPremiumDays] = useState('30');
+  const [premiumPlanId, setPremiumPlanId] = useState('');
   const [premiumReason, setPremiumReason] = useState('Tặng quà event');
   const [planForm, setPlanForm] = useState(emptyPlanForm);
+  const [affiliateForm, setAffiliateForm] = useState(emptyAffiliateForm);
 
   const userTotalPages = Math.max(1, Math.ceil(usersTotal / PAGE_SIZE));
   const planTotalPages = Math.max(1, Math.ceil(plansTotal / PAGE_SIZE));
+  const affiliateTotalPages = Math.max(1, Math.ceil(affiliateTotal / PAGE_SIZE));
 
   const safeUsage = Array.isArray(usage) ? usage : [];
 
@@ -76,6 +96,11 @@ export default function AdminDashboardScreen() {
     }),
     { total: 0, success: 0, failed: 0 }
   ), [safeUsage]);
+  const premiumPlanOptions = useMemo(() => plans.filter(plan => plan.isActive), [plans]);
+  const selectedPremiumPlan = useMemo(
+    () => premiumPlanOptions.find(plan => plan.id === premiumPlanId),
+    [premiumPlanId, premiumPlanOptions]
+  );
 
   async function loadOverview() {
     setLoading(true);
@@ -122,6 +147,25 @@ export default function AdminDashboardScreen() {
     }
   }
 
+  async function loadAffiliateLinks(page = affiliatePage) {
+    setLoading(true);
+    try {
+      const result = await adminService.getAffiliateLinks({
+        page,
+        size: PAGE_SIZE,
+        is_active: affiliateActiveFilter === 'all' ? undefined : affiliateActiveFilter === 'active',
+        ingredient_id: affiliateIngredientId.trim() || undefined,
+      });
+      setAffiliateLinks(result.items);
+      setAffiliateTotal(result.totalCount);
+      setAffiliatePage(page);
+    } catch (error) {
+      Alert.alert('Không thể tải affiliate links', getAuthErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function loadUsage() {
     setLoading(true);
     try {
@@ -142,6 +186,7 @@ export default function AdminDashboardScreen() {
     loadOverview();
     loadUsers(1);
     loadPlans(1);
+    loadAffiliateLinks(1);
     loadUsage();
   }, [currentUser?.isAdmin]);
 
@@ -193,17 +238,17 @@ export default function AdminDashboardScreen() {
       return;
     }
 
-    const daysToGrant = Number(premiumDays);
-    if (!daysToGrant || daysToGrant <= 0) {
-      Alert.alert('Số ngày không hợp lệ', 'Vui lòng nhập số ngày Premium lớn hơn 0.');
+    const planId = premiumPlanId.trim();
+    if (!planId) {
+      Alert.alert('Thiếu gói Premium', 'Vui lòng nhập plan_id của gói muốn cấp cho người dùng.');
       return;
     }
 
     setActionLoading(true);
     try {
-      await adminService.grantPremium(user.id, { daysToGrant, reason: premiumReason.trim() || 'Admin cấp gói' });
+      await adminService.grantPremium(user.id, { plan_id: planId, reason: premiumReason.trim() || null });
       await loadUsers(usersPage);
-      Alert.alert('Đã cấp Premium', `${user.username} đã được cấp ${daysToGrant} ngày Premium.`);
+      Alert.alert('Đã cấp Premium', `${user.username || user.email || user.id} đã được cấp gói Premium.`);
     } catch (error) {
       const status = (error as any)?.response?.status;
       if (status === 404) {
@@ -331,10 +376,101 @@ export default function AdminDashboardScreen() {
     ]);
   }
 
+  function startEditAffiliate(link: AdminAffiliateLink) {
+    if (!link.id) {
+      Alert.alert('Thiếu mã link', 'Không tìm thấy id của affiliate link trong dữ liệu API.');
+      return;
+    }
+
+    setAffiliateForm({
+      id: link.id,
+      standardIngredientId: link.ingredientId,
+      productName: link.productName,
+      productUrl: link.productUrl,
+      currentPriceAmount: String(link.currentPriceAmount ?? link.price ?? 0),
+      currentPriceCurrency: link.currentPriceCurrency ?? 'VND',
+      platform: link.platform,
+      isActive: link.isActive,
+    });
+  }
+
+  async function handleSaveAffiliate() {
+    if (!affiliateForm.productName || !affiliateForm.productUrl || !affiliateForm.currentPriceAmount || (!affiliateForm.id && !affiliateForm.standardIngredientId)) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập đủ nguyên liệu, tên sản phẩm, URL và giá.');
+      return;
+    }
+
+    const price = Number(affiliateForm.currentPriceAmount);
+    if (!price || price <= 0) {
+      Alert.alert('Giá không hợp lệ', 'Giá affiliate phải lớn hơn 0.');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (affiliateForm.id) {
+        await adminService.updateAffiliateLink(affiliateForm.id, {
+          productName: affiliateForm.productName.trim(),
+          productUrl: affiliateForm.productUrl.trim(),
+          currentPriceAmount: price,
+          currentPriceCurrency: affiliateForm.currentPriceCurrency.trim() || 'VND',
+          platform: affiliateForm.platform.trim() || 'Shopee',
+          isActive: affiliateForm.isActive,
+        });
+      } else {
+        await adminService.createAffiliateLink({
+          standardIngredientId: affiliateForm.standardIngredientId.trim(),
+          productName: affiliateForm.productName.trim(),
+          productUrl: affiliateForm.productUrl.trim(),
+          currentPriceAmount: price,
+          currentPriceCurrency: affiliateForm.currentPriceCurrency.trim() || 'VND',
+          platform: affiliateForm.platform.trim() || 'Shopee',
+        });
+      }
+      setAffiliateForm(emptyAffiliateForm);
+      await loadAffiliateLinks(1);
+      Alert.alert('Đã lưu affiliate link', 'Thông tin link tiếp thị đã được cập nhật.');
+    } catch (error) {
+      Alert.alert('Không thể lưu affiliate link', getAuthErrorMessage(error));
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleToggleAffiliate(link: AdminAffiliateLink) {
+    const nextIsActive = !link.isActive;
+    setActionLoading(true);
+    try {
+      await adminService.toggleAffiliateLink(link.id, { isActive: nextIsActive });
+      await loadAffiliateLinks(affiliatePage);
+      Alert.alert(nextIsActive ? 'Đã bật link' : 'Đã tắt link', `${link.productName} hiện ${nextIsActive ? 'đang hoạt động' : 'đã tạm tắt'}.`);
+    } catch (error) {
+      Alert.alert('Không thể đổi trạng thái link', getAuthErrorMessage(error));
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleSyncAffiliateLinks() {
+    setActionLoading(true);
+    try {
+      await adminService.syncAffiliateLinks({
+        forceSyncAll,
+        targetIngredientId: syncIngredientId.trim() || undefined,
+      });
+      Alert.alert('Đã bắt đầu đồng bộ', 'Job đồng bộ affiliate đã được đưa vào hàng đợi.');
+    } catch (error) {
+      Alert.alert('Không thể đồng bộ affiliate', getAuthErrorMessage(error));
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   const tabs: Array<{ id: AdminTab; label: string }> = [
     { id: 'overview', label: 'Tổng quan' },
     { id: 'users', label: 'Người dùng' },
     { id: 'plans', label: 'Gói cước' },
+    { id: 'affiliate', label: 'Affiliate' },
     { id: 'usage', label: 'API' },
   ];
 
@@ -400,27 +536,48 @@ export default function AdminDashboardScreen() {
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Cấp Premium nhanh</Text>
-              <View style={styles.formRow}>
-                <View style={styles.formCol}>
-                  <Input label="Số ngày" value={premiumDays} onChangeText={setPremiumDays} keyboardType="number-pad" />
-                </View>
-                <View style={styles.formCol}>
-                  <Input label="Lý do" value={premiumReason} onChangeText={setPremiumReason} />
-                </View>
+              <Text style={styles.cardSub}>Chọn gói Premium muốn cấp, sau đó bấm Cấp Premium trên user cần cấp.</Text>
+              <View style={styles.planOptionWrap}>
+                {premiumPlanOptions.length > 0 ? premiumPlanOptions.map(plan => {
+                  const selected = premiumPlanId === plan.id;
+                  return (
+                    <TouchableOpacity key={plan.id} style={[styles.planOption, selected && styles.planOptionActive]} onPress={() => setPremiumPlanId(plan.id)}>
+                      <Text style={[styles.planOptionTitle, selected && styles.planOptionTitleActive]}>{plan.planName}</Text>
+                      <Text style={[styles.planOptionMeta, selected && styles.planOptionMetaActive]}>{formatMoney(plan.price)} / {plan.durationInDays} ngày</Text>
+                    </TouchableOpacity>
+                  );
+                }) : (
+                  <Text style={styles.cardSub}>Chưa tải được gói active. Vui lòng sang tab Gói cước hoặc bấm tải lại danh sách gói.</Text>
+                )}
               </View>
+              {selectedPremiumPlan && <Text style={styles.cardSub}>Đang chọn: {selectedPremiumPlan.planName} - ID: {selectedPremiumPlan.id}</Text>}
+              <Input label="Lý do" value={premiumReason} onChangeText={setPremiumReason} />
             </View>
 
             <Text style={styles.listTitle}>Danh sách người dùng ({usersTotal})</Text>
             {users.map(user => (
               <View key={user.id || user.username} style={styles.userCard}>
                 <View style={styles.cardTop}>
+                  {user.avatarUrl ? (
+                    <Image source={{ uri: user.avatarUrl }} style={styles.userAvatar} />
+                  ) : (
+                    <View style={styles.userAvatarFallback}>
+                      <Text style={styles.userAvatarText}>{(user.fullName || user.username || user.email || '?').slice(0, 1).toUpperCase()}</Text>
+                    </View>
+                  )}
                   <View style={styles.flex}>
-                    <Text style={styles.cardTitle}>{user.fullName || user.username}</Text>
-                    <Text style={styles.cardSub}>{user.username} - {user.email}</Text>
+                    <Text style={styles.cardTitle}>{user.fullName || user.username || user.email || 'Chưa có tên'}</Text>
+                    <Text style={styles.cardSub}>@{user.username || 'chưa có username'} - {user.email || 'chưa có email'}</Text>
+                    <Text style={styles.cardSub}>ID: {user.id}</Text>
                   </View>
                   <StatusPill active={user.isActive} />
                 </View>
-                <Text style={styles.cardMeta}>{user.isPremium ? 'Premium' : 'Free'}</Text>
+                <Text style={styles.cardMeta}>
+                  {user.isPremium
+                    ? `Premium${user.subscriptionStatus?.planName ? ` - ${user.subscriptionStatus.planName}` : ''}${user.subscriptionStatus?.endDate ? ` - hết hạn ${new Date(user.subscriptionStatus.endDate).toLocaleDateString('vi-VN')}` : ''}`
+                    : 'Free'}
+                </Text>
+                <Text style={styles.cardSub}>Ngày tạo: {user.createdAt ? new Date(user.createdAt).toLocaleString('vi-VN') : 'Chưa có dữ liệu'}</Text>
                 <View style={styles.actionsRow}>
                   <TouchableOpacity style={styles.smallAction} onPress={() => handleGrantPremium(user)}>
                     <Crown size={16} color={COLORS.primary} />
@@ -481,6 +638,7 @@ export default function AdminDashboardScreen() {
                   <View style={styles.flex}>
                     <Text style={styles.cardTitle}>{plan.planName}</Text>
                     <Text style={styles.cardSub}>{formatMoney(plan.price)} / {plan.durationInDays} ngày</Text>
+                    <Text style={styles.cardSub}>Plan ID: {plan.id}</Text>
                   </View>
                   <StatusPill active={plan.isActive} />
                 </View>
@@ -498,6 +656,82 @@ export default function AdminDashboardScreen() {
               </View>
             ))}
             <Pager page={plansPage} totalPages={planTotalPages} onPrev={() => loadPlans(Math.max(1, plansPage - 1))} onNext={() => loadPlans(Math.min(planTotalPages, plansPage + 1))} />
+          </View>
+        )}
+
+        {activeTab === 'affiliate' && (
+          <View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{affiliateForm.id ? 'Cập nhật affiliate link' : 'Thêm affiliate link'}</Text>
+              {!affiliateForm.id && (
+                <Input label="Standard Ingredient ID" value={affiliateForm.standardIngredientId} onChangeText={standardIngredientId => setAffiliateForm(current => ({ ...current, standardIngredientId }))} placeholder="b3fc-2c963f66afa6" autoCapitalize="none" />
+              )}
+              <Input label="Tên sản phẩm" value={affiliateForm.productName} onChangeText={productName => setAffiliateForm(current => ({ ...current, productName }))} placeholder="Dầu Oliu Extra Virgin" />
+              <Input label="URL sản phẩm" value={affiliateForm.productUrl} onChangeText={productUrl => setAffiliateForm(current => ({ ...current, productUrl }))} placeholder="https://shopee.vn/..." autoCapitalize="none" />
+              <View style={styles.formRow}>
+                <View style={styles.formCol}>
+                  <Input label="Giá" value={affiliateForm.currentPriceAmount} onChangeText={currentPriceAmount => setAffiliateForm(current => ({ ...current, currentPriceAmount }))} keyboardType="numeric" />
+                </View>
+                <View style={styles.formCol}>
+                  <Input label="Tiền tệ" value={affiliateForm.currentPriceCurrency} onChangeText={currentPriceCurrency => setAffiliateForm(current => ({ ...current, currentPriceCurrency }))} />
+                </View>
+              </View>
+              <Input label="Nền tảng" value={affiliateForm.platform} onChangeText={platform => setAffiliateForm(current => ({ ...current, platform }))} placeholder="Shopee" />
+              {affiliateForm.id && (
+                <TouchableOpacity style={styles.toggleLine} onPress={() => setAffiliateForm(current => ({ ...current, isActive: !current.isActive }))}>
+                  <Text style={styles.toggleText}>{affiliateForm.isActive ? 'Đang hoạt động' : 'Đang tắt'}</Text>
+                </TouchableOpacity>
+              )}
+              <Button title={affiliateForm.id ? 'Lưu link' : 'Tạo link'} onPress={handleSaveAffiliate} loading={actionLoading} />
+              {affiliateForm.id && <Button title="Hủy chỉnh sửa" onPress={() => setAffiliateForm(emptyAffiliateForm)} outline style={styles.mt10} />}
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Đồng bộ affiliate</Text>
+              <Input label="Target Ingredient ID" value={syncIngredientId} onChangeText={setSyncIngredientId} placeholder="Để trống nếu không cần chỉ định" autoCapitalize="none" />
+              <TouchableOpacity style={styles.toggleLine} onPress={() => setForceSyncAll(current => !current)}>
+                <Text style={styles.toggleText}>{forceSyncAll ? 'Force sync toàn bộ: Bật' : 'Force sync toàn bộ: Tắt'}</Text>
+              </TouchableOpacity>
+              <Button title="Bắt đầu đồng bộ" onPress={handleSyncAffiliateLinks} loading={actionLoading} outline />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Lọc affiliate links</Text>
+              <Input label="Ingredient ID" value={affiliateIngredientId} onChangeText={setAffiliateIngredientId} placeholder="Lọc theo ingredient_id" autoCapitalize="none" />
+              <View style={styles.filterRow}>
+                {(['all', 'active', 'inactive'] as const).map(item => (
+                  <TouchableOpacity key={item} style={[styles.filterChip, affiliateActiveFilter === item && styles.filterChipActive]} onPress={() => setAffiliateActiveFilter(item)}>
+                    <Text style={[styles.filterText, affiliateActiveFilter === item && styles.filterTextActive]}>{item === 'all' ? 'Tất cả' : item === 'active' ? 'Active' : 'Inactive'}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Button title="Áp dụng lọc" onPress={() => loadAffiliateLinks(1)} outline />
+            </View>
+
+            <Text style={styles.listTitle}>Affiliate links ({affiliateTotal})</Text>
+            {affiliateLinks.map(link => (
+              <View key={link.id || link.productUrl} style={styles.userCard}>
+                <View style={styles.cardTop}>
+                  <View style={styles.flex}>
+                    <Text style={styles.cardTitle}>{link.productName}</Text>
+                    <Text style={styles.cardSub}>{link.platform} - {formatMoney(link.price || link.currentPriceAmount)} - Ingredient: {link.ingredientId}</Text>
+                    <Text style={styles.cardSub} numberOfLines={1}>{link.productUrl}</Text>
+                  </View>
+                  <StatusPill active={link.isActive} />
+                </View>
+                <View style={styles.actionsRow}>
+                  <TouchableOpacity style={styles.smallAction} onPress={() => startEditAffiliate(link)}>
+                    <Edit3 size={16} color={COLORS.primary} />
+                    <Text style={styles.smallActionText}>Sửa</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.smallAction} onPress={() => handleToggleAffiliate(link)}>
+                    <LinkIcon size={16} color={link.isActive ? COLORS.error : COLORS.primary} />
+                    <Text style={[styles.smallActionText, link.isActive && styles.dangerText]}>{link.isActive ? 'Tắt' : 'Bật'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+            <Pager page={affiliatePage} totalPages={affiliateTotalPages} onPrev={() => loadAffiliateLinks(Math.max(1, affiliatePage - 1))} onNext={() => loadAffiliateLinks(Math.min(affiliateTotalPages, affiliatePage + 1))} />
           </View>
         )}
 
@@ -580,6 +814,9 @@ const styles = StyleSheet.create({
   listTitle: { color: COLORS.text, fontSize: 18, fontWeight: '900', marginBottom: 10 },
   userCard: { backgroundColor: COLORS.white, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, padding: 14, marginBottom: 10 },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  userAvatar: { width: 42, height: 42, borderRadius: 8, backgroundColor: COLORS.surface },
+  userAvatarFallback: { width: 42, height: 42, borderRadius: 8, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center' },
+  userAvatarText: { color: COLORS.primary, fontSize: 16, fontWeight: '900' },
   flex: { flex: 1 },
   cardTitle: { color: COLORS.text, fontSize: 16, fontWeight: '900' },
   cardSub: { color: COLORS.textGray, fontSize: 12, lineHeight: 18, marginTop: 3 },
@@ -602,6 +839,13 @@ const styles = StyleSheet.create({
   filterChipActive: { backgroundColor: COLORS.primary },
   filterText: { color: COLORS.textGray, fontWeight: '800', fontSize: 12 },
   filterTextActive: { color: COLORS.white },
+  planOptionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, marginBottom: 12 },
+  planOption: { minWidth: '47%', flexGrow: 1, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, borderRadius: 8, padding: 10 },
+  planOptionActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  planOptionTitle: { color: COLORS.text, fontSize: 13, fontWeight: '900' },
+  planOptionTitleActive: { color: COLORS.white },
+  planOptionMeta: { color: COLORS.textGray, fontSize: 11, marginTop: 4, fontWeight: '700' },
+  planOptionMetaActive: { color: COLORS.white },
   toggleLine: { backgroundColor: COLORS.surface, borderRadius: 8, padding: 12, marginBottom: 12 },
   toggleText: { color: COLORS.primary, fontWeight: '900', textAlign: 'center' },
   mt10: { marginTop: 10 },

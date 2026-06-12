@@ -4,6 +4,7 @@ import {
 } from '../types/subscription';
 import {
   ChangePasswordRequest,
+  DietaryProfile,
   UpdateProfileRequest,
   UpdateProfileResponse,
 } from '../types/auth';
@@ -50,6 +51,27 @@ export const userService = {
 
   async changePassword(payload: ChangePasswordRequest) {
     const response = await axiosClient.put<ApiEnvelope<null> | null>(`${BASE_URL}/password`, payload);
+    return response.data;
+  },
+
+  async getDietaryProfile() {
+    const response = await axiosClient.get<ApiEnvelope<DietaryProfile> | DietaryProfile>(`${BASE_URL}/me/dietary-profile`);
+    const payload = unwrap<DietaryProfile>(response);
+    return {
+      diets: Array.isArray(payload?.diets) ? payload.diets : [],
+      allergies: Array.isArray(payload?.allergies) ? payload.allergies : [],
+      favoriteCuisines: Array.isArray(payload?.favoriteCuisines) ? payload.favoriteCuisines : [],
+      weeklyBudget: typeof payload?.weeklyBudget === 'number' ? payload.weeklyBudget : 0,
+    };
+  },
+
+  async updateDietaryProfile(payload: DietaryProfile) {
+    const response = await axiosClient.put<ApiEnvelope<null> | null>(`${BASE_URL}/me/dietary-profile`, {
+      diets: payload.diets,
+      allergies: payload.allergies,
+      favoriteCuisines: payload.favoriteCuisines,
+      weeklyBudget: payload.weeklyBudget,
+    });
     return response.data;
   },
 };

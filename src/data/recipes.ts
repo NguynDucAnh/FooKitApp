@@ -23,6 +23,13 @@ export interface Recipe {
 export interface Ingredient {
   name: string;
   amount: string;
+  rawEnglishName?: string;
+  isMapped?: boolean;
+  affiliateProduct?: {
+    productName: string;
+    productUrl: string;
+    price: number;
+  } | null;
 }
 
 export const recipes: Recipe[] = [

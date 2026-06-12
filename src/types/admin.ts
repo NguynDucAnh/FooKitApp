@@ -47,12 +47,28 @@ export interface AdminUser {
   aspNetUserId?: string;
   AspNetUserId?: string;
   username: string;
-  email: string;
-  fullName?: string;
+  email?: string | null;
+  fullName?: string | null;
+  full_name?: string | null;
   isPremium: boolean;
   is_premium?: boolean;
   isActive: boolean;
   is_active?: boolean;
+  subscriptionStatus?: AdminSubscriptionStatus | null;
+  subscription_status?: AdminSubscriptionStatus | null;
+  createdAt?: string;
+  created_at?: string;
+  avatarUrl?: string | null;
+  avatar_url?: string | null;
+}
+
+export interface AdminSubscriptionStatus {
+  isPremium?: boolean;
+  is_premium?: boolean;
+  planName?: string;
+  plan_name?: string;
+  endDate?: string;
+  end_date?: string;
 }
 
 export interface CreatedAdminUser {
@@ -81,6 +97,30 @@ export interface AdminSubscriptionPlan {
   isActive: boolean;
 }
 
+export interface AdminAffiliateLink {
+  id: string;
+  Id?: string;
+  ingredientId: string;
+  IngredientId?: string;
+  ingredient_id?: string;
+  standardIngredientId?: string;
+  StandardIngredientId?: string;
+  productName: string;
+  ProductName?: string;
+  productUrl: string;
+  ProductUrl?: string;
+  price: number;
+  currentPriceAmount?: number;
+  CurrentPriceAmount?: number;
+  currentPriceCurrency?: string;
+  CurrentPriceCurrency?: string;
+  platform: string;
+  Platform?: string;
+  isActive: boolean;
+  is_active?: boolean;
+  IsActive?: boolean;
+}
+
 export interface PaginatedResult<T> {
   totalCount: number;
   items: T[];
@@ -105,8 +145,8 @@ export interface GetApiUsageParams {
 }
 
 export interface GrantPremiumRequest {
-  daysToGrant: number;
-  reason: string;
+  plan_id: string;
+  reason?: string | null;
 }
 
 export interface ToggleBanRequest {
@@ -130,4 +170,38 @@ export interface CreateSubscriptionPlanRequest {
 
 export interface UpdateSubscriptionPlanRequest extends CreateSubscriptionPlanRequest {
   isActive: boolean;
+}
+
+export interface GetAffiliateLinksParams {
+  page: number;
+  size: number;
+  is_active?: boolean;
+  ingredient_id?: string;
+}
+
+export interface CreateAffiliateLinkRequest {
+  standardIngredientId: string;
+  productName: string;
+  productUrl: string;
+  currentPriceAmount: number;
+  currentPriceCurrency: string;
+  platform: string;
+}
+
+export interface UpdateAffiliateLinkRequest {
+  productName: string;
+  productUrl: string;
+  currentPriceAmount: number;
+  currentPriceCurrency: string;
+  platform: string;
+  isActive: boolean;
+}
+
+export interface ToggleAffiliateLinkRequest {
+  isActive: boolean;
+}
+
+export interface SyncAffiliateLinksRequest {
+  forceSyncAll: boolean;
+  targetIngredientId?: string;
 }
