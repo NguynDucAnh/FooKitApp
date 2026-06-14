@@ -106,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async updateProfile(payload, localDraft) {
       const updatedProfile = await userService.updateProfile(payload);
       const nextFullName = updatedProfile.fullName ?? payload.fullName;
+      const nextAvatarUrl = updatedProfile.avatarUrl ?? localDraft?.avatarUrl ?? currentUser?.avatarUrl;
       const nextUser: AuthUser = {
         ...(currentUser ?? {
           username: updatedProfile.username ?? '',
@@ -118,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: updatedProfile.email ?? currentUser?.email ?? '',
         name: nextFullName,
         fullName: nextFullName,
+        avatarUrl: nextAvatarUrl,
       };
 
       await saveStoredUser(nextUser);

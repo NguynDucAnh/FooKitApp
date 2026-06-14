@@ -181,12 +181,6 @@ function normalizeAffiliateLinksResult(result: PaginatedResult<AdminAffiliateLin
   };
 }
 
-function toUrlEncodedForm(payload: Record<string, string | number | boolean | null | undefined>) {
-  return Object.entries(payload)
-    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value == null ? '' : String(value))}`)
-    .join('&');
-}
-
 export const adminService = {
   async getOverview() {
     const response = await axiosClient.get<ApiEnvelope<AdminOverview> | AdminOverview>('/api/Admin/overview');
@@ -219,14 +213,9 @@ export const adminService = {
   },
 
   async grantPremium(userId: string, payload: GrantPremiumRequest) {
-    const body = toUrlEncodedForm({
+    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/Admin/users/${userId}/grant-premium`, {
       plan_id: payload.plan_id,
-      reason: payload.reason ?? '',
-    });
-
-    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/Admin/users/${userId}/grant-premium`, body.toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-      transformRequest: [data => data],
+      reason: payload.reason ?? null,
     });
     return response.data;
   },

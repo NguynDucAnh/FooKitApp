@@ -58,6 +58,7 @@ export interface SetCredentialsRequest {
 
 export interface UpdateProfileRequest {
   fullName: string;
+  avatarUri?: string | null;
 }
 
 export interface UpdateProfileResponse {
@@ -73,6 +74,9 @@ export interface UpdateProfileResponse {
   FullName?: string;
   full_name?: string;
   name?: string;
+  avatarUrl?: string;
+  avatar_url?: string;
+  AvatarUrl?: string;
 }
 
 export interface ChangePasswordRequest {

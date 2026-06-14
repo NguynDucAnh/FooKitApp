@@ -37,14 +37,44 @@ function normalizeProfile(profile: UpdateProfileResponse): UpdateProfileResponse
     username: getStringField(profile, ['username', 'userName', 'UserName']) ?? profile.username,
     email: getStringField(profile, ['email', 'Email']) ?? profile.email,
     fullName: getStringField(profile, ['fullName', 'FullName', 'full_name', 'name']) ?? profile.fullName,
+    avatarUrl: getStringField(profile, ['avatarUrl', 'AvatarUrl', 'avatar_url']) ?? profile.avatarUrl,
   };
+}
+
+function getFileName(uri: string) {
+  const name = uri.split('/').pop()?.split('?')[0];
+  return name && name.includes('.') ? name : `avatar-${Date.now()}.jpg`;
+}
+
+function getMimeType(fileName: string) {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  if (extension === 'png') return 'image/png';
+  if (extension === 'webp') return 'image/webp';
+  if (extension === 'heic') return 'image/heic';
+  return 'image/jpeg';
 }
 
 export const userService = {
   async updateProfile(payload: UpdateProfileRequest) {
+    const formData = new FormData();
+    formData.append('FullName', payload.fullName);
+
+    if (payload.avatarUri && !payload.avatarUri.startsWith('http')) {
+      const fileName = getFileName(payload.avatarUri);
+      formData.append('AvatarFile', {
+        uri: payload.avatarUri,
+        name: fileName,
+        type: getMimeType(fileName),
+      } as any);
+    }
+
     const response = await axiosClient.put<ApiEnvelope<UpdateProfileResponse> | UpdateProfileResponse>(
       `${BASE_URL}/profile`,
-      { fullName: payload.fullName }
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        transformRequest: [data => data],
+      }
     );
     return normalizeProfile(unwrap<UpdateProfileResponse>(response));
   },
