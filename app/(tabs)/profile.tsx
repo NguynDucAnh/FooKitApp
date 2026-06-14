@@ -156,7 +156,7 @@ export default function ProfileScreen() {
     setSavingProfile(true);
     try {
       const nextUser = await updateProfile(
-        { fullName },
+        { fullName, avatarUri: form.avatarUrl?.trim() || null },
         {
           avatarUrl: form.avatarUrl?.trim(),
           phone: form.phone?.trim(),
