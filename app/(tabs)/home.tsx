@@ -6,13 +6,42 @@ import { RecipeDetailScreen } from '../../src/components/RecipeDetailScreen';
 import { BottomNav } from '../../src/components/BottomNav';
 import SubscriptionDashboard from '../../src/components/subscription/SubscriptionDashboard';
 import { Recipe } from '../../src/data/recipes';
+import { dishService } from '../../src/services/dishService';
+import { DishRecipeResponse } from '../../src/types/dish';
 
 const NAV_TABS = ['home', 'discover', 'favorites', 'planner'];
+
+function applyRecipeDetail(recipe: Recipe, detail: DishRecipeResponse): Recipe {
+  return {
+    ...recipe,
+    dishCacheId: detail.dishCacheId,
+    name: detail.dishName || recipe.name,
+    image: detail.imageUrl || recipe.image,
+    budget: detail.totalCost ?? recipe.budget,
+    ingredients: Array.isArray(detail.ingredients) && detail.ingredients.length
+      ? detail.ingredients.map(ingredient => ({
+        name: ingredient.standardIngredientName || ingredient.rawIngredientName || 'Nguyen lieu',
+        amount: ingredient.rawIngredientName || 'vua du',
+        isMapped: ingredient.isMatched,
+        affiliateProduct: ingredient.affiliateUrl ? {
+          productName: ingredient.standardIngredientName || ingredient.rawIngredientName || 'San pham goi y',
+          productUrl: ingredient.affiliateUrl,
+          price: ingredient.estimatedPrice ?? 0,
+        } : null,
+      }))
+      : recipe.ingredients,
+    instructions: Array.isArray(detail.cookingSteps) && detail.cookingSteps.length
+      ? detail.cookingSteps
+      : recipe.instructions,
+  };
+}
 
 export default function App() {
   const params = useLocalSearchParams<{ tab?: string }>();
   const [currentView, setCurrentView] = useState<'home' | 'detail'>('home');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [loadingRecipeDetail, setLoadingRecipeDetail] = useState(false);
+  const [recipeDetailError, setRecipeDetailError] = useState('');
   const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
@@ -24,14 +53,40 @@ export default function App() {
     setSelectedRecipe(null);
   }, [params.tab]);
 
-  const handleRecipeClick = (recipe: Recipe) => {
+  const handleRecipeClick = async (recipe: Recipe) => {
     setSelectedRecipe(recipe);
     setCurrentView('detail');
+    setRecipeDetailError('');
+
+    if (!recipe.dishCacheId) {
+      setRecipeDetailError('Món này chưa có dishCacheId từ API gợi ý, nên chưa thể tải công thức đầy đủ.');
+      return;
+    }
+
+    setLoadingRecipeDetail(true);
+    try {
+      const detail = await dishService.getDishRecipe(recipe.dishCacheId);
+      setSelectedRecipe(current => {
+        if (!current || current.dishCacheId !== recipe.dishCacheId) return current;
+        return applyRecipeDetail(current, detail);
+      });
+    } catch (error: any) {
+      const status = error?.response?.status;
+      setRecipeDetailError(status === 404
+        ? 'Công thức này không còn trong cache hoặc dishCacheId không tồn tại. Hãy tải lại gợi ý để nhận món mới.'
+        : status === 401
+          ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tải công thức.'
+          : 'Chưa thể tải công thức chi tiết. Dữ liệu gợi ý ban đầu vẫn đang được hiển thị.');
+    } finally {
+      setLoadingRecipeDetail(false);
+    }
   };
 
   const handleBackToHome = () => {
     setCurrentView('home');
     setSelectedRecipe(null);
+    setLoadingRecipeDetail(false);
+    setRecipeDetailError('');
   };
 
   const handleTabChange = (tab: string) => {
@@ -43,6 +98,8 @@ export default function App() {
     setActiveTab(tab);
     setCurrentView('home');
     setSelectedRecipe(null);
+    setLoadingRecipeDetail(false);
+    setRecipeDetailError('');
   };
 
   return (
@@ -53,7 +110,12 @@ export default function App() {
         )}
 
         {currentView === 'detail' && selectedRecipe && (
-          <RecipeDetailScreen recipe={selectedRecipe} onBack={handleBackToHome} />
+          <RecipeDetailScreen
+            recipe={selectedRecipe}
+            onBack={handleBackToHome}
+            loadingRemoteDetail={loadingRecipeDetail}
+            remoteDetailError={recipeDetailError}
+          />
         )}
 
         {activeTab === 'discover' && (

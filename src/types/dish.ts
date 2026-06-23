@@ -9,11 +9,33 @@ export interface SuggestDishesResponse {
 }
 
 export interface SuggestedDishResult {
+  dishCacheId?: string;
+  dish_cache_id?: string;
+  DishCacheId?: string;
   dishName: string;
   imageUrl: string;
   instructions: string;
   totalCost: number;
   ingredients: SuggestedIngredient[];
+}
+
+export interface DishRecipeIngredient {
+  rawIngredientName: string;
+  standardIngredientId?: string | null;
+  standardIngredientName?: string | null;
+  isMatched?: boolean;
+  isPriced?: boolean;
+  affiliateUrl?: string | null;
+  estimatedPrice?: number | null;
+}
+
+export interface DishRecipeResponse {
+  dishCacheId: string;
+  dishName: string;
+  imageUrl?: string | null;
+  cookingSteps?: string[];
+  ingredients?: DishRecipeIngredient[];
+  totalCost?: number;
 }
 
 export interface SuggestedIngredient {

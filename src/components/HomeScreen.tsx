@@ -18,11 +18,13 @@ const EQUIPMENT_OPTIONS = [
 
 const DIET_OPTIONS = [
   { label: 'Không giới hạn', value: 0 },
-  { label: 'Cân bằng', value: 1 },
+  { label: 'Thuần chay', value: 1 },
   { label: 'Ăn chay', value: 2 },
-  { label: 'Thuần chay', value: 3 },
-  { label: 'Ít carb', value: 4 },
-  { label: 'Giàu đạm', value: 5 },
+  { label: 'Keto', value: 3 },
+  { label: 'Eat Clean', value: 4 },
+  { label: 'Paleo', value: 5 },
+  { label: 'Không gluten', value: 6 },
+  { label: 'Không sữa', value: 7 },
 ];
 
 const MEAL_IMAGES = {
@@ -95,6 +97,7 @@ function mapDishToRecipe(dish: SuggestedDish, meal: MealKey, index: number): Rec
 
   return {
     id: dish.id || `${meal}-${index}-${name}`,
+    dishCacheId: dish.dishCacheId || dish.dish_cache_id || dish.DishCacheId,
     name,
     image: dish.image || dish.imageUrl || dish.thumbnailUrl || MEAL_IMAGES[meal],
     rating: dish.rating || 4.8,
@@ -121,6 +124,7 @@ function mapSuggestedDishToRecipe(dish: SuggestedDishResult, index: number): Rec
 
   return {
     id: `suggest-${index}-${dish.dishName}`,
+    dishCacheId: dish.dishCacheId || dish.dish_cache_id || dish.DishCacheId,
     name: dish.dishName || `Món gợi ý ${index + 1}`,
     image: dish.imageUrl || MEAL_IMAGES.dinner,
     rating: 4.8,
