@@ -39,7 +39,7 @@ export default function PricingCard({ plan, currentPlanName, loading, onSelect }
         {isPaid && (
           <View style={styles.paymentBadge}>
             <CreditCard size={15} color={COLORS.accent} />
-            <Text style={styles.paymentBadgeText}>VNPay</Text>
+            <Text style={styles.paymentBadgeText}>PayOS</Text>
           </View>
         )}
       </View>
@@ -60,7 +60,7 @@ export default function PricingCard({ plan, currentPlanName, loading, onSelect }
       </View>
 
       <Button
-        title={isCurrent ? 'Gói hiện tại' : isPaid ? 'Thanh toán VNPay' : 'Bắt đầu miễn phí'}
+        title={isCurrent ? 'Gói hiện tại' : isPaid ? 'Thanh toán PayOS' : 'Bắt đầu miễn phí'}
         onPress={() => onSelect(plan)}
         loading={loading}
         disabled={isCurrent}

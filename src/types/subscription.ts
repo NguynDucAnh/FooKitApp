@@ -49,10 +49,14 @@ export interface CreatePaymentRequest {
 }
 
 export interface CreatePaymentResponse {
-  paymentUrl: string;
+  checkoutUrl?: string;
+  paymentUrl?: string;
+  transactionRef?: string;
+  success?: boolean;
+  message?: string;
 }
 
-export interface VNPayReturnResponse {
+export interface PayOSReturnResponse {
   success: boolean;
   transactionRef?: string;
   message: string;

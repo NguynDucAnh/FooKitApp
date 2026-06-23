@@ -5,9 +5,11 @@ import { Recipe } from '../data/recipes';
 interface RecipeDetailScreenProps {
   recipe: Recipe;
   onBack: () => void;
+  loadingRemoteDetail?: boolean;
+  remoteDetailError?: string;
 }
 
-export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) {
+export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false, remoteDetailError = '' }: RecipeDetailScreenProps) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
@@ -41,6 +43,12 @@ export function RecipeDetailScreen({ recipe, onBack }: RecipeDetailScreenProps) 
       </ImageBackground>
 
       <View style={styles.body}>
+        {loadingRemoteDetail && (
+          <View style={styles.remoteDetailNotice}>
+            <Text style={styles.remoteDetailNoticeText}>Đang tải công thức chi tiết...</Text>
+          </View>
+        )}
+        {!!remoteDetailError && <Text style={styles.remoteDetailError}>{remoteDetailError}</Text>}
         <View style={styles.statsGrid}>
           <View style={styles.statsCard}>
             <Clock size={18} color="#16A34A" />
@@ -229,6 +237,28 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 20
+  },
+  remoteDetailNotice: {
+    backgroundColor: '#ECFDF5',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  remoteDetailNoticeText: {
+    color: '#166534',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  remoteDetailError: {
+    color: '#B45309',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 13,
+    lineHeight: 18,
   },
   statsGrid: {
     flexDirection: 'row',

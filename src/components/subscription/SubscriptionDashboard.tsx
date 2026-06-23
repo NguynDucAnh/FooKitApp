@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { CreditCard, ShieldCheck } from 'lucide-react-native';
 import { COLORS } from '../../constants';
 import { usePaymentHistory } from '../../hooks/usePaymentHistory';
@@ -21,36 +22,13 @@ function getPlanId(plan: SubscriptionPlan) {
   return plan.id ?? plan.planId;
 }
 
-function getVNPayUrlIssue(paymentUrl: string) {
+function getPayOSUrlIssue(checkoutUrl: string) {
   try {
-    const url = new URL(paymentUrl);
-    const requiredParams = [
-      'vnp_Amount',
-      'vnp_Command',
-      'vnp_CreateDate',
-      'vnp_CurrCode',
-      'vnp_IpAddr',
-      'vnp_Locale',
-      'vnp_OrderInfo',
-      'vnp_ReturnUrl',
-      'vnp_TmnCode',
-      'vnp_TxnRef',
-      'vnp_Version',
-      'vnp_SecureHash',
-    ];
-    const missingParams = requiredParams.filter(param => !url.searchParams.get(param));
-
-    if (!url.hostname.includes('vnpayment.vn')) {
-      return 'paymentUrl không phải domain VNPay.';
-    }
-
-    if (missingParams.length > 0) {
-      return `paymentUrl thiếu tham số: ${missingParams.join(', ')}.`;
-    }
-
+    const url = new URL(checkoutUrl);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return 'checkoutUrl không phải HTTP URL hợp lệ.';
     return null;
   } catch {
-    return 'paymentUrl không phải URL hợp lệ.';
+    return 'checkoutUrl không phải URL hợp lệ.';
   }
 }
 
@@ -107,32 +85,33 @@ export default function SubscriptionDashboard() {
     try {
       const payment = await paymentService.createPayment({ planId });
 
-      if (!payment.paymentUrl) {
-        throw new Error('Backend chưa trả về paymentUrl.');
+      if (!payment.checkoutUrl) {
+        throw new Error('Backend chưa trả về checkoutUrl PayOS nên ứng dụng không thể mở cổng thanh toán.');
       }
 
-      const paymentUrlIssue = getVNPayUrlIssue(payment.paymentUrl);
+      const paymentUrlIssue = getPayOSUrlIssue(payment.checkoutUrl);
       if (paymentUrlIssue) {
-        throw new Error(`${paymentUrlIssue} Vui lòng kiểm tra phần tạo URL VNPay ở backend.`);
+        throw new Error(paymentUrlIssue);
       }
 
-      const result = await WebBrowser.openBrowserAsync(payment.paymentUrl, {
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
-      });
+      const result = await WebBrowser.openAuthSessionAsync(
+        payment.checkoutUrl,
+        Linking.createURL('payment/result')
+      );
 
       await refreshPaymentState();
 
-      if (result.type === 'cancel') {
+      if (result.type === 'cancel' || result.type === 'dismiss') {
         Alert.alert(
           'Đã đóng cổng thanh toán',
-          'Nếu bạn đã thanh toán thành công, hệ thống sẽ tự kích hoạt Premium sau khi VNPay gửi xác nhận IPN.'
+          'Nếu bạn đã thanh toán thành công, hệ thống sẽ tự kích hoạt Premium sau khi PayOS gửi webhook xác nhận.'
         );
         return;
       }
 
       Alert.alert('Đang cập nhật thanh toán', 'Fookit đã tải lại trạng thái gói và lịch sử thanh toán của bạn.');
     } catch (err) {
-      Alert.alert('Không thể tạo thanh toán VNPay', err instanceof Error ? err.message : 'Vui lòng thử lại sau.');
+      Alert.alert('Không thể tạo thanh toán PayOS', err instanceof Error ? err.message : 'Vui lòng thử lại sau.');
     } finally {
       setPayingPlanId(null);
     }
@@ -145,19 +124,19 @@ export default function SubscriptionDashboard() {
           <Text style={styles.eyebrow}>Thành viên Premium</Text>
           <View style={styles.sandboxBadge}>
             <CreditCard size={14} color={COLORS.accent} />
-            <Text style={styles.sandboxText}>VNPay Sandbox</Text>
+            <Text style={styles.sandboxText}>PayOS</Text>
           </View>
         </View>
         <Text style={styles.title}>Quản lý gói của bạn</Text>
         <Text style={styles.subtitle}>
-          Theo dõi trạng thái Premium, nâng cấp qua VNPay và kiểm tra lịch sử thanh toán trong một nơi.
+          Theo dõi trạng thái Premium, nâng cấp qua PayOS và kiểm tra lịch sử thanh toán trong một nơi.
         </Text>
       </View>
 
       <View style={styles.paymentInfo}>
         <ShieldCheck size={18} color={COLORS.primary} />
         <Text style={styles.paymentInfoText}>
-          Thanh toán được xử lý trên cổng VNPay sandbox. Sau khi hoàn tất, backend sẽ nhận IPN để kích hoạt Premium.
+          Thanh toán được xử lý trên cổng PayOS. Sau khi hoàn tất, backend sẽ nhận webhook để kích hoạt Premium.
         </Text>
       </View>
 
@@ -172,13 +151,13 @@ export default function SubscriptionDashboard() {
       <CurrentPlanCard
         subscription={subscription}
         loading={loading}
-        onUpgrade={() => Alert.alert('Nâng cấp Premium', 'Chọn gói Premium bên dưới để thanh toán qua VNPay.')}
+        onUpgrade={() => Alert.alert('Nâng cấp Premium', 'Chọn gói Premium bên dưới để thanh toán qua PayOS.')}
         onCancel={() => setCancelModalVisible(true)}
       />
 
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Bảng giá</Text>
-        <Text style={styles.sectionSub}>Chọn gói phù hợp và thanh toán an toàn qua VNPay sandbox.</Text>
+        <Text style={styles.sectionSub}>Chọn gói phù hợp và thanh toán an toàn qua PayOS.</Text>
       </View>
 
       {plansError && (

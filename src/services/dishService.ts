@@ -1,6 +1,6 @@
 import axiosClient from './axiosClient';
 import { ApiEnvelope } from '../types/subscription';
-import { SuggestDishesRequest, SuggestDishesResponse } from '../types/dish';
+import { DishRecipeResponse, SuggestDishesRequest, SuggestDishesResponse } from '../types/dish';
 
 function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
   const payload = response.data as ApiEnvelope<T>;
@@ -20,5 +20,12 @@ export const dishService = {
     return {
       suggestedDishes: Array.isArray(data?.suggestedDishes) ? data.suggestedDishes : [],
     };
+  },
+
+  async getDishRecipe(dishCacheId: string) {
+    const response = await axiosClient.get<ApiEnvelope<DishRecipeResponse> | DishRecipeResponse>(
+      `/api/Dishes/${dishCacheId}/recipe`
+    );
+    return unwrap<DishRecipeResponse>(response);
   },
 };

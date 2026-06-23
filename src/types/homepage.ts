@@ -11,6 +11,9 @@ export interface MealSuggestionsResponse {
 }
 
 export interface SuggestedDish {
+  dishCacheId?: string;
+  dish_cache_id?: string;
+  DishCacheId?: string;
   id?: string;
   name?: string;
   dishName?: string;

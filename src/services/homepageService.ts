@@ -36,4 +36,11 @@ export const homepageService = {
       dinner: dinner.dishes,
     };
   },
+
+  async clearCache(targetUserId?: string) {
+    const response = await axiosClient.post<ApiEnvelope<null> | null>('/api/Homepage/clear-cache', {
+      targetUserId: targetUserId?.trim() || null,
+    });
+    return response.data;
+  },
 };
