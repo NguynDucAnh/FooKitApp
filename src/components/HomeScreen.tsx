@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, StyleSheet, View, Text, TextInput, ScrollView, Image, Pressable, ImageBackground } from 'react-native';
-import { Bell, Sparkles, Sunrise, Sun, Moon, ChefHat } from 'lucide-react-native';
+import { Bell, Sparkles, Sunrise, Sun, Moon, ChefHat, Crown, LockKeyhole } from 'lucide-react-native';
 import { RecipeCard } from './RecipeCard';
 import { recipes, Recipe } from '../data/recipes';
 import { homepageService } from '../services/homepageService';
 import { dishService } from '../services/dishService';
 import { SuggestedDish } from '../types/homepage';
 import { SuggestedDishResult } from '../types/dish';
+import { useFavorites } from '../context/FavoritesContext';
+import { useSubscriptionStore } from '../context/SubscriptionContext';
 
 const EQUIPMENT_OPTIONS = [
   { label: 'Lò nướng', value: 'oven' },
@@ -162,15 +164,17 @@ function mapSuggestedDishToRecipe(dish: SuggestedDishResult, index: number): Rec
 
 interface HomeScreenProps {
   onRecipeClick: (recipe: Recipe) => void;
+  onUpgradePremium: () => void;
 }
 
-export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
+export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps) {
   const [suggestEquipment, setSuggestEquipment] = useState('oven');
   const [suggestDiet, setSuggestDiet] = useState(0);
   const [suggestBudget, setSuggestBudget] = useState('100000');
   const [suggestedDishes, setSuggestedDishes] = useState<Recipe[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [suggestError, setSuggestError] = useState('');
+  const [lockedDietLabel, setLockedDietLabel] = useState('');
   const [suggestions, setSuggestions] = useState<{ breakfast: Recipe[]; lunch: Recipe[]; dinner: Recipe[] }>({
     breakfast: [],
     lunch: [],
@@ -179,9 +183,8 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [suggestionsError, setSuggestionsError] = useState('');
   const [isPremiumExpired, setIsPremiumExpired] = useState(false);
-  const [favoriteRecipes, setFavoriteRecipes] = useState<Set<string>>(
-    new Set(recipes.filter((r) => r.isFavorite).map((r) => r.id))
-  );
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isPremium } = useSubscriptionStore();
 
   async function loadSuggestions() {
     setSuggestionsLoading(true);
@@ -211,6 +214,12 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
   }, []);
 
   async function handleSuggestDishes() {
+    if (suggestDiet !== 0 && !isPremium) {
+      const selectedDiet = DIET_OPTIONS.find(option => option.value === suggestDiet);
+      setLockedDietLabel(selectedDiet?.label ?? 'chế độ ăn nâng cao');
+      return;
+    }
+
     const budget = Number(suggestBudget.replace(/[^\d]/g, ''));
     if (!budget || budget <= 0) {
       Alert.alert('Ngân sách không hợp lệ', 'Vui lòng nhập ngân sách lớn hơn 0.');
@@ -233,26 +242,19 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
     } catch (error: any) {
       const status = error?.response?.status;
       const message = status === 403
-        ? 'Bạn cần tài khoản Premium để dùng chế độ ăn nâng cao. Hãy chọn Không giới hạn hoặc nâng cấp Premium.'
+        ? 'Chế độ ăn này dành cho thành viên Premium. Bạn có thể xem các gói phù hợp để tiếp tục.'
         : 'Không thể tạo gợi ý món ăn lúc này. Vui lòng thử lại.';
       setSuggestError(message);
-      Alert.alert('Không thể gợi ý món ăn', message);
+      if (status === 403) {
+        const selectedDiet = DIET_OPTIONS.find(option => option.value === suggestDiet);
+        setLockedDietLabel(selectedDiet?.label ?? 'chế độ ăn nâng cao');
+      } else {
+        Alert.alert('Không thể gợi ý món ăn', message);
+      }
     } finally {
       setSuggestLoading(false);
     }
   }
-
-  const handleFavoriteToggle = (id: string) => {
-    setFavoriteRecipes((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
 
   const suggestedRecipes = [...suggestions.breakfast, ...suggestions.lunch, ...suggestions.dinner];
   const featuredRecipe = suggestedRecipes[0] ?? recipes.find((r) => r.id === '3');
@@ -345,9 +347,9 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
                   {section.data.map((recipe) => (
                     <View key={recipe.id} style={styles.cardWidth}>
                       <RecipeCard
-                        recipe={{ ...recipe, isFavorite: favoriteRecipes.has(recipe.id) }}
-                        onFavoriteToggle={handleFavoriteToggle}
-                        onClick={() => onRecipeClick(recipe)}
+                        recipe={{ ...recipe, isFavorite: isFavorite(recipe.id) }}
+                        onFavoriteToggle={() => toggleFavorite(recipe)}
+                        onClick={() => onRecipeClick({ ...recipe, isFavorite: isFavorite(recipe.id) })}
                       />
                     </View>
                   ))}
@@ -397,12 +399,35 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
               <Pressable
                 key={option.value}
                 style={[styles.optionChip, suggestDiet === option.value && styles.optionChipActive]}
-                onPress={() => setSuggestDiet(option.value)}
+                onPress={() => {
+                  if (option.value !== 0 && !isPremium) {
+                    setLockedDietLabel(option.label);
+                    return;
+                  }
+                  setSuggestDiet(option.value);
+                  setLockedDietLabel('');
+                  setSuggestError('');
+                }}
               >
                 <Text style={[styles.optionChipText, suggestDiet === option.value && styles.optionChipTextActive]}>{option.label}</Text>
+                {option.value !== 0 && !isPremium && <LockKeyhole size={12} color="#B45309" />}
               </Pressable>
             ))}
           </View>
+
+          {!!lockedDietLabel && !isPremium && (
+            <View style={styles.premiumPrompt}>
+              <View style={styles.premiumPromptIcon}><Crown size={22} color="#B45309" /></View>
+              <View style={styles.premiumPromptContent}>
+                <Text style={styles.premiumPromptTitle}>{lockedDietLabel} là lựa chọn Premium</Text>
+                <Text style={styles.premiumPromptText}>Nâng cấp để nhận gợi ý món ăn đúng chế độ, khẩu vị và mục tiêu dinh dưỡng của bạn.</Text>
+                <View style={styles.premiumPromptActions}>
+                  <Pressable style={styles.upgradeButton} onPress={onUpgradePremium}><Text style={styles.upgradeButtonText}>Xem gói Premium</Text></Pressable>
+                  <Pressable style={styles.laterButton} onPress={() => setLockedDietLabel('')}><Text style={styles.laterButtonText}>Để sau</Text></Pressable>
+                </View>
+              </View>
+            </View>
+          )}
 
           <Text style={styles.filterLabel}>Ngân sách</Text>
           <View style={styles.budgetInputRow}>
@@ -429,9 +454,9 @@ export function HomeScreen({ onRecipeClick }: HomeScreenProps) {
             {suggestedDishes.map((recipe) => (
               <View key={recipe.id} style={styles.cardWidth}>
                 <RecipeCard
-                  recipe={{ ...recipe, isFavorite: favoriteRecipes.has(recipe.id) }}
-                  onFavoriteToggle={handleFavoriteToggle}
-                  onClick={() => onRecipeClick(recipe)}
+                  recipe={{ ...recipe, isFavorite: isFavorite(recipe.id) }}
+                  onFavoriteToggle={() => toggleFavorite(recipe)}
+                  onClick={() => onRecipeClick({ ...recipe, isFavorite: isFavorite(recipe.id) })}
                 />
               </View>
             ))}
@@ -617,6 +642,9 @@ const styles = StyleSheet.create({
     marginBottom: 14
   },
   optionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderWidth: 1,
     borderColor: '#D1D5DB',
     backgroundColor: '#F8FAFC',
@@ -638,6 +666,33 @@ const styles = StyleSheet.create({
   optionChipTextActive: {
     color: '#FFFFFF'
   },
+  premiumPrompt: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 20,
+    padding: 16,
+    marginTop: 2,
+    marginBottom: 18,
+  },
+  premiumPromptIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  premiumPromptContent: { flex: 1 },
+  premiumPromptTitle: { color: '#92400E', fontSize: 15, fontWeight: '800', marginBottom: 5 },
+  premiumPromptText: { color: '#78350F', fontSize: 13, lineHeight: 19 },
+  premiumPromptActions: { flexDirection: 'row', alignItems: 'center', marginTop: 13 },
+  upgradeButton: { backgroundColor: '#F59E0B', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10 },
+  upgradeButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  laterButton: { paddingHorizontal: 8, paddingVertical: 10 },
+  laterButtonText: { color: '#92400E', fontSize: 12, fontWeight: '700' },
   budgetInputRow: {
     flexDirection: 'row',
     alignItems: 'center',

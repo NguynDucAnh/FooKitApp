@@ -8,25 +8,45 @@ import SubscriptionDashboard from '../../src/components/subscription/Subscriptio
 import { Recipe } from '../../src/data/recipes';
 import { dishService } from '../../src/services/dishService';
 import { DishRecipeResponse } from '../../src/types/dish';
+import { FavoritesScreen } from '../../src/components/FavoritesScreen';
 
 const NAV_TABS = ['home', 'discover', 'favorites', 'planner'];
 
+function toMoney(value: number | string | null | undefined) {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
 function applyRecipeDetail(recipe: Recipe, detail: DishRecipeResponse): Recipe {
+  const ingredientTotal = Array.isArray(detail.ingredients)
+    ? detail.ingredients.reduce((sum, ingredient) => sum + (toMoney(ingredient.estimatedPrice) ?? 0), 0)
+    : 0;
+  const detailTotal = toMoney(detail.totalCost);
+  const resolvedBudget = detailTotal !== null && detailTotal > 0
+    ? detailTotal
+    : ingredientTotal > 0
+      ? ingredientTotal
+      : recipe.budget;
+
   return {
     ...recipe,
-    dishCacheId: detail.dishCacheId,
+    dishCacheId: detail.dishCacheId || recipe.dishCacheId,
     name: detail.dishName || recipe.name,
     image: detail.imageUrl || recipe.image,
-    budget: detail.totalCost ?? recipe.budget,
+    budget: resolvedBudget,
     ingredients: Array.isArray(detail.ingredients) && detail.ingredients.length
       ? detail.ingredients.map(ingredient => ({
-        name: ingredient.standardIngredientName || ingredient.rawIngredientName || 'Nguyen lieu',
-        amount: ingredient.rawIngredientName || 'vua du',
+        name: ingredient.standardIngredientName?.trim() || ingredient.rawIngredientName?.trim() || 'Nguyên liệu',
+        rawIngredientName: ingredient.rawIngredientName?.trim() || undefined,
+        standardIngredientId: ingredient.standardIngredientId,
+        isMatched: !!ingredient.isMatched,
+        isPriced: !!ingredient.isPriced,
+        estimatedPrice: toMoney(ingredient.estimatedPrice),
         isMapped: ingredient.isMatched,
         affiliateProduct: ingredient.affiliateUrl ? {
-          productName: ingredient.standardIngredientName || ingredient.rawIngredientName || 'San pham goi y',
+          productName: ingredient.standardIngredientName?.trim() || ingredient.rawIngredientName?.trim() || 'Sản phẩm gợi ý',
           productUrl: ingredient.affiliateUrl,
-          price: ingredient.estimatedPrice ?? 0,
+          price: toMoney(ingredient.estimatedPrice) ?? 0,
         } : null,
       }))
       : recipe.ingredients,
@@ -106,7 +126,7 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.screen}>
         {currentView === 'home' && activeTab === 'home' && (
-          <HomeScreen onRecipeClick={handleRecipeClick} />
+          <HomeScreen onRecipeClick={handleRecipeClick} onUpgradePremium={() => handleTabChange('discover')} />
         )}
 
         {currentView === 'detail' && selectedRecipe && (
@@ -118,18 +138,15 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'discover' && (
+        {currentView === 'home' && activeTab === 'discover' && (
           <SubscriptionDashboard />
         )}
 
-        {activeTab === 'favorites' && (
-          <ScrollView contentContainerStyle={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Món yêu thích</Text>
-            <Text style={styles.placeholderText}>Các công thức bạn đã lưu sẽ xuất hiện tại đây.</Text>
-          </ScrollView>
+        {currentView === 'home' && activeTab === 'favorites' && (
+          <FavoritesScreen onRecipeClick={handleRecipeClick} onExplore={() => handleTabChange('home')} />
         )}
 
-        {activeTab === 'planner' && (
+        {currentView === 'home' && activeTab === 'planner' && (
           <ScrollView contentContainerStyle={styles.placeholderContent}>
             <Text style={styles.placeholderTitle}>Lên kế hoạch bữa ăn</Text>
             <Text style={styles.placeholderText}>Sắp xếp thực đơn hằng tuần của bạn tại đây.</Text>

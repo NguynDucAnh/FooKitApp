@@ -20,22 +20,22 @@ export interface SuggestedDishResult {
 }
 
 export interface DishRecipeIngredient {
-  rawIngredientName: string;
+  rawIngredientName?: string | null;
   standardIngredientId?: string | null;
   standardIngredientName?: string | null;
   isMatched?: boolean;
   isPriced?: boolean;
   affiliateUrl?: string | null;
-  estimatedPrice?: number | null;
+  estimatedPrice?: number | string | null;
 }
 
 export interface DishRecipeResponse {
-  dishCacheId: string;
-  dishName: string;
+  dishCacheId?: string;
+  dishName?: string;
   imageUrl?: string | null;
   cookingSteps?: string[];
   ingredients?: DishRecipeIngredient[];
-  totalCost?: number;
+  totalCost?: number | string | null;
 }
 
 export interface SuggestedIngredient {

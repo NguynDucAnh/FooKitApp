@@ -2,6 +2,7 @@ import React, { createContext, ReactNode, useCallback, useContext, useEffect, us
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MySubscription } from '../types/subscription';
 import { subscriptionService } from '../services/subscriptionService';
+import { useAuth } from '../hooks/useAuth';
 
 interface SubscriptionContextValue {
   subscription: MySubscription | null;
@@ -16,6 +17,7 @@ const SubscriptionContext = createContext<SubscriptionContextValue | null>(null)
 const PREMIUM_STATUS_KEY = 'premiumStatus';
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
+  const { accessToken, loading: authLoading } = useAuth();
   const [subscription, setSubscriptionState] = useState<MySubscription | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,23 +44,35 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [setSubscription]);
 
   useEffect(() => {
-    async function hydratePremiumStatus() {
-      const rawStatus = await AsyncStorage.getItem(PREMIUM_STATUS_KEY);
-      if (!rawStatus) return;
+    if (authLoading) return;
 
-      try {
-        const parsedStatus = JSON.parse(rawStatus);
-        setSubscriptionState({
-          isPremium: !!parsedStatus.isPremium,
-          planName: parsedStatus.planName ?? 'Free',
-        });
-      } catch {
-        await AsyncStorage.removeItem(PREMIUM_STATUS_KEY);
-      }
+    if (!accessToken) {
+      setSubscriptionState(null);
+      AsyncStorage.removeItem(PREMIUM_STATUS_KEY).catch(() => undefined);
+      return;
     }
 
-    hydratePremiumStatus();
-  }, []);
+    let cancelled = false;
+    async function hydrateAndRefreshPremiumStatus() {
+      const rawStatus = await AsyncStorage.getItem(PREMIUM_STATUS_KEY);
+      if (rawStatus && !cancelled) {
+        try {
+          const parsedStatus = JSON.parse(rawStatus);
+          setSubscriptionState({
+            isPremium: !!parsedStatus.isPremium,
+            planName: parsedStatus.planName ?? 'Free',
+          });
+        } catch {
+          await AsyncStorage.removeItem(PREMIUM_STATUS_KEY);
+        }
+      }
+
+      if (!cancelled) await refreshSubscription();
+    }
+
+    hydrateAndRefreshPremiumStatus();
+    return () => { cancelled = true; };
+  }, [accessToken, authLoading, refreshSubscription]);
 
   const value = useMemo<SubscriptionContextValue>(() => ({
     subscription,

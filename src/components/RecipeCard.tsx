@@ -18,7 +18,7 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
           onPress={() => onFavoriteToggle?.(recipe.id)}
           android_ripple={{ color: '#E5E7EB' }}
         >
-          <Heart size={18} color={recipe.isFavorite ? '#DC2626' : '#4B5563'} />
+          <Heart size={18} color={recipe.isFavorite ? '#DC2626' : '#4B5563'} fill={recipe.isFavorite ? '#DC2626' : 'transparent'} />
         </Pressable>
         <View style={styles.difficultyBadge}>
           <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
