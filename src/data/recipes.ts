@@ -23,7 +23,12 @@ export interface Recipe {
 
 export interface Ingredient {
   name: string;
-  amount: string;
+  amount?: string;
+  rawIngredientName?: string;
+  standardIngredientId?: string | null;
+  isMatched?: boolean;
+  isPriced?: boolean;
+  estimatedPrice?: number | null;
   rawEnglishName?: string;
   isMapped?: boolean;
   affiliateProduct?: {

@@ -1,6 +1,7 @@
 import { Linking, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
 import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
 import { Recipe } from '../data/recipes';
+import { useFavorites } from '../context/FavoritesContext';
 
 interface RecipeDetailScreenProps {
   recipe: Recipe;
@@ -10,6 +11,8 @@ interface RecipeDetailScreenProps {
 }
 
 export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false, remoteDetailError = '' }: RecipeDetailScreenProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorited = isFavorite(recipe.id);
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
@@ -18,8 +21,8 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           <ArrowLeft size={20} color="#111827" />
         </Pressable>
         <View style={styles.heroActions}>
-          <Pressable style={[styles.iconButton, styles.heroActionButton]} android_ripple={{ color: '#E5E7EB' }}>
-            <Heart size={20} color={recipe.isFavorite ? '#DC2626' : '#111827'} />
+          <Pressable style={[styles.iconButton, styles.heroActionButton]} onPress={() => toggleFavorite(recipe)} android_ripple={{ color: '#E5E7EB' }}>
+            <Heart size={20} color={favorited ? '#DC2626' : '#111827'} fill={favorited ? '#DC2626' : 'transparent'} />
           </Pressable>
           <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
             <Share2 size={20} color="#111827" />
@@ -114,7 +117,16 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
               </View>
               <View style={styles.ingredientTextWrap}>
                 <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                <Text style={styles.ingredientAmount}>{ingredient.amount}</Text>
+                {!!ingredient.amount && <Text style={styles.ingredientAmount}>{ingredient.amount}</Text>}
+                {!!ingredient.rawIngredientName && ingredient.rawIngredientName.toLocaleLowerCase('vi') !== ingredient.name.toLocaleLowerCase('vi') && (
+                  <Text style={styles.rawIngredientText}>Tên nguyên liệu ban đầu: {ingredient.rawIngredientName}</Text>
+                )}
+                <View style={styles.ingredientStatusRow}>
+                  {ingredient.isMatched && <View style={styles.matchedBadge}><Text style={styles.matchedBadgeText}>Đã chuẩn hóa</Text></View>}
+                  {ingredient.isPriced && typeof ingredient.estimatedPrice === 'number' && !ingredient.affiliateProduct && (
+                    <Text style={styles.estimatedPrice}>Giá dự kiến: {ingredient.estimatedPrice.toLocaleString('vi-VN')} đ</Text>
+                  )}
+                </View>
                 {ingredient.affiliateProduct && (
                   <Pressable style={styles.affiliateBox} onPress={() => Linking.openURL(ingredient.affiliateProduct!.productUrl)}>
                     <Text style={styles.affiliateLabel}>Mua gợi ý</Text>
@@ -360,6 +372,34 @@ const styles = StyleSheet.create({
   },
   ingredientAmount: {
     color: '#6B7280'
+  },
+  rawIngredientText: {
+    color: '#64748B',
+    fontSize: 12,
+    marginTop: 3,
+  },
+  ingredientStatusRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 7,
+  },
+  matchedBadge: {
+    backgroundColor: '#DCFCE7',
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    marginRight: 8,
+  },
+  matchedBadgeText: {
+    color: '#15803D',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  estimatedPrice: {
+    color: '#047857',
+    fontSize: 12,
+    fontWeight: '700',
   },
   affiliateBox: {
     marginTop: 10,
