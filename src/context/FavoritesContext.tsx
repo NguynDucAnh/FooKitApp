@@ -1,8 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 import { Recipe } from '../data/recipes';
+import { useAuth } from '../hooks/useAuth';
 
-const STORAGE_KEY = '@fookit/favorite-recipes';
+const LEGACY_STORAGE_KEY = '@fookit/favorite-recipes';
+
+function parseStoredFavorites(value: string | null) {
+  if (!value) return [];
+
+  try {
+    const stored = JSON.parse(value);
+    return Array.isArray(stored) ? stored as Recipe[] : [];
+  } catch {
+    return [];
+  }
+}
 
 interface FavoritesContextValue {
   favorites: Recipe[];
@@ -13,24 +25,56 @@ interface FavoritesContextValue {
 const FavoritesContext = createContext<FavoritesContextValue | undefined>(undefined);
 
 export function FavoritesProvider({ children }: PropsWithChildren) {
+  const { currentUser } = useAuth();
   const [favorites, setFavorites] = useState<Recipe[]>([]);
-  const [isReady, setIsReady] = useState(false);
+  const [storageOwner, setStorageOwner] = useState<string | null>(null);
+  const userIdentity = currentUser?.id ?? currentUser?.username;
+  const storageKey = userIdentity
+    ? `@fookit/users/${encodeURIComponent(userIdentity)}/favorite-recipes`
+    : null;
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then(value => {
-        if (!value) return;
-        const stored = JSON.parse(value);
-        if (Array.isArray(stored)) setFavorites(stored);
-      })
-      .catch(() => undefined)
-      .finally(() => setIsReady(true));
-  }, []);
+    let cancelled = false;
+    setStorageOwner(null);
+    setFavorites([]);
+
+    if (!storageKey) return () => {
+      cancelled = true;
+    };
+
+    async function loadFavorites() {
+      const [userValue, legacyValue] = await AsyncStorage.multiGet([
+        storageKey!,
+        LEGACY_STORAGE_KEY,
+      ]);
+      if (cancelled) return;
+
+      const hasUserValue = userValue[1] !== null;
+      const nextFavorites = parseStoredFavorites(hasUserValue ? userValue[1] : legacyValue[1]);
+
+      if (!hasUserValue && legacyValue[1] !== null) {
+        await AsyncStorage.setItem(storageKey!, JSON.stringify(nextFavorites));
+        await AsyncStorage.removeItem(LEGACY_STORAGE_KEY);
+        if (cancelled) return;
+      }
+
+      setFavorites(nextFavorites);
+      setStorageOwner(storageKey);
+    }
+
+    loadFavorites().catch(() => {
+      if (!cancelled) setStorageOwner(storageKey);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [storageKey]);
 
   useEffect(() => {
-    if (!isReady) return;
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(favorites)).catch(() => undefined);
-  }, [favorites, isReady]);
+    if (!storageKey || storageOwner !== storageKey) return;
+    AsyncStorage.setItem(storageKey, JSON.stringify(favorites)).catch(() => undefined);
+  }, [favorites, storageKey, storageOwner]);
 
   const value = useMemo<FavoritesContextValue>(() => ({
     favorites,

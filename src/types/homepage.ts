@@ -35,7 +35,7 @@ export interface SuggestedDish {
   totalCost?: number;
   price?: number;
   tools?: string[];
-  ingredients?: Array<{ name?: string; amount?: string } | string>;
+  ingredients?: ({ name?: string; amount?: string } | string)[];
   instructions?: string[] | string | null;
   nutrition?: {
     protein?: number;

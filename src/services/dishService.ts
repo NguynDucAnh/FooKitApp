@@ -1,13 +1,7 @@
 import axiosClient from './axiosClient';
 import { ApiEnvelope } from '../types/subscription';
 import { DishRecipeResponse, SuggestDishesRequest, SuggestDishesResponse } from '../types/dish';
-
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
-  const payload = response.data as ApiEnvelope<T>;
-  return typeof payload === 'object' && payload !== null && 'data' in payload
-    ? payload.data
-    : response.data as T;
-}
+import { unwrapApiResponse } from '../utils/apiNormalize';
 
 export const dishService = {
   async suggestDishes(payload: SuggestDishesRequest) {
@@ -15,7 +9,7 @@ export const dishService = {
       '/api/Dishes/suggest',
       payload
     );
-    const data = unwrap<SuggestDishesResponse>(response);
+    const data = unwrapApiResponse<SuggestDishesResponse>(response);
 
     return {
       suggestedDishes: Array.isArray(data?.suggestedDishes) ? data.suggestedDishes : [],
@@ -26,6 +20,6 @@ export const dishService = {
     const response = await axiosClient.get<ApiEnvelope<DishRecipeResponse> | DishRecipeResponse>(
       `/api/Dishes/${dishCacheId}/recipe`
     );
-    return unwrap<DishRecipeResponse>(response);
+    return unwrapApiResponse<DishRecipeResponse>(response);
   },
 };

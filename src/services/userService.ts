@@ -8,27 +8,9 @@ import {
   UpdateProfileRequest,
   UpdateProfileResponse,
 } from '../types/auth';
+import { getStringField, unwrapApiResponse } from '../utils/apiNormalize';
 
 const BASE_URL = '/api/Users';
-
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
-  const payload = response.data as ApiEnvelope<T>;
-  return typeof payload === 'object' && payload !== null && 'data' in payload
-    ? payload.data
-    : response.data as T;
-}
-
-function getStringField(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value;
-  }
-
-  return undefined;
-}
 
 function normalizeProfile(profile: UpdateProfileResponse): UpdateProfileResponse {
   return {
@@ -76,7 +58,7 @@ export const userService = {
         transformRequest: [data => data],
       }
     );
-    return normalizeProfile(unwrap<UpdateProfileResponse>(response));
+    return normalizeProfile(unwrapApiResponse<UpdateProfileResponse>(response));
   },
 
   async changePassword(payload: ChangePasswordRequest) {
@@ -86,7 +68,7 @@ export const userService = {
 
   async getDietaryProfile() {
     const response = await axiosClient.get<ApiEnvelope<DietaryProfile> | DietaryProfile>(`${BASE_URL}/me/dietary-profile`);
-    const payload = unwrap<DietaryProfile>(response);
+    const payload = unwrapApiResponse<DietaryProfile>(response);
     return {
       diets: Array.isArray(payload?.diets) ? payload.diets : [],
       allergies: Array.isArray(payload?.allergies) ? payload.allergies : [],

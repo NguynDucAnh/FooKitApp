@@ -14,10 +14,6 @@ import CurrentPlanCard from './CurrentPlanCard';
 import PaymentHistoryTable from './PaymentHistoryTable';
 import PricingCard from './PricingCard';
 
-function getPlanLabel(planName: string) {
-  return planName.toLowerCase() === 'free' ? 'miễn phí' : planName;
-}
-
 function getPlanId(plan: SubscriptionPlan) {
   return plan.id ?? plan.planId;
 }

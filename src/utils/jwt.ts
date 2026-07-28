@@ -77,6 +77,18 @@ export function getRolesFromJwt(token?: string | null) {
   }).map(role => String(role).trim()).filter(Boolean);
 }
 
+export function isJwtExpired(token?: string | null, clockSkewSeconds = 30) {
+  const payload = getJwtPayload(token);
+  const expiresAt = payload?.exp;
+
+  if (typeof expiresAt !== 'number' || !Number.isFinite(expiresAt)) {
+    return true;
+  }
+
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  return expiresAt <= nowInSeconds + clockSkewSeconds;
+}
+
 export function hasAdminRole(roles?: string[] | string | null) {
   const values = Array.isArray(roles) ? roles : roles ? [roles] : [];
   return values.some(role => role.toLowerCase() === 'admin');

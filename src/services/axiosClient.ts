@@ -7,6 +7,7 @@ import {
   getRefreshToken,
   saveTokens,
 } from '../utils/tokenStorage';
+import { notifyAuthSessionExpired } from '../utils/authSessionEvents';
 
 interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -73,6 +74,7 @@ axiosClient.interceptors.response.use(
     } catch (refreshError) {
       refreshPromise = null;
       await clearAuthStorage();
+      notifyAuthSessionExpired();
       router.replace('/(auth)/login');
       return Promise.reject(refreshError);
     }

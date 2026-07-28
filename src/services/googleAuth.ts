@@ -61,7 +61,7 @@ export async function startGoogleAuthSessionAsync() {
     throw new Error(errorDescription ?? error);
   }
 
-  if (returnedState && returnedState !== state) {
+  if (!returnedState || returnedState !== state) {
     throw new Error('Phiên đăng nhập Google không hợp lệ. Vui lòng thử lại.');
   }
 

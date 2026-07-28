@@ -1,4 +1,4 @@
-﻿import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { View, Pressable, Text, StyleSheet } from 'react-native';
 
 interface BudgetSelectorProps {
   options: { label: string; value: number }[];

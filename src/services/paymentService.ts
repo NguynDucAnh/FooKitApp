@@ -5,15 +5,9 @@ import {
   CreatePaymentResponse,
   PayOSReturnResponse,
 } from '../types/subscription';
+import { unwrapApiResponse } from '../utils/apiNormalize';
 
 const BASE_URL = '/api/Payments';
-
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
-  const payload = response.data as ApiEnvelope<T>;
-  return typeof payload === 'object' && payload !== null && 'data' in payload
-    ? payload.data
-    : response.data as T;
-}
 
 function extractPaymentUrl(value: unknown, depth = 0): string | undefined {
   if (typeof value === 'string') return value.trim() || undefined;
@@ -45,7 +39,7 @@ export const paymentService = {
       `${BASE_URL}/create`,
       payload
     );
-    const payment = unwrap<CreatePaymentResponse>(response);
+    const payment = unwrapApiResponse<CreatePaymentResponse>(response);
     const checkoutUrl = extractPaymentUrl(payment) ?? extractPaymentUrl(response.data);
     return {
       ...payment,
@@ -59,6 +53,6 @@ export const paymentService = {
       `${BASE_URL}/payos-return`,
       { params: { orderCode } }
     );
-    return unwrap<PayOSReturnResponse>(response);
+    return unwrapApiResponse<PayOSReturnResponse>(response);
   },
 };

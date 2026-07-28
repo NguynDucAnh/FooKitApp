@@ -1,7 +1,8 @@
 import { Linking, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
-import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
+import { ArrowLeft, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
 import { Recipe } from '../data/recipes';
 import { useFavorites } from '../context/FavoritesContext';
+import { RecipeNutrition, RecipeStats } from './recipe/RecipeSummary';
 
 interface RecipeDetailScreenProps {
   recipe: Recipe;
@@ -52,28 +53,7 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           </View>
         )}
         {!!remoteDetailError && <Text style={styles.remoteDetailError}>{remoteDetailError}</Text>}
-        <View style={styles.statsGrid}>
-          <View style={styles.statsCard}>
-            <Clock size={18} color="#16A34A" />
-            <Text style={styles.statsLabel}>Thời gian</Text>
-            <Text style={styles.statsValue}>{recipe.time} phút</Text>
-          </View>
-          <View style={styles.statsCard}>
-            <Flame size={18} color="#F59E0B" />
-            <Text style={styles.statsLabel}>Calo</Text>
-            <Text style={styles.statsValue}>{recipe.calories}</Text>
-          </View>
-          <View style={styles.statsCard}>
-            <DollarSign size={18} color="#16A34A" />
-            <Text style={styles.statsLabel}>Chi phí</Text>
-            <Text style={styles.statsValue}>{recipe.budget.toLocaleString('vi-VN')} đ</Text>
-          </View>
-          <View style={styles.statsCard}>
-            <Text style={styles.statsEmoji}>👨‍🍳</Text>
-            <Text style={styles.statsLabel}>Độ khó</Text>
-            <Text style={styles.statsValue}>{recipe.difficulty}</Text>
-          </View>
-        </View>
+        <RecipeStats recipe={recipe} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dụng cụ cần có</Text>
@@ -86,27 +66,7 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Thông tin dinh dưỡng</Text>
-          <View style={styles.nutritionCard}>
-            <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Chất đạm</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.protein}g</Text>
-            </View>
-            <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Tinh bột</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.carbs}g</Text>
-            </View>
-            <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Chất béo</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.fat}g</Text>
-            </View>
-            <View style={styles.nutritionRow}>
-              <Text style={styles.nutritionLabel}>Chất xơ</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.fiber}g</Text>
-            </View>
-          </View>
-        </View>
+        <RecipeNutrition nutrition={recipe.nutrition} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Nguyên liệu</Text>

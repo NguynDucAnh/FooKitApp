@@ -7,8 +7,8 @@ on:
     branches: [develop, deploy]
 
 jobs:
-  lint-and-test:
-    name: Lint & Test
+  quality:
+    name: Typecheck & Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -25,10 +25,7 @@ jobs:
         run: npm ci
 
       - name: Run TypeScript check
-        run: npm run type-check || true
+        run: npm run typecheck
 
       - name: Run ESLint
-        run: npm run lint || true
-
-     
-  
+        run: npm run lint

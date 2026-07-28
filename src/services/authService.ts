@@ -10,6 +10,7 @@ import {
 } from '../types/auth';
 import { clearAuthStorage, saveStoredUser, saveTokens } from '../utils/tokenStorage';
 import { getRolesFromJwt, hasAdminRole } from '../utils/jwt';
+import { getBooleanField, getStringField } from '../utils/apiNormalize';
 
 const AUTH_BASE = '/api/Auth';
 
@@ -35,39 +36,6 @@ function normalizeRoles(user: Partial<AuthUser>, token?: string) {
   ];
   const roles = responseRoles.length ? responseRoles : getRolesFromJwt(token);
   return roles;
-}
-
-function getStringField(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value;
-  }
-
-  return undefined;
-}
-
-function getBooleanField(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (normalized === 'true') return true;
-      if (normalized === 'false') return false;
-    }
-    if (typeof value === 'number') {
-      if (value === 1) return true;
-      if (value === 0) return false;
-    }
-  }
-
-  return undefined;
 }
 
 function getUser(response: AuthResponse, fallbackUsername: string, token?: string): AuthUser {

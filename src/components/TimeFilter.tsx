@@ -1,4 +1,4 @@
-﻿import { ScrollView, Pressable, Text, StyleSheet } from 'react-native';
+import { ScrollView, Pressable, Text, StyleSheet } from 'react-native';
 
 interface TimeFilterProps {
   filters: { label: string; value: number }[];

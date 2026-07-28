@@ -1,4 +1,4 @@
-﻿import { ScrollView, Pressable, Text, StyleSheet, View } from 'react-native';
+import { ScrollView, Pressable, Text, StyleSheet } from 'react-native';
 
 interface ToolSelectorProps {
   tools: { name: string; icon: string }[];

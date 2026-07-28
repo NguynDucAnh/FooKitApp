@@ -1,4 +1,4 @@
-﻿import { Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
 
 interface CategoryChipProps {
   label: string;

@@ -4,13 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
-  CalendarDays,
   Camera,
   ChefHat,
-  Heart,
   LogOut,
   ShieldCheck,
-  Sparkles,
   Utensils,
   Wallet,
 } from 'lucide-react-native';
@@ -23,59 +20,20 @@ import { getGoogleSignInErrorMessage, startGoogleAuthSessionAsync } from '../../
 import { userService } from '../../src/services/userService';
 import { AuthUser } from '../../src/types/auth';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
+import {
+  EMPTY_PROFILE_USER,
+  formatProfileBudget,
+  parseCommaSeparatedList,
+  parseProfileBudget,
+  PROFILE_DIET_OPTIONS,
+  PROFILE_QUICK_LINKS,
+} from '../../src/components/profile/profileConfig';
 
-const brandLogo = require('../../img/logo fookit 2.jpg');
-
-const EMPTY_USER: AuthUser = {
-  username: '',
-  name: 'Người dùng',
-  fullName: 'Người dùng',
-  email: '',
-  phone: '',
-  address: '',
-  avatarUrl: '',
-  cookingGoal: '',
-  dietaryPreference: '',
-  allergies: '',
-  favoriteCuisine: '',
-  weeklyBudget: '',
-};
-
-const QUICK_LINKS = [
-  { icon: Sparkles, label: 'Gợi ý món ăn', description: 'Tìm công thức phù hợp khẩu vị và ngân sách.', tab: 'home' },
-  { icon: Wallet, label: 'Gói Premium', description: 'Quản lý gói ẩm thực và lịch sử thanh toán.', tab: 'discover' },
-  { icon: Heart, label: 'Món yêu thích', description: 'Xem lại các công thức đã lưu.', tab: 'favorites' },
-  { icon: CalendarDays, label: 'Kế hoạch bữa ăn', description: 'Sắp xếp thực đơn theo tuần.', tab: 'planner' },
-];
-
-const DIET_OPTIONS = [
-  { id: 1, label: 'Cân bằng' },
-  { id: 2, label: 'Ăn chay' },
-  { id: 3, label: 'Thuần chay' },
-  { id: 4, label: 'Ít carb' },
-  { id: 5, label: 'Giàu đạm' },
-  { id: 6, label: 'Keto' },
-];
-
-function parseList(value: string) {
-  return value
-    .split(',')
-    .map(item => item.trim())
-    .filter(Boolean);
-}
-
-function formatBudget(value: number) {
-  return value > 0 ? value.toLocaleString('vi-VN') : '';
-}
-
-function parseBudget(value: string) {
-  const normalized = value.replace(/[^\d]/g, '');
-  return normalized ? Number(normalized) : 0;
-}
+const brandLogo = require('../../img/fookit-logo.jpg');
 
 export default function ProfileScreen() {
   const { changePassword, currentUser, linkGoogle, logout, updateProfile } = useAuth();
-  const [form, setForm] = useState<AuthUser>(currentUser ?? EMPTY_USER);
+  const [form, setForm] = useState<AuthUser>(currentUser ?? EMPTY_PROFILE_USER);
   const [savingProfile, setSavingProfile] = useState(false);
   const [loadingFoodProfile, setLoadingFoodProfile] = useState(false);
   const [savingFoodProfile, setSavingFoodProfile] = useState(false);
@@ -92,7 +50,7 @@ export default function ProfileScreen() {
   const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
-    const nextUser = { ...EMPTY_USER, ...(currentUser ?? {}) };
+    const nextUser = { ...EMPTY_PROFILE_USER, ...(currentUser ?? {}) };
     setForm({
       ...nextUser,
       name: nextUser.fullName ?? nextUser.name,
@@ -111,7 +69,7 @@ export default function ProfileScreen() {
           diets: profile.diets,
           allergies: profile.allergies.join(', '),
           favoriteCuisines: profile.favoriteCuisines.join(', '),
-          weeklyBudget: formatBudget(profile.weeklyBudget),
+          weeklyBudget: formatProfileBudget(profile.weeklyBudget),
         });
       } catch (error) {
         Alert.alert('Không thể tải hồ sơ ẩm thực', getAuthErrorMessage(error));
@@ -121,7 +79,7 @@ export default function ProfileScreen() {
     }
 
     loadDietaryProfile();
-  }, [currentUser?.id, currentUser?.username]);
+  }, [currentUser]);
 
   const avatarSource = useMemo(() => {
     return form.avatarUrl?.trim() ? { uri: form.avatarUrl.trim() } : brandLogo;
@@ -163,7 +121,7 @@ export default function ProfileScreen() {
           address: form.address?.trim(),
         }
       );
-      setForm({ ...EMPTY_USER, ...nextUser });
+      setForm({ ...EMPTY_PROFILE_USER, ...nextUser });
       Alert.alert('Đã cập nhật', 'Thông tin hồ sơ đã được đồng bộ với tài khoản của bạn.');
     } catch (error) {
       Alert.alert('Không thể cập nhật hồ sơ', getAuthErrorMessage(error));
@@ -183,9 +141,9 @@ export default function ProfileScreen() {
 
       await userService.updateDietaryProfile({
         diets: dietForm.diets,
-        allergies: parseList(dietForm.allergies),
-        favoriteCuisines: parseList(dietForm.favoriteCuisines),
-        weeklyBudget: parseBudget(dietForm.weeklyBudget),
+        allergies: parseCommaSeparatedList(dietForm.allergies),
+        favoriteCuisines: parseCommaSeparatedList(dietForm.favoriteCuisines),
+        weeklyBudget: parseProfileBudget(dietForm.weeklyBudget),
       });
       setForm(nextUser);
       Alert.alert('Đã lưu', 'Hồ sơ ẩm thực đã được đồng bộ với tài khoản của bạn.');
@@ -270,7 +228,7 @@ export default function ProfileScreen() {
   const handle = form.username ? `@${form.username}` : 'Hồ sơ ẩm thực cá nhân';
   const isAdmin = !!currentUser?.isAdmin;
   const canSetGoogleCredentials = !!currentUser?.isGoogleAccount && !currentUser?.hasCredentials;
-  const selectedDietLabels = DIET_OPTIONS.filter(option => dietForm.diets.includes(option.id)).map(option => option.label);
+  const selectedDietLabels = PROFILE_DIET_OPTIONS.filter(option => dietForm.diets.includes(option.id)).map(option => option.label);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -333,7 +291,7 @@ export default function ProfileScreen() {
           {loadingFoodProfile && <Text style={styles.helperText}>Đang tải hồ sơ ẩm thực...</Text>}
           <Text style={styles.inputLabel}>Chế độ ăn</Text>
           <View style={styles.chipWrap}>
-            {DIET_OPTIONS.map(option => {
+            {PROFILE_DIET_OPTIONS.map(option => {
               const active = dietForm.diets.includes(option.id);
               return (
                 <Pressable key={option.id} style={[styles.dietChip, active && styles.dietChipActive]} onPress={() => toggleDiet(option.id)}>
@@ -351,7 +309,7 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Tiện ích fookit</Text>
-          {QUICK_LINKS.map(item => {
+          {PROFILE_QUICK_LINKS.map(item => {
             const Icon = item.icon;
             return (
               <TouchableOpacity key={item.label} style={styles.menuRow} onPress={() => openHomeTab(item.tab)}>

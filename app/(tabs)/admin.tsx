@@ -10,6 +10,7 @@ import { adminService } from '../../src/services/adminService';
 import { AdminAffiliateLink, AdminOverview, AdminSubscriptionPlan, AdminUser, ApiUsageItem } from '../../src/types/admin';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
 import { useAuth } from '../../src/hooks/useAuth';
+import { AdminMetric as Metric, AdminPager as Pager, AdminStatusPill as StatusPill } from '../../src/components/admin/AdminPrimitives';
 
 type AdminTab = 'overview' | 'users' | 'plans' | 'affiliate' | 'usage';
 
@@ -86,7 +87,7 @@ export default function AdminDashboardScreen() {
   const planTotalPages = Math.max(1, Math.ceil(plansTotal / PAGE_SIZE));
   const affiliateTotalPages = Math.max(1, Math.ceil(affiliateTotal / PAGE_SIZE));
 
-  const safeUsage = Array.isArray(usage) ? usage : [];
+  const safeUsage = useMemo(() => Array.isArray(usage) ? usage : [], [usage]);
 
   const usageTotals = useMemo(() => safeUsage.reduce(
     (acc, item) => ({
@@ -188,6 +189,8 @@ export default function AdminDashboardScreen() {
     loadPlans(1);
     loadAffiliateLinks(1);
     loadUsage();
+    // The initial dashboard load intentionally reruns only when admin authorization changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser?.isAdmin]);
 
   if (authLoading) {
@@ -466,7 +469,7 @@ export default function AdminDashboardScreen() {
     }
   }
 
-  const tabs: Array<{ id: AdminTab; label: string }> = [
+  const tabs: { id: AdminTab; label: string }[] = [
     { id: 'overview', label: 'Tổng quan' },
     { id: 'users', label: 'Người dùng' },
     { id: 'plans', label: 'Gói cước' },
@@ -757,34 +760,6 @@ export default function AdminDashboardScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
-  );
-}
-
-function Metric({ icon: Icon, label, value }: { icon: React.ComponentType<any>; label: string; value: string }) {
-  return (
-    <View style={styles.metric}>
-      <Icon size={20} color={COLORS.primary} />
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricLabel}>{label}</Text>
-    </View>
-  );
-}
-
-function StatusPill({ active }: { active: boolean }) {
-  return (
-    <View style={[styles.statusPill, active ? styles.statusActive : styles.statusInactive]}>
-      <Text style={[styles.statusText, active ? styles.statusTextActive : styles.statusTextInactive]}>{active ? 'Active' : 'Inactive'}</Text>
-    </View>
-  );
-}
-
-function Pager({ page, totalPages, onPrev, onNext }: { page: number; totalPages: number; onPrev: () => void; onNext: () => void }) {
-  return (
-    <View style={styles.pager}>
-      <Button title="Trước" onPress={onPrev} disabled={page <= 1} outline style={styles.pagerBtn} />
-      <Text style={styles.pagerText}>{page}/{totalPages}</Text>
-      <Button title="Sau" onPress={onNext} disabled={page >= totalPages} outline style={styles.pagerBtn} />
-    </View>
   );
 }
 

@@ -1,19 +1,13 @@
 import axiosClient from './axiosClient';
 import { ApiEnvelope } from '../types/subscription';
 import { MealSuggestionsResponse } from '../types/homepage';
-
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
-  const payload = response.data as ApiEnvelope<T>;
-  return typeof payload === 'object' && payload !== null && 'data' in payload
-    ? payload.data
-    : response.data as T;
-}
+import { unwrapApiResponse } from '../utils/apiNormalize';
 
 async function getMealSuggestions(meal: 'breakfast' | 'lunch' | 'dinner') {
   const response = await axiosClient.get<ApiEnvelope<MealSuggestionsResponse> | MealSuggestionsResponse>(
     `/api/Homepage/suggestions/${meal}`
   );
-  const payload = unwrap<MealSuggestionsResponse>(response);
+  const payload = unwrapApiResponse<MealSuggestionsResponse>(response);
 
   return {
     isPremiumExpired: !!payload?.isPremiumExpired,

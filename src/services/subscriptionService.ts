@@ -5,27 +5,9 @@ import {
   PaymentHistoryItem,
   SubscriptionPlan,
 } from '../types/subscription';
+import { getStringField, unwrapApiResponse } from '../utils/apiNormalize';
 
 const BASE_URL = '/api/Subscriptions';
-
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
-  const payload = response.data as ApiEnvelope<T>;
-  return typeof payload === 'object' && payload !== null && 'data' in payload
-    ? payload.data
-    : response.data as T;
-}
-
-function getStringField(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value;
-  }
-
-  return undefined;
-}
 
 function normalizePlan(plan: SubscriptionPlan) {
   return {
@@ -38,17 +20,17 @@ function normalizePlan(plan: SubscriptionPlan) {
 export const subscriptionService = {
   async getMySubscription() {
     const response = await axiosClient.get<ApiEnvelope<MySubscription>>(`${BASE_URL}/my-subscription`);
-    return unwrap<MySubscription>(response);
+    return unwrapApiResponse<MySubscription>(response);
   },
 
   async getPlans() {
     const response = await axiosClient.get<ApiEnvelope<SubscriptionPlan[]>>(`${BASE_URL}/plans`);
-    return unwrap<SubscriptionPlan[]>(response).map(normalizePlan);
+    return unwrapApiResponse<SubscriptionPlan[]>(response).map(normalizePlan);
   },
 
   async getPaymentHistory() {
     const response = await axiosClient.get<ApiEnvelope<PaymentHistoryItem[]>>(`${BASE_URL}/payment-history`);
-    return unwrap<PaymentHistoryItem[]>(response);
+    return unwrapApiResponse<PaymentHistoryItem[]>(response);
   },
 
   async cancelSubscription() {
