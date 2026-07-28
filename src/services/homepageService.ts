@@ -1,19 +1,15 @@
 import axiosClient from './axiosClient';
 import { ApiEnvelope } from '../types/subscription';
 import { MealSuggestionsResponse } from '../types/homepage';
+import { unwrapApiResponse } from '../utils/apiNormalize';
 
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
-  const payload = response.data as ApiEnvelope<T>;
-  return typeof payload === 'object' && payload !== null && 'data' in payload
-    ? payload.data
-    : response.data as T;
-}
+type MealKey = 'breakfast' | 'lunch' | 'dinner';
 
-async function getMealSuggestions(meal: 'breakfast' | 'lunch' | 'dinner') {
+async function getMealSuggestions(meal: MealKey) {
   const response = await axiosClient.get<ApiEnvelope<MealSuggestionsResponse> | MealSuggestionsResponse>(
     `/api/Homepage/suggestions/${meal}`
   );
-  const payload = unwrap<MealSuggestionsResponse>(response);
+  const payload = unwrapApiResponse<MealSuggestionsResponse>(response);
 
   return {
     isPremiumExpired: !!payload?.isPremiumExpired,
@@ -23,23 +19,36 @@ async function getMealSuggestions(meal: 'breakfast' | 'lunch' | 'dinner') {
 
 export const homepageService = {
   async getSuggestions() {
-    const [breakfast, lunch, dinner] = await Promise.all([
+    const [breakfastResult, lunchResult, dinnerResult] = await Promise.allSettled([
       getMealSuggestions('breakfast'),
       getMealSuggestions('lunch'),
       getMealSuggestions('dinner'),
     ]);
+    const breakfast = breakfastResult.status === 'fulfilled' ? breakfastResult.value : null;
+    const lunch = lunchResult.status === 'fulfilled' ? lunchResult.value : null;
+    const dinner = dinnerResult.status === 'fulfilled' ? dinnerResult.value : null;
+    const failedMeals: MealKey[] = [];
+
+    if (!breakfast) failedMeals.push('breakfast');
+    if (!lunch) failedMeals.push('lunch');
+    if (!dinner) failedMeals.push('dinner');
 
     return {
-      isPremiumExpired: breakfast.isPremiumExpired || lunch.isPremiumExpired || dinner.isPremiumExpired,
-      breakfast: breakfast.dishes,
-      lunch: lunch.dishes,
-      dinner: dinner.dishes,
+      isPremiumExpired: !!(
+        breakfast?.isPremiumExpired
+        || lunch?.isPremiumExpired
+        || dinner?.isPremiumExpired
+      ),
+      breakfast: breakfast?.dishes ?? [],
+      lunch: lunch?.dishes ?? [],
+      dinner: dinner?.dishes ?? [],
+      failedMeals,
     };
   },
 
   async clearCache(targetUserId?: string) {
     const response = await axiosClient.post<ApiEnvelope<null> | null>('/api/Homepage/clear-cache', {
-      targetUserId: targetUserId?.trim() || null,
+      target_user_id: targetUserId?.trim() || null,
     });
     return response.data;
   },

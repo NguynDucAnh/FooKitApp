@@ -12,7 +12,10 @@ interface RetryConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+const AUTH_REQUEST_TIMEOUT_MS = 10_000;
+
 let refreshPromise: Promise<string | null> | null = null;
+let terminalSessionPromise: Promise<void> | null = null;
 
 const axiosClient = axios.create({
   baseURL: API_URL,
@@ -31,6 +34,8 @@ async function refreshAccessToken() {
   const response = await axios.post(`${API_URL}/api/Auth/refresh-token`, {
     accessToken,
     refreshToken,
+  }, {
+    timeout: AUTH_REQUEST_TIMEOUT_MS,
   });
 
   const nextAccessToken = response.data?.accessToken ?? response.data?.data?.accessToken ?? response.data?.token;
@@ -40,6 +45,30 @@ async function refreshAccessToken() {
 
   await saveTokens({ accessToken: nextAccessToken, refreshToken: nextRefreshToken });
   return nextAccessToken;
+}
+
+function getRefreshPromise() {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+function terminateSessionOnce() {
+  if (!terminalSessionPromise) {
+    terminalSessionPromise = (async () => {
+      try {
+        await clearAuthStorage();
+      } finally {
+        router.replace('/(auth)/login');
+      }
+    })().finally(() => {
+      terminalSessionPromise = null;
+    });
+  }
+  return terminalSessionPromise;
 }
 
 axiosClient.interceptors.request.use(async (config) => {
@@ -62,18 +91,14 @@ axiosClient.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      refreshPromise = refreshPromise ?? refreshAccessToken();
-      const nextAccessToken = await refreshPromise;
-      refreshPromise = null;
+      const nextAccessToken = await getRefreshPromise();
 
       if (!nextAccessToken) throw error;
 
       originalRequest.headers.Authorization = `Bearer ${nextAccessToken}`;
       return axiosClient(originalRequest);
     } catch (refreshError) {
-      refreshPromise = null;
-      await clearAuthStorage();
-      router.replace('/(auth)/login');
+      await terminateSessionOnce();
       return Promise.reject(refreshError);
     }
   }

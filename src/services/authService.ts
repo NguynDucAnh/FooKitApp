@@ -23,9 +23,18 @@ function getTokens(response: AuthResponse): AuthTokens {
   const refreshToken = response.refreshToken ?? data.refreshToken ?? '';
 
   return {
-    accessToken: accessToken ?? '',
-    refreshToken,
+    accessToken: accessToken?.trim() ?? '',
+    refreshToken: refreshToken.trim(),
   };
+}
+
+function validateTokens(tokens: AuthTokens) {
+  if (!tokens.accessToken) {
+    throw new Error('Phản hồi đăng nhập không có access token');
+  }
+  if (!tokens.refreshToken) {
+    throw new Error('Phản hồi đăng nhập không có refresh token');
+  }
 }
 
 function normalizeRoles(user: Partial<AuthUser>, token?: string) {
@@ -95,11 +104,10 @@ function getUser(response: AuthResponse, fallbackUsername: string, token?: strin
 
 async function persistAuth(response: AuthResponse, fallbackUsername: string) {
   const tokens = getTokens(response);
+  validateTokens(tokens);
   const user = getUser(response, fallbackUsername, tokens.accessToken);
 
-  if (tokens.accessToken) {
-    await saveTokens(tokens);
-  }
+  await saveTokens(tokens);
   await saveStoredUser(user);
 
   return { tokens, user };

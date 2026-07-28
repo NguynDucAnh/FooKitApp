@@ -5,6 +5,7 @@ import {
   CreatePaymentResponse,
   PayOSReturnResponse,
 } from '../types/subscription';
+import { getHttpsUrl } from '../utils/externalUrl';
 
 const BASE_URL = '/api/Payments';
 
@@ -46,7 +47,9 @@ export const paymentService = {
       payload
     );
     const payment = unwrap<CreatePaymentResponse>(response);
-    const checkoutUrl = extractPaymentUrl(payment) ?? extractPaymentUrl(response.data);
+    const checkoutUrl = getHttpsUrl(
+      extractPaymentUrl(payment) ?? extractPaymentUrl(response.data),
+    ) ?? undefined;
     return {
       ...payment,
       checkoutUrl,

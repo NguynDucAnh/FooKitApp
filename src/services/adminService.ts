@@ -22,74 +22,13 @@ import {
   UpdateAffiliateLinkRequest,
   UpdateSubscriptionPlanRequest,
 } from '../types/admin';
-
-function unwrap<T>(response: { data: ApiEnvelope<T> | T }) {
-  const payload = response.data as ApiEnvelope<T>;
-  return typeof payload === 'object' && payload !== null && 'data' in payload
-    ? payload.data
-    : response.data as T;
-}
-
-function getStringField(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'string' && value.trim()) return value;
-  }
-
-  return undefined;
-}
-
-function getBooleanField(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (normalized === 'true') return true;
-      if (normalized === 'false') return false;
-    }
-    if (typeof value === 'number') {
-      if (value === 1) return true;
-      if (value === 0) return false;
-    }
-  }
-
-  return undefined;
-}
-
-function getNumberField(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string' && value.trim()) {
-      const parsed = Number(value);
-      if (!Number.isNaN(parsed)) return parsed;
-    }
-  }
-
-  return undefined;
-}
-
-function getArrayField<T>(source: unknown, keys: string[]) {
-  if (!source || typeof source !== 'object') return undefined;
-
-  const record = source as Record<string, unknown>;
-  for (const key of keys) {
-    const value = record[key];
-    if (Array.isArray(value)) return value as T[];
-  }
-
-  return undefined;
-}
+import {
+  getArrayField,
+  getBooleanField,
+  getNumberField,
+  getStringField,
+  unwrapApiResponse,
+} from '../utils/apiNormalize';
 
 function normalizePlan(plan: AdminSubscriptionPlan): AdminSubscriptionPlan {
   return {
@@ -184,7 +123,7 @@ function normalizeAffiliateLinksResult(result: PaginatedResult<AdminAffiliateLin
 export const adminService = {
   async getOverview() {
     const response = await axiosClient.get<ApiEnvelope<AdminOverview> | AdminOverview>('/api/Admin/overview');
-    const payload = unwrap<AdminOverview>(response);
+    const payload = unwrapApiResponse<AdminOverview>(response);
 
     return {
       ...payload,
@@ -201,7 +140,7 @@ export const adminService = {
 
   async getApiUsage(params: GetApiUsageParams) {
     const response = await axiosClient.get<ApiEnvelope<ApiUsageItem[]> | ApiUsageItem[] | { items?: ApiUsageItem[] }>('/api/Admin/api-usage', { params });
-    const payload = unwrap<ApiUsageItem[] | { items?: ApiUsageItem[] }>(response);
+    const payload = unwrapApiResponse<ApiUsageItem[] | { items?: ApiUsageItem[] }>(response);
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload.items)) return payload.items;
     return [];
@@ -209,7 +148,7 @@ export const adminService = {
 
   async getUsers(params: GetUsersParams) {
     const response = await axiosClient.get<ApiEnvelope<PaginatedResult<AdminUser>> | PaginatedResult<AdminUser>>('/api/Admin/users', { params });
-    return normalizeUsersResult(unwrap<PaginatedResult<AdminUser>>(response));
+    return normalizeUsersResult(unwrapApiResponse<PaginatedResult<AdminUser>>(response));
   },
 
   async grantPremium(userId: string, payload: GrantPremiumRequest) {
@@ -221,13 +160,16 @@ export const adminService = {
   },
 
   async toggleBan(userId: string, payload: ToggleBanRequest) {
-    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/Admin/users/${userId}/toggle-ban`, payload);
+    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/Admin/users/${userId}/toggle-ban`, {
+      is_active: payload.isActive,
+      reason: payload.reason ?? null,
+    });
     return response.data;
   },
 
   async createUser(payload: CreateAdminUserRequest) {
     const response = await axiosClient.post<ApiEnvelope<CreatedAdminUser> | CreatedAdminUser>('/api/Admin/users', payload);
-    return unwrap<CreatedAdminUser>(response);
+    return unwrapApiResponse<CreatedAdminUser>(response);
   },
 
   async getPlans(params: GetAdminPlansParams) {
@@ -235,23 +177,23 @@ export const adminService = {
       '/api/Subscriptions/admin/plans',
       { params }
     );
-    return normalizePlansResult(unwrap<PaginatedResult<AdminSubscriptionPlan>>(response));
+    return normalizePlansResult(unwrapApiResponse<PaginatedResult<AdminSubscriptionPlan>>(response));
   },
 
   async createPlan(payload: CreateSubscriptionPlanRequest) {
     const response = await axiosClient.post<ApiEnvelope<AdminSubscriptionPlan> | AdminSubscriptionPlan>('/api/Subscriptions/admin/plans', payload);
-    return normalizePlan(unwrap<AdminSubscriptionPlan>(response));
+    return normalizePlan(unwrapApiResponse<AdminSubscriptionPlan>(response));
   },
 
   async updatePlan(id: string, payload: UpdateSubscriptionPlanRequest) {
     try {
       const response = await axiosClient.put<ApiEnvelope<AdminSubscriptionPlan> | AdminSubscriptionPlan>(`/api/Subscriptions/admin/plans/${id}`, payload);
-      return normalizePlan(unwrap<AdminSubscriptionPlan>(response));
+      return normalizePlan(unwrapApiResponse<AdminSubscriptionPlan>(response));
     } catch (error: any) {
       if (error?.response?.status !== 404) throw error;
 
       const response = await axiosClient.put<ApiEnvelope<AdminSubscriptionPlan> | AdminSubscriptionPlan>(`/api/Admin/subscription-plans/${id}`, payload);
-      return normalizePlan(unwrap<AdminSubscriptionPlan>(response));
+      return normalizePlan(unwrapApiResponse<AdminSubscriptionPlan>(response));
     }
   },
 
@@ -265,26 +207,31 @@ export const adminService = {
       '/api/AffiliateLinks',
       { params }
     );
-    return normalizeAffiliateLinksResult(unwrap<PaginatedResult<AdminAffiliateLink>>(response));
+    return normalizeAffiliateLinksResult(unwrapApiResponse<PaginatedResult<AdminAffiliateLink>>(response));
   },
 
   async createAffiliateLink(payload: CreateAffiliateLinkRequest) {
     const response = await axiosClient.post<ApiEnvelope<AdminAffiliateLink> | AdminAffiliateLink>('/api/AffiliateLinks', payload);
-    return normalizeAffiliateLink(unwrap<AdminAffiliateLink>(response));
+    return normalizeAffiliateLink(unwrapApiResponse<AdminAffiliateLink>(response));
   },
 
   async updateAffiliateLink(id: string, payload: UpdateAffiliateLinkRequest) {
     const response = await axiosClient.put<ApiEnvelope<AdminAffiliateLink> | AdminAffiliateLink>(`/api/AffiliateLinks/${id}`, payload);
-    return normalizeAffiliateLink(unwrap<AdminAffiliateLink>(response));
+    return normalizeAffiliateLink(unwrapApiResponse<AdminAffiliateLink>(response));
   },
 
   async toggleAffiliateLink(id: string, payload: ToggleAffiliateLinkRequest) {
-    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/AffiliateLinks/${id}/toggle-status`, payload);
+    const response = await axiosClient.put<ApiEnvelope<null> | null>(`/api/AffiliateLinks/${id}/toggle-status`, {
+      is_active: payload.isActive,
+    });
     return response.data;
   },
 
   async syncAffiliateLinks(payload: SyncAffiliateLinksRequest) {
-    const response = await axiosClient.post<ApiEnvelope<null> | null>('/api/AffiliateLinks/sync', payload);
+    const response = await axiosClient.post<ApiEnvelope<null> | null>('/api/AffiliateLinks/sync', {
+      target_ingredient_id: payload.targetIngredientId?.trim() || null,
+      force_sync_all: payload.forceSyncAll,
+    });
     return response.data;
   },
 };

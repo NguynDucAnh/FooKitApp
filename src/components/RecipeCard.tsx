@@ -9,6 +9,13 @@ interface RecipeCardProps {
 }
 
 export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProps) {
+  const timeLabel = typeof recipe.time === 'number' ? `${recipe.time} phút` : 'Chưa có dữ liệu';
+  const caloriesLabel = typeof recipe.calories === 'number' ? `${recipe.calories} calo` : 'Chưa có dữ liệu';
+  const ratingLabel = typeof recipe.rating === 'number' ? recipe.rating.toString() : 'Chưa có đánh giá';
+  const budgetLabel = typeof recipe.budget === 'number'
+    ? `${recipe.budget.toLocaleString('vi-VN')} đ`
+    : 'Chưa có dữ liệu';
+
   return (
     <Pressable style={styles.card} onPress={onClick} android_ripple={{ color: '#F3F4F6' }}>
       <View style={styles.imageWrapper}>
@@ -20,9 +27,11 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
         >
           <Heart size={18} color={recipe.isFavorite ? '#DC2626' : '#4B5563'} fill={recipe.isFavorite ? '#DC2626' : 'transparent'} />
         </Pressable>
-        <View style={styles.difficultyBadge}>
-          <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
-        </View>
+        {!!recipe.difficulty && (
+          <View style={styles.difficultyBadge}>
+            <Text style={styles.difficultyText}>{recipe.difficulty}</Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.cardContent}>
@@ -33,20 +42,20 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
             <Clock size={14} color="#4B5563" />
-            <Text style={styles.metaText}>{recipe.time} phút</Text>
+            <Text style={styles.metaText}>{timeLabel}</Text>
           </View>
           <View style={styles.metaItem}>
             <Flame size={14} color="#4B5563" />
-            <Text style={styles.metaText}>{recipe.calories} calo</Text>
+            <Text style={styles.metaText}>{caloriesLabel}</Text>
           </View>
           <View style={styles.metaItem}>
             <Text style={styles.ratingStar}>★</Text>
-            <Text style={styles.metaText}>{recipe.rating}</Text>
+            <Text style={styles.metaText}>{ratingLabel}</Text>
           </View>
         </View>
 
         <View style={styles.bottomRow}>
-          <Text style={styles.priceText}>{recipe.budget.toLocaleString('vi-VN')} đ</Text>
+          <Text style={styles.priceText}>{budgetLabel}</Text>
           <View style={styles.chevronButton}>
             <ChevronRight size={18} color="#FFFFFF" />
           </View>

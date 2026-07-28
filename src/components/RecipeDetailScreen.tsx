@@ -1,7 +1,8 @@
-import { Linking, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
+import { Alert, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
 import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
 import { Recipe } from '../data/recipes';
 import { useFavorites } from '../context/FavoritesContext';
+import { openExternalHttpsUrl } from '../utils/externalUrl';
 
 interface RecipeDetailScreenProps {
   recipe: Recipe;
@@ -13,6 +14,22 @@ interface RecipeDetailScreenProps {
 export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false, remoteDetailError = '' }: RecipeDetailScreenProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorited = isFavorite(recipe.id);
+  const hasRating = typeof recipe.rating === 'number';
+  const hasReviewCount = typeof recipe.reviewCount === 'number';
+  const formatNutrition = (value: number | null | undefined) => (
+    typeof value === 'number' ? `${value}g` : 'Chưa có dữ liệu'
+  );
+  async function handleOpenAffiliateUrl(productUrl: string) {
+    try {
+      await openExternalHttpsUrl(productUrl);
+    } catch {
+      Alert.alert(
+        'Không thể mở liên kết mua hàng',
+        'Liên kết này không an toàn hoặc thiết bị không hỗ trợ. Vui lòng thử lại sau.',
+      );
+    }
+  }
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
       <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
@@ -39,8 +56,10 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           <Text style={styles.recipeTitle}>{recipe.name}</Text>
           <View style={styles.ratingRow}>
             <Star size={18} color="#F59E0B" />
-            <Text style={styles.ratingText}>{recipe.rating}</Text>
-            <Text style={styles.ratingSubtext}>(128 đánh giá)</Text>
+            <Text style={styles.ratingText}>{hasRating ? recipe.rating : 'Chưa có đánh giá'}</Text>
+            {hasReviewCount && (
+              <Text style={styles.ratingSubtext}>({recipe.reviewCount} đánh giá)</Text>
+            )}
           </View>
         </View>
       </ImageBackground>
@@ -56,22 +75,30 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           <View style={styles.statsCard}>
             <Clock size={18} color="#16A34A" />
             <Text style={styles.statsLabel}>Thời gian</Text>
-            <Text style={styles.statsValue}>{recipe.time} phút</Text>
+            <Text style={styles.statsValue}>
+              {typeof recipe.time === 'number' ? `${recipe.time} phút` : 'Chưa có dữ liệu'}
+            </Text>
           </View>
           <View style={styles.statsCard}>
             <Flame size={18} color="#F59E0B" />
             <Text style={styles.statsLabel}>Calo</Text>
-            <Text style={styles.statsValue}>{recipe.calories}</Text>
+            <Text style={styles.statsValue}>
+              {typeof recipe.calories === 'number' ? recipe.calories : 'Chưa có dữ liệu'}
+            </Text>
           </View>
           <View style={styles.statsCard}>
             <DollarSign size={18} color="#16A34A" />
             <Text style={styles.statsLabel}>Chi phí</Text>
-            <Text style={styles.statsValue}>{recipe.budget.toLocaleString('vi-VN')} đ</Text>
+            <Text style={styles.statsValue}>
+              {typeof recipe.budget === 'number'
+                ? `${recipe.budget.toLocaleString('vi-VN')} đ`
+                : 'Chưa có dữ liệu'}
+            </Text>
           </View>
           <View style={styles.statsCard}>
             <Text style={styles.statsEmoji}>👨‍🍳</Text>
             <Text style={styles.statsLabel}>Độ khó</Text>
-            <Text style={styles.statsValue}>{recipe.difficulty}</Text>
+            <Text style={styles.statsValue}>{recipe.difficulty ?? 'Chưa có dữ liệu'}</Text>
           </View>
         </View>
 
@@ -91,19 +118,19 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           <View style={styles.nutritionCard}>
             <View style={styles.nutritionRow}>
               <Text style={styles.nutritionLabel}>Chất đạm</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.protein}g</Text>
+              <Text style={styles.nutritionValue}>{formatNutrition(recipe.nutrition?.protein)}</Text>
             </View>
             <View style={styles.nutritionRow}>
               <Text style={styles.nutritionLabel}>Tinh bột</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.carbs}g</Text>
+              <Text style={styles.nutritionValue}>{formatNutrition(recipe.nutrition?.carbs)}</Text>
             </View>
             <View style={styles.nutritionRow}>
               <Text style={styles.nutritionLabel}>Chất béo</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.fat}g</Text>
+              <Text style={styles.nutritionValue}>{formatNutrition(recipe.nutrition?.fat)}</Text>
             </View>
             <View style={styles.nutritionRow}>
               <Text style={styles.nutritionLabel}>Chất xơ</Text>
-              <Text style={styles.nutritionValue}>{recipe.nutrition.fiber}g</Text>
+              <Text style={styles.nutritionValue}>{formatNutrition(recipe.nutrition?.fiber)}</Text>
             </View>
           </View>
         </View>
@@ -128,10 +155,20 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
                   )}
                 </View>
                 {ingredient.affiliateProduct && (
-                  <Pressable style={styles.affiliateBox} onPress={() => Linking.openURL(ingredient.affiliateProduct!.productUrl)}>
+                  <Pressable
+                    style={styles.affiliateBox}
+                    onPress={() => void handleOpenAffiliateUrl(ingredient.affiliateProduct!.productUrl)}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Mở liên kết mua ${ingredient.affiliateProduct.productName}`}
+                    accessibilityHint="Mở trang mua hàng bên ngoài FooKitApp"
+                  >
                     <Text style={styles.affiliateLabel}>Mua gợi ý</Text>
                     <Text style={styles.affiliateName}>{ingredient.affiliateProduct.productName}</Text>
-                    <Text style={styles.affiliatePrice}>{ingredient.affiliateProduct.price.toLocaleString('vi-VN')} đ</Text>
+                    <Text style={styles.affiliatePrice}>
+                      {typeof ingredient.affiliateProduct.price === 'number'
+                        ? `${ingredient.affiliateProduct.price.toLocaleString('vi-VN')} đ`
+                        : 'Chưa có dữ liệu giá'}
+                    </Text>
                   </Pressable>
                 )}
               </View>

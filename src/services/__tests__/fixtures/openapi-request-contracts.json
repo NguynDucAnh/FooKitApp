@@ -1,0 +1,69 @@
+{
+  "paths": {
+    "/api/Admin/users/{userId}/toggle-ban": {
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "is_active": {},
+                  "reason": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AffiliateLinks/{id}/toggle-status": {
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "is_active": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AffiliateLinks/sync": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "target_ingredient_id": {},
+                  "force_sync_all": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Homepage/clear-cache": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "target_user_id": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}
