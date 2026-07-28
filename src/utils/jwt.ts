@@ -81,3 +81,16 @@ export function hasAdminRole(roles?: string[] | string | null) {
   const values = Array.isArray(roles) ? roles : roles ? [roles] : [];
   return values.some(role => role.toLowerCase() === 'admin');
 }
+
+export function isJwtExpired(
+  token?: string | null,
+  nowSeconds = Math.floor(Date.now() / 1000),
+  clockSkewSeconds = 0
+) {
+  const payload = getJwtPayload(token);
+  const expiresAt = payload?.exp;
+
+  if (typeof expiresAt !== 'number' || !Number.isFinite(expiresAt)) return true;
+
+  return expiresAt <= nowSeconds + Math.max(0, clockSkewSeconds);
+}

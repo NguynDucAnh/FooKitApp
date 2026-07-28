@@ -32,20 +32,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isActive = true;
+
     async function hydrateAuth() {
-      const [token, user] = await Promise.all([getAccessToken(), getStoredUser()]);
-      const roles = user?.roles?.length ? user.roles : getRolesFromJwt(token);
-      setAccessToken(token);
-      setCurrentUser(user ? {
-        ...user,
-        roles,
-        role: user.role ?? roles[0],
-        isAdmin: user.isAdmin ?? hasAdminRole(roles),
-      } : null);
-      setLoading(false);
+      try {
+        const [token, user] = await Promise.all([getAccessToken(), getStoredUser()]);
+        if (!isActive) return;
+
+        const roles = user?.roles?.length ? user.roles : getRolesFromJwt(token);
+        setAccessToken(token);
+        setCurrentUser(user ? {
+          ...user,
+          roles,
+          role: user.role ?? roles[0],
+          isAdmin: user.isAdmin ?? hasAdminRole(roles),
+        } : null);
+      } catch {
+        if (!isActive) return;
+        setAccessToken(null);
+        setCurrentUser(null);
+      } finally {
+        if (isActive) setLoading(false);
+      }
     }
 
-    hydrateAuth();
+    void hydrateAuth();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const value = useMemo<AuthContextValue>(() => ({

@@ -7,54 +7,10 @@ import { BottomNav } from '../../src/components/BottomNav';
 import SubscriptionDashboard from '../../src/components/subscription/SubscriptionDashboard';
 import { Recipe } from '../../src/data/recipes';
 import { dishService } from '../../src/services/dishService';
-import { DishRecipeResponse } from '../../src/types/dish';
 import { FavoritesScreen } from '../../src/components/FavoritesScreen';
+import { applyRecipeDetail } from '../../src/mappers/recipeMapper';
 
 const NAV_TABS = ['home', 'discover', 'favorites', 'planner'];
-
-function toMoney(value: number | string | null | undefined) {
-  const parsed = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
-function applyRecipeDetail(recipe: Recipe, detail: DishRecipeResponse): Recipe {
-  const ingredientTotal = Array.isArray(detail.ingredients)
-    ? detail.ingredients.reduce((sum, ingredient) => sum + (toMoney(ingredient.estimatedPrice) ?? 0), 0)
-    : 0;
-  const detailTotal = toMoney(detail.totalCost);
-  const resolvedBudget = detailTotal !== null && detailTotal > 0
-    ? detailTotal
-    : ingredientTotal > 0
-      ? ingredientTotal
-      : recipe.budget;
-
-  return {
-    ...recipe,
-    dishCacheId: detail.dishCacheId || recipe.dishCacheId,
-    name: detail.dishName || recipe.name,
-    image: detail.imageUrl || recipe.image,
-    budget: resolvedBudget,
-    ingredients: Array.isArray(detail.ingredients) && detail.ingredients.length
-      ? detail.ingredients.map(ingredient => ({
-        name: ingredient.standardIngredientName?.trim() || ingredient.rawIngredientName?.trim() || 'Nguyên liệu',
-        rawIngredientName: ingredient.rawIngredientName?.trim() || undefined,
-        standardIngredientId: ingredient.standardIngredientId,
-        isMatched: !!ingredient.isMatched,
-        isPriced: !!ingredient.isPriced,
-        estimatedPrice: toMoney(ingredient.estimatedPrice),
-        isMapped: ingredient.isMatched,
-        affiliateProduct: ingredient.affiliateUrl ? {
-          productName: ingredient.standardIngredientName?.trim() || ingredient.rawIngredientName?.trim() || 'Sản phẩm gợi ý',
-          productUrl: ingredient.affiliateUrl,
-          price: toMoney(ingredient.estimatedPrice) ?? 0,
-        } : null,
-      }))
-      : recipe.ingredients,
-    instructions: Array.isArray(detail.cookingSteps) && detail.cookingSteps.length
-      ? detail.cookingSteps
-      : recipe.instructions,
-  };
-}
 
 export default function App() {
   const params = useLocalSearchParams<{ tab?: string }>();

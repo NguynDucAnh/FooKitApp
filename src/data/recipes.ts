@@ -3,22 +3,23 @@ export interface Recipe {
   dishCacheId?: string;
   name: string;
   image: string;
-  rating: number;
-  time: number;
-  calories: number;
-  difficulty: 'Dễ' | 'Trung bình' | 'Khó';
+  rating?: number | null;
+  reviewCount?: number | null;
+  time?: number | null;
+  calories?: number | null;
+  difficulty?: 'Dễ' | 'Trung bình' | 'Khó' | null;
   category: string[];
-  budget: number;
+  budget?: number | null;
   tools: string[];
   isFavorite: boolean;
   ingredients: Ingredient[];
   instructions: string[];
-  nutrition: {
-    protein: number;
-    carbs: number;
-    fat: number;
-    fiber: number;
-  };
+  nutrition?: {
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+  } | null;
 }
 
 export interface Ingredient {
@@ -34,7 +35,7 @@ export interface Ingredient {
   affiliateProduct?: {
     productName: string;
     productUrl: string;
-    price: number;
+    price?: number | null;
   } | null;
 }
 

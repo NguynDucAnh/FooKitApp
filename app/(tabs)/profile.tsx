@@ -23,6 +23,7 @@ import { getGoogleSignInErrorMessage, startGoogleAuthSessionAsync } from '../../
 import { userService } from '../../src/services/userService';
 import { AuthUser } from '../../src/types/auth';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
+import { PROFILE_DIET_OPTIONS } from '../../src/constants/dietary';
 
 const brandLogo = require('../../img/logo fookit 2.jpg');
 
@@ -46,15 +47,6 @@ const QUICK_LINKS = [
   { icon: Wallet, label: 'Gói Premium', description: 'Quản lý gói ẩm thực và lịch sử thanh toán.', tab: 'discover' },
   { icon: Heart, label: 'Món yêu thích', description: 'Xem lại các công thức đã lưu.', tab: 'favorites' },
   { icon: CalendarDays, label: 'Kế hoạch bữa ăn', description: 'Sắp xếp thực đơn theo tuần.', tab: 'planner' },
-];
-
-const DIET_OPTIONS = [
-  { id: 1, label: 'Cân bằng' },
-  { id: 2, label: 'Ăn chay' },
-  { id: 3, label: 'Thuần chay' },
-  { id: 4, label: 'Ít carb' },
-  { id: 5, label: 'Giàu đạm' },
-  { id: 6, label: 'Keto' },
 ];
 
 function parseList(value: string) {
@@ -270,7 +262,9 @@ export default function ProfileScreen() {
   const handle = form.username ? `@${form.username}` : 'Hồ sơ ẩm thực cá nhân';
   const isAdmin = !!currentUser?.isAdmin;
   const canSetGoogleCredentials = !!currentUser?.isGoogleAccount && !currentUser?.hasCredentials;
-  const selectedDietLabels = DIET_OPTIONS.filter(option => dietForm.diets.includes(option.id)).map(option => option.label);
+  const selectedDietLabels = PROFILE_DIET_OPTIONS
+    .filter(option => dietForm.diets.includes(option.value))
+    .map(option => option.label);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -333,10 +327,10 @@ export default function ProfileScreen() {
           {loadingFoodProfile && <Text style={styles.helperText}>Đang tải hồ sơ ẩm thực...</Text>}
           <Text style={styles.inputLabel}>Chế độ ăn</Text>
           <View style={styles.chipWrap}>
-            {DIET_OPTIONS.map(option => {
-              const active = dietForm.diets.includes(option.id);
+            {PROFILE_DIET_OPTIONS.map(option => {
+              const active = dietForm.diets.includes(option.value);
               return (
-                <Pressable key={option.id} style={[styles.dietChip, active && styles.dietChipActive]} onPress={() => toggleDiet(option.id)}>
+                <Pressable key={option.value} style={[styles.dietChip, active && styles.dietChipActive]} onPress={() => toggleDiet(option.value)}>
                   <Text style={[styles.dietChipText, active && styles.dietChipTextActive]}>{option.label}</Text>
                 </Pressable>
               );

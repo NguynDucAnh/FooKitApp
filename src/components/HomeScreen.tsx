@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, StyleSheet, View, Text, TextInput, ScrollView, Image, Pressable, ImageBackground } from 'react-native';
 import { Bell, Sparkles, Sunrise, Sun, Moon, ChefHat, Crown, LockKeyhole } from 'lucide-react-native';
 import { RecipeCard } from './RecipeCard';
 import { recipes, Recipe } from '../data/recipes';
 import { homepageService } from '../services/homepageService';
 import { dishService } from '../services/dishService';
-import { SuggestedDish } from '../types/homepage';
-import { SuggestedDishResult } from '../types/dish';
 import { useFavorites } from '../context/FavoritesContext';
 import { useSubscriptionStore } from '../context/SubscriptionContext';
+import {
+  mapHomepageDishToRecipe,
+  mapSuggestedDishToRecipe,
+  MealKey,
+} from '../mappers/recipeMapper';
+import { HOME_DIET_OPTIONS } from '../constants/dietary';
 
 const EQUIPMENT_OPTIONS = [
   { label: 'Lò nướng', value: 'oven' },
@@ -18,148 +22,15 @@ const EQUIPMENT_OPTIONS = [
   { label: 'Máy xay', value: 'blender' },
 ];
 
-const DIET_OPTIONS = [
-  { label: 'Không giới hạn', value: 0 },
-  { label: 'Thuần chay', value: 1 },
-  { label: 'Ăn chay', value: 2 },
-  { label: 'Keto', value: 3 },
-  { label: 'Eat Clean', value: 4 },
-  { label: 'Paleo', value: 5 },
-  { label: 'Không gluten', value: 6 },
-  { label: 'Không sữa', value: 7 },
-];
-
-const MEAL_IMAGES = {
-  breakfast: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=600&fit=crop',
-  lunch: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop',
-  dinner: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop',
+const MEAL_LABELS: Record<MealKey, string> = {
+  breakfast: 'bữa sáng',
+  lunch: 'bữa trưa',
+  dinner: 'bữa tối',
 };
 
-type MealKey = 'breakfast' | 'lunch' | 'dinner';
-
-function toArray(value: SuggestedDish['category'] | SuggestedDish['categories'], fallback: string[]) {
-  if (Array.isArray(value)) return value.filter(Boolean);
-  if (typeof value === 'string' && value.trim()) return [value.trim()];
-  return fallback;
-}
-
-function normalizeIngredients(value: SuggestedDish['ingredients']) {
-  if (!Array.isArray(value) || value.length === 0) {
-    return [{ name: 'Nguyên liệu', amount: 'BE chưa cung cấp chi tiết' }];
-  }
-
-  return value.map((item) => {
-    if (typeof item === 'string') return { name: item, amount: 'vừa đủ' };
-    return {
-      name: item.name || 'Nguyên liệu',
-      amount: item.amount || 'vừa đủ',
-    };
-  });
-}
-
-function stripHtml(value: string) {
-  return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function normalizeInstructions(value: SuggestedDish['instructions']) {
-  if (Array.isArray(value) && value.length) return value.filter(Boolean);
-
-  if (typeof value === 'string') {
-    const text = stripHtml(value);
-    if (text) {
-      return text
-        .split(/(?:\.\s+|\n+)/)
-        .map(item => item.trim())
-        .filter(Boolean);
-    }
-  }
-
-  return [
-    'BE chưa cung cấp hướng dẫn chi tiết cho món này.',
-    'Bạn có thể mở công thức nguồn hoặc thử lại khi dữ liệu được đồng bộ đầy đủ hơn.',
-  ];
-}
-
-function normalizeDifficulty(value?: string): Recipe['difficulty'] {
-  if (value === 'Trung bình' || value === 'Khó' || value === 'Dễ') return value;
-  const normalized = value?.toLowerCase();
-  if (normalized?.includes('hard') || normalized?.includes('khó')) return 'Khó';
-  if (normalized?.includes('medium') || normalized?.includes('trung')) return 'Trung bình';
-  return 'Dễ';
-}
-
-function getBudget(dish: SuggestedDish) {
-  const cost = dish.budget ?? dish.estimatedCost ?? dish.totalCost ?? dish.price;
-  return typeof cost === 'number' && cost > 0 ? cost : 0;
-}
-
-function mapDishToRecipe(dish: SuggestedDish, meal: MealKey, index: number): Recipe {
-  const mealLabel = meal === 'breakfast' ? 'Bữa sáng' : meal === 'lunch' ? 'Bữa trưa' : 'Bữa tối';
-  const name = dish.name || dish.dishName || dish.title || `${mealLabel} gợi ý ${index + 1}`;
-
-  return {
-    id: dish.id || `${meal}-${index}-${name}`,
-    dishCacheId: dish.dishCacheId || dish.dish_cache_id || dish.DishCacheId,
-    name,
-    image: dish.image || dish.imageUrl || dish.thumbnailUrl || MEAL_IMAGES[meal],
-    rating: dish.rating || 4.8,
-    time: dish.time || dish.cookingTime || dish.cookingTimeMinutes || 25,
-    calories: dish.calories || dish.kcal || 420,
-    difficulty: normalizeDifficulty(dish.difficulty),
-    category: toArray(dish.categories || dish.category, [mealLabel]),
-    budget: getBudget(dish),
-    tools: Array.isArray(dish.tools) && dish.tools.length ? dish.tools : ['Bếp gia đình'],
-    isFavorite: false,
-    ingredients: normalizeIngredients(dish.ingredients),
-    instructions: normalizeInstructions(dish.instructions),
-    nutrition: {
-      protein: dish.nutrition?.protein || 20,
-      carbs: dish.nutrition?.carbs || 45,
-      fat: dish.nutrition?.fat || 14,
-      fiber: dish.nutrition?.fiber || 6,
-    },
-  };
-}
-
-function mapSuggestedDishToRecipe(dish: SuggestedDishResult, index: number): Recipe {
-  const instructions = normalizeInstructions(dish.instructions);
-
-  return {
-    id: `suggest-${index}-${dish.dishName}`,
-    dishCacheId: dish.dishCacheId || dish.dish_cache_id || dish.DishCacheId,
-    name: dish.dishName || `Món gợi ý ${index + 1}`,
-    image: dish.imageUrl || MEAL_IMAGES.dinner,
-    rating: 4.8,
-    time: 25,
-    calories: 420,
-    difficulty: 'Dễ',
-    category: ['Gợi ý tối ưu'],
-    budget: typeof dish.totalCost === 'number' ? dish.totalCost : 0,
-    tools: ['Theo thiết bị đã chọn'],
-    isFavorite: false,
-    ingredients: Array.isArray(dish.ingredients) && dish.ingredients.length
-      ? dish.ingredients.map(ingredient => ({
-        name: ingredient.standardIngredientName || ingredient.rawEnglishName || 'Nguyên liệu',
-        amount: ingredient.rawEnglishName || 'vừa đủ',
-        rawEnglishName: ingredient.rawEnglishName,
-        isMapped: ingredient.isMapped,
-        affiliateProduct: ingredient.affiliateProduct
-          ? {
-            productName: ingredient.affiliateProduct.productName,
-            productUrl: ingredient.affiliateProduct.productUrl,
-            price: ingredient.affiliateProduct.price ?? ingredient.affiliateProduct.currentPriceAmount ?? 0,
-          }
-          : null,
-      }))
-      : [{ name: 'Nguyên liệu', amount: 'BE chưa cung cấp chi tiết' }],
-    instructions,
-    nutrition: {
-      protein: 20,
-      carbs: 45,
-      fat: 14,
-      fiber: 6,
-    },
-  };
+function getFallbackRecipes(meal: MealKey) {
+  const category = meal === 'breakfast' ? 'Bữa sáng' : meal === 'lunch' ? 'Bữa trưa' : 'Bữa tối';
+  return recipes.filter(recipe => recipe.category.includes(category)).slice(0, 3);
 }
 
 interface HomeScreenProps {
@@ -183,39 +54,62 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
   const [suggestionsLoading, setSuggestionsLoading] = useState(true);
   const [suggestionsError, setSuggestionsError] = useState('');
   const [isPremiumExpired, setIsPremiumExpired] = useState(false);
+  const suggestionsRequestId = useRef(0);
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isPremium } = useSubscriptionStore();
 
   async function loadSuggestions() {
+    const requestId = ++suggestionsRequestId.current;
     setSuggestionsLoading(true);
     setSuggestionsError('');
     try {
       const result = await homepageService.getSuggestions();
+      if (requestId !== suggestionsRequestId.current) return;
+
+      const failedMeals = new Set<MealKey>(result.failedMeals);
       setIsPremiumExpired(result.isPremiumExpired);
-      setSuggestions({
-        breakfast: result.breakfast.map((dish, index) => mapDishToRecipe(dish, 'breakfast', index)),
-        lunch: result.lunch.map((dish, index) => mapDishToRecipe(dish, 'lunch', index)),
-        dinner: result.dinner.map((dish, index) => mapDishToRecipe(dish, 'dinner', index)),
-      });
+      setSuggestions(current => ({
+        breakfast: failedMeals.has('breakfast')
+          ? current.breakfast.length ? current.breakfast : getFallbackRecipes('breakfast')
+          : result.breakfast.map((dish, index) => mapHomepageDishToRecipe(dish, 'breakfast', index)),
+        lunch: failedMeals.has('lunch')
+          ? current.lunch.length ? current.lunch : getFallbackRecipes('lunch')
+          : result.lunch.map((dish, index) => mapHomepageDishToRecipe(dish, 'lunch', index)),
+        dinner: failedMeals.has('dinner')
+          ? current.dinner.length ? current.dinner : getFallbackRecipes('dinner')
+          : result.dinner.map((dish, index) => mapHomepageDishToRecipe(dish, 'dinner', index)),
+      }));
+
+      if (result.failedMeals.length > 0) {
+        const failedLabels = result.failedMeals.map(meal => MEAL_LABELS[meal]).join(', ');
+        setSuggestionsError(`Không thể tải ${failedLabels}. Các bữa còn lại vẫn được cập nhật. Kéo xuống để thử lại.`);
+      }
     } catch {
+      if (requestId !== suggestionsRequestId.current) return;
+
       setSuggestionsError('Không thể tải thực đơn hôm nay. Đang hiển thị công thức mẫu để bạn tham khảo.');
       setSuggestions({
-        breakfast: recipes.filter(recipe => recipe.category.includes('Bữa sáng')).slice(0, 3),
-        lunch: recipes.filter(recipe => recipe.category.includes('Bữa trưa')).slice(0, 3),
-        dinner: recipes.filter(recipe => recipe.category.includes('Bữa tối')).slice(0, 3),
+        breakfast: getFallbackRecipes('breakfast'),
+        lunch: getFallbackRecipes('lunch'),
+        dinner: getFallbackRecipes('dinner'),
       });
     } finally {
-      setSuggestionsLoading(false);
+      if (requestId === suggestionsRequestId.current) {
+        setSuggestionsLoading(false);
+      }
     }
   }
 
   useEffect(() => {
     loadSuggestions();
+    return () => {
+      suggestionsRequestId.current += 1;
+    };
   }, []);
 
   async function handleSuggestDishes() {
     if (suggestDiet !== 0 && !isPremium) {
-      const selectedDiet = DIET_OPTIONS.find(option => option.value === suggestDiet);
+      const selectedDiet = HOME_DIET_OPTIONS.find(option => option.value === suggestDiet);
       setLockedDietLabel(selectedDiet?.label ?? 'chế độ ăn nâng cao');
       return;
     }
@@ -246,7 +140,7 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
         : 'Không thể tạo gợi ý món ăn lúc này. Vui lòng thử lại.';
       setSuggestError(message);
       if (status === 403) {
-        const selectedDiet = DIET_OPTIONS.find(option => option.value === suggestDiet);
+        const selectedDiet = HOME_DIET_OPTIONS.find(option => option.value === suggestDiet);
         setLockedDietLabel(selectedDiet?.label ?? 'chế độ ăn nâng cao');
       } else {
         Alert.alert('Không thể gợi ý món ăn', message);
@@ -395,7 +289,7 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
 
           <Text style={styles.filterLabel}>Chế độ ăn</Text>
           <View style={styles.optionGrid}>
-            {DIET_OPTIONS.map(option => (
+            {HOME_DIET_OPTIONS.map(option => (
               <Pressable
                 key={option.value}
                 style={[styles.optionChip, suggestDiet === option.value && styles.optionChipActive]}

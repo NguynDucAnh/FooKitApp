@@ -151,6 +151,7 @@ export interface GrantPremiumRequest {
 
 export interface ToggleBanRequest {
   isActive: boolean;
+  reason?: string | null;
 }
 
 export interface CreateAdminUserRequest {
