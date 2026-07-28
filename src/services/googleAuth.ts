@@ -1,11 +1,14 @@
 import * as AuthSession from 'expo-auth-session';
+import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { GOOGLE_REDIRECT_URI, GOOGLE_WEB_CLIENT_ID } from '../constants';
+import { getJwtPayload } from '../utils/jwt';
 
 WebBrowser.maybeCompleteAuthSession();
 
-function createRandomValue() {
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+async function createRandomValue() {
+  const bytes = await Crypto.getRandomBytesAsync(32);
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function getParamsFromUrl(url: string) {
@@ -26,8 +29,7 @@ export function assertGoogleClientConfigured() {
 export async function startGoogleAuthSessionAsync() {
   assertGoogleClientConfigured();
 
-  const state = createRandomValue();
-  const nonce = createRandomValue();
+  const [state, nonce] = await Promise.all([createRandomValue(), createRandomValue()]);
   const returnUrl = AuthSession.getDefaultReturnUrl();
 
   const googleParams = new URLSearchParams({
@@ -61,7 +63,7 @@ export async function startGoogleAuthSessionAsync() {
     throw new Error(errorDescription ?? error);
   }
 
-  if (returnedState && returnedState !== state) {
+  if (!returnedState || returnedState !== state) {
     throw new Error('Phiên đăng nhập Google không hợp lệ. Vui lòng thử lại.');
   }
 
@@ -69,6 +71,10 @@ export async function startGoogleAuthSessionAsync() {
 
   if (!idToken) {
     throw new Error('Google không trả về idToken.');
+  }
+
+  if (getJwtPayload(idToken)?.nonce !== nonce) {
+    throw new Error('Phản hồi Google không khớp phiên đăng nhập. Vui lòng thử lại.');
   }
 
   return idToken;
