@@ -1,7 +1,8 @@
-import { Linking, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
+import { Alert, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
 import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
 import { Recipe } from '../data/recipes';
 import { useFavorites } from '../context/FavoritesContext';
+import { openExternalHttpsUrl } from '../utils/externalUrl';
 
 interface RecipeDetailScreenProps {
   recipe: Recipe;
@@ -18,6 +19,16 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
   const formatNutrition = (value: number | null | undefined) => (
     typeof value === 'number' ? `${value}g` : 'Chưa có dữ liệu'
   );
+  async function handleOpenAffiliateUrl(productUrl: string) {
+    try {
+      await openExternalHttpsUrl(productUrl);
+    } catch {
+      Alert.alert(
+        'Không thể mở liên kết mua hàng',
+        'Liên kết này không an toàn hoặc thiết bị không hỗ trợ. Vui lòng thử lại sau.',
+      );
+    }
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -144,7 +155,13 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
                   )}
                 </View>
                 {ingredient.affiliateProduct && (
-                  <Pressable style={styles.affiliateBox} onPress={() => Linking.openURL(ingredient.affiliateProduct!.productUrl)}>
+                  <Pressable
+                    style={styles.affiliateBox}
+                    onPress={() => void handleOpenAffiliateUrl(ingredient.affiliateProduct!.productUrl)}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Mở liên kết mua ${ingredient.affiliateProduct.productName}`}
+                    accessibilityHint="Mở trang mua hàng bên ngoài FooKitApp"
+                  >
                     <Text style={styles.affiliateLabel}>Mua gợi ý</Text>
                     <Text style={styles.affiliateName}>{ingredient.affiliateProduct.productName}</Text>
                     <Text style={styles.affiliatePrice}>

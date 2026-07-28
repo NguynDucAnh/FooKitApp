@@ -9,6 +9,7 @@ import { usePlans } from '../../hooks/usePlans';
 import { useSubscription } from '../../hooks/useSubscription';
 import { paymentService } from '../../services/paymentService';
 import { SubscriptionPlan } from '../../types/subscription';
+import { getHttpsUrl } from '../../utils/externalUrl';
 import CancelSubscriptionModal from './CancelSubscriptionModal';
 import CurrentPlanCard from './CurrentPlanCard';
 import PaymentHistoryTable from './PaymentHistoryTable';
@@ -20,16 +21,6 @@ function getPlanLabel(planName: string) {
 
 function getPlanId(plan: SubscriptionPlan) {
   return plan.id ?? plan.planId;
-}
-
-function getPayOSUrlIssue(checkoutUrl: string) {
-  try {
-    const url = new URL(checkoutUrl);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') return 'checkoutUrl không phải HTTP URL hợp lệ.';
-    return null;
-  } catch {
-    return 'checkoutUrl không phải URL hợp lệ.';
-  }
 }
 
 export default function SubscriptionDashboard() {
@@ -76,7 +67,7 @@ export default function SubscriptionDashboard() {
     if (!planId) {
       Alert.alert(
         'Chưa thể thanh toán',
-        'Gói này chưa có planId từ API. Hãy tải lại bảng giá hoặc kiểm tra response /api/Subscriptions/plans.'
+        'Thông tin thanh toán của gói chưa đầy đủ. Hãy tải lại bảng giá và thử lại.'
       );
       return;
     }
@@ -85,17 +76,15 @@ export default function SubscriptionDashboard() {
     try {
       const payment = await paymentService.createPayment({ planId });
 
-      if (!payment.checkoutUrl) {
-        throw new Error('Backend chưa trả về checkoutUrl PayOS nên ứng dụng không thể mở cổng thanh toán.');
-      }
-
-      const paymentUrlIssue = getPayOSUrlIssue(payment.checkoutUrl);
-      if (paymentUrlIssue) {
-        throw new Error(paymentUrlIssue);
+      const checkoutUrl = getHttpsUrl(payment.checkoutUrl);
+      if (!checkoutUrl) {
+        throw new Error(
+          'Cổng thanh toán chưa cung cấp liên kết HTTPS an toàn. Vui lòng thử lại sau.',
+        );
       }
 
       const result = await WebBrowser.openAuthSessionAsync(
-        payment.checkoutUrl,
+        checkoutUrl,
         Linking.createURL('payment/result')
       );
 
@@ -136,7 +125,7 @@ export default function SubscriptionDashboard() {
       <View style={styles.paymentInfo}>
         <ShieldCheck size={18} color={COLORS.primary} />
         <Text style={styles.paymentInfoText}>
-          Thanh toán được xử lý trên cổng PayOS. Sau khi hoàn tất, backend sẽ nhận webhook để kích hoạt Premium.
+          Bạn sẽ rời FooKitApp để thanh toán trên cổng PayOS bảo mật. Gói Premium chỉ được cập nhật sau khi hệ thống xác nhận giao dịch.
         </Text>
       </View>
 
