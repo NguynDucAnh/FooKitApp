@@ -4,9 +4,17 @@ import { Alert } from 'react-native';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
 import { AuthUser, ChangePasswordRequest, GoogleLoginRequest, LoginRequest, RegisterRequest, SetCredentialsRequest, UpdateProfileRequest } from '../types/auth';
-import { getAccessToken, getStoredUser, saveStoredUser } from '../utils/tokenStorage';
+import {
+  clearAuthStorage,
+  getAccessToken,
+  getRefreshToken,
+  getStoredUser,
+  saveStoredUser,
+} from '../utils/tokenStorage';
 import { getAuthErrorMessage } from '../utils/authErrors';
-import { getRolesFromJwt, hasAdminRole } from '../utils/jwt';
+import { getRolesFromJwt, hasAdminRole, isJwtExpired } from '../utils/jwt';
+
+const AUTH_CLOCK_SKEW_SECONDS = 30;
 
 interface AuthContextValue {
   currentUser: AuthUser | null;
@@ -36,8 +44,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function hydrateAuth() {
       try {
-        const [token, user] = await Promise.all([getAccessToken(), getStoredUser()]);
+        const [token, refreshToken, user] = await Promise.all([
+          getAccessToken(),
+          getRefreshToken(),
+          getStoredUser(),
+        ]);
         if (!isActive) return;
+
+        if (!token || !refreshToken || isJwtExpired(token, undefined, AUTH_CLOCK_SKEW_SECONDS)) {
+          await clearAuthStorage();
+          if (!isActive) return;
+          setAccessToken(null);
+          setCurrentUser(null);
+          return;
+        }
 
         const roles = user?.roles?.length ? user.roles : getRolesFromJwt(token);
         setAccessToken(token);

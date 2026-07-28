@@ -2,17 +2,23 @@ import React, { useContext } from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { AuthContext, AuthProvider } from '../AuthContext';
 import {
+  clearAuthStorage,
   getAccessToken,
+  getRefreshToken,
   getStoredUser,
 } from '../../utils/tokenStorage';
 
 jest.mock('../../utils/tokenStorage', () => ({
+  clearAuthStorage: jest.fn(),
   getAccessToken: jest.fn(),
+  getRefreshToken: jest.fn(),
   getStoredUser: jest.fn(),
   saveStoredUser: jest.fn(),
 }));
 
+const mockedClearAuthStorage = clearAuthStorage as jest.MockedFunction<typeof clearAuthStorage>;
 const mockedGetAccessToken = getAccessToken as jest.MockedFunction<typeof getAccessToken>;
+const mockedGetRefreshToken = getRefreshToken as jest.MockedFunction<typeof getRefreshToken>;
 const mockedGetStoredUser = getStoredUser as jest.MockedFunction<typeof getStoredUser>;
 
 type AuthState = NonNullable<React.ContextType<typeof AuthContext>>;
@@ -45,13 +51,25 @@ function getLatestAuthState() {
   return latestAuthState;
 }
 
+function createUnsignedJwt(payload: Record<string, unknown>) {
+  const encode = (value: object) => Buffer
+    .from(JSON.stringify(value), 'utf8')
+    .toString('base64url');
+
+  return `${encode({ alg: 'none', typ: 'JWT' })}.${encode(payload)}.`;
+}
+
 describe('AuthProvider hydration', () => {
   beforeEach(() => {
     latestAuthState = null;
+    mockedClearAuthStorage.mockResolvedValue();
   });
 
   it('hydrates a stored session and exits loading', async () => {
-    mockedGetAccessToken.mockResolvedValue('stored-access-token');
+    mockedGetAccessToken.mockResolvedValue(createUnsignedJwt({
+      exp: Math.floor(Date.now() / 1000) + 3_600,
+    }));
+    mockedGetRefreshToken.mockResolvedValue('stored-refresh-token');
     mockedGetStoredUser.mockResolvedValue({
       username: 'test-user',
       name: 'Người dùng thử',
@@ -62,7 +80,6 @@ describe('AuthProvider hydration', () => {
     const renderer = await renderAuthProvider();
 
     expect(getLatestAuthState()).toMatchObject({
-      accessToken: 'stored-access-token',
       isAuthenticated: true,
       loading: false,
       currentUser: {
@@ -77,6 +94,7 @@ describe('AuthProvider hydration', () => {
 
   it('clears in-memory auth state and exits loading when storage hydration fails', async () => {
     mockedGetAccessToken.mockRejectedValue(new Error('storage unavailable'));
+    mockedGetRefreshToken.mockResolvedValue('stored-refresh-token');
     mockedGetStoredUser.mockResolvedValue({
       username: 'stale-user',
       name: 'Dữ liệu cũ',
@@ -85,6 +103,54 @@ describe('AuthProvider hydration', () => {
 
     const renderer = await renderAuthProvider();
 
+    expect(getLatestAuthState()).toMatchObject({
+      accessToken: null,
+      currentUser: null,
+      isAuthenticated: false,
+      loading: false,
+    });
+
+    renderer.unmount();
+  });
+
+  it('clears an expired persisted session before exposing auth state', async () => {
+    mockedGetAccessToken.mockResolvedValue(createUnsignedJwt({
+      exp: Math.floor(Date.now() / 1000) - 60,
+    }));
+    mockedGetRefreshToken.mockResolvedValue('stored-refresh-token');
+    mockedGetStoredUser.mockResolvedValue({
+      username: 'expired-user',
+      name: 'Người dùng hết hạn',
+      email: 'expired@example.test',
+    });
+
+    const renderer = await renderAuthProvider();
+
+    expect(mockedClearAuthStorage).toHaveBeenCalledTimes(1);
+    expect(getLatestAuthState()).toMatchObject({
+      accessToken: null,
+      currentUser: null,
+      isAuthenticated: false,
+      loading: false,
+    });
+
+    renderer.unmount();
+  });
+
+  it('clears an incomplete persisted session without a refresh token', async () => {
+    mockedGetAccessToken.mockResolvedValue(createUnsignedJwt({
+      exp: Math.floor(Date.now() / 1000) + 3_600,
+    }));
+    mockedGetRefreshToken.mockResolvedValue(null);
+    mockedGetStoredUser.mockResolvedValue({
+      username: 'incomplete-user',
+      name: 'Người dùng thiếu token',
+      email: 'incomplete@example.test',
+    });
+
+    const renderer = await renderAuthProvider();
+
+    expect(mockedClearAuthStorage).toHaveBeenCalledTimes(1);
     expect(getLatestAuthState()).toMatchObject({
       accessToken: null,
       currentUser: null,
