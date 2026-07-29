@@ -2,7 +2,7 @@ import { Heart, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFavorites } from '../context/FavoritesContext';
-import { Recipe } from '../data/recipes';
+import { Recipe } from '../types/recipe';
 import { RecipeCard } from './RecipeCard';
 
 interface Props {

@@ -1,4 +1,4 @@
-import { Recipe } from '../../data/recipes';
+import { Recipe } from '../../types/recipe';
 import { SuggestedDishResult } from '../../types/dish';
 import {
   applyRecipeDetail,
@@ -74,6 +74,7 @@ describe('recipeMapper', () => {
       }, 'lunch', 0);
 
       expect(recipe).toMatchObject({
+        image: null,
         rating: null,
         reviewCount: null,
         time: null,
@@ -112,6 +113,7 @@ describe('recipeMapper', () => {
 
       expect(recipe).toMatchObject({
         id: 'suggest-cache',
+        image: null,
         rating: null,
         reviewCount: null,
         time: null,

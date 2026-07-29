@@ -1,6 +1,6 @@
 import { StyleSheet, View, Text, Image, Pressable } from 'react-native';
-import { Clock, Flame, Heart, ChevronRight } from 'lucide-react-native';
-import { Recipe } from '../data/recipes';
+import { Clock, Flame, Heart, ChevronRight, ImageOff } from 'lucide-react-native';
+import { Recipe } from '../types/recipe';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -19,7 +19,14 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
   return (
     <Pressable style={styles.card} onPress={onClick} android_ripple={{ color: '#F3F4F6' }}>
       <View style={styles.imageWrapper}>
-        <Image source={{ uri: recipe.image }} style={styles.image} />
+        {recipe.image ? (
+          <Image source={{ uri: recipe.image }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <ImageOff size={28} color="#64748B" />
+            <Text style={styles.imagePlaceholderText}>Chưa có ảnh món ăn</Text>
+          </View>
+        )}
         <Pressable
           style={styles.favoriteButton}
           onPress={() => onFavoriteToggle?.(recipe.id)}
@@ -83,6 +90,17 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 180
+  },
+  imagePlaceholder: {
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  imagePlaceholderText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 8
   },
   favoriteButton: {
     position: 'absolute',

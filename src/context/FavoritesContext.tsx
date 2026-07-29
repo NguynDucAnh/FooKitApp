@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
-import { Recipe } from '../data/recipes';
+import { Recipe } from '../types/recipe';
 
 const STORAGE_KEY = '@fookit/favorite-recipes';
 
