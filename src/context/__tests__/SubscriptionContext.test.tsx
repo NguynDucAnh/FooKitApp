@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TestRenderer, { act } from 'react-test-renderer';
+import { unmountWithAct } from '../../test-utils/reactTestRenderer';
 import { useAuth } from '../../hooks/useAuth';
 import { subscriptionService } from '../../services/subscriptionService';
 import { MySubscription } from '../../types/subscription';
@@ -105,7 +106,7 @@ describe('SubscriptionProvider session ownership', () => {
       error: null,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('loads the server-authoritative subscription for the active session', async () => {
@@ -128,7 +129,7 @@ describe('SubscriptionProvider session ownership', () => {
       error: null,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('reuses one in-flight refresh for concurrent calls in the same session', async () => {
@@ -165,7 +166,7 @@ describe('SubscriptionProvider session ownership', () => {
       error: null,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('releases the single-flight slot after a failed refresh', async () => {
@@ -209,7 +210,7 @@ describe('SubscriptionProvider session ownership', () => {
       error: null,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('starts a new authoritative refresh after a subscription mutation', async () => {
@@ -260,7 +261,7 @@ describe('SubscriptionProvider session ownership', () => {
       error: null,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('ignores an older response after the authenticated session changes', async () => {
@@ -321,6 +322,6 @@ describe('SubscriptionProvider session ownership', () => {
       error: null,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

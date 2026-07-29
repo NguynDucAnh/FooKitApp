@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
+import { unmountWithAct } from '../../test-utils/reactTestRenderer';
 import { AuthContext, AuthProvider } from '../AuthContext';
 import {
   clearAuthStorage,
@@ -89,7 +90,7 @@ describe('AuthProvider hydration', () => {
       },
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('clears in-memory auth state and exits loading when storage hydration fails', async () => {
@@ -110,7 +111,7 @@ describe('AuthProvider hydration', () => {
       loading: false,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('clears an expired persisted session before exposing auth state', async () => {
@@ -134,7 +135,7 @@ describe('AuthProvider hydration', () => {
       loading: false,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('clears an incomplete persisted session without a refresh token', async () => {
@@ -158,6 +159,6 @@ describe('AuthProvider hydration', () => {
       loading: false,
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

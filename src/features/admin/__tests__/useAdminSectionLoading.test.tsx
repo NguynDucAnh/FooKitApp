@@ -1,5 +1,6 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act } from 'react-test-renderer';
+import { renderWithAct, unmountWithAct } from '../../../test-utils/reactTestRenderer';
 import {
   useAdminSectionLoading,
 } from '../useAdminSectionLoading';
@@ -30,7 +31,7 @@ describe('useAdminSectionLoading', () => {
     let overviewTask!: Promise<void>;
     let usersTask!: Promise<void>;
 
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <HookHarness onRender={value => {
         controller = value;
       }} />,
@@ -59,7 +60,7 @@ describe('useAdminSectionLoading', () => {
     });
 
     expect(controller.loadingBySection.users).toBe(false);
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('does not clear a section while another request for that section is pending', async () => {
@@ -69,7 +70,7 @@ describe('useAdminSectionLoading', () => {
     let firstTask!: Promise<void>;
     let secondTask!: Promise<void>;
 
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <HookHarness onRender={value => {
         controller = value;
       }} />,
@@ -93,7 +94,7 @@ describe('useAdminSectionLoading', () => {
     });
 
     expect(controller.loadingBySection.users).toBe(false);
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('clears loading when a request rejects', async () => {
@@ -101,7 +102,7 @@ describe('useAdminSectionLoading', () => {
     let controller!: LoadingController;
     let task!: Promise<void>;
 
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <HookHarness onRender={value => {
         controller = value;
       }} />,
@@ -117,6 +118,6 @@ describe('useAdminSectionLoading', () => {
     });
 
     expect(controller.loadingBySection.usage).toBe(false);
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

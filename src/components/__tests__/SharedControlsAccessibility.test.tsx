@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, TouchableOpacity } from 'react-native';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act } from 'react-test-renderer';
+import { renderWithAct, unmountWithAct } from '../../test-utils/reactTestRenderer';
 import Button from '../Button';
 import { BudgetSelector } from '../BudgetSelector';
 import { CategoryChip } from '../CategoryChip';
@@ -9,7 +10,7 @@ import { ToolSelector } from '../ToolSelector';
 
 describe('shared control accessibility', () => {
   it('announces button loading and disabled state', () => {
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <Button title="Lưu thay đổi" onPress={jest.fn()} loading />,
     );
     const button = renderer.root.findByType(TouchableOpacity);
@@ -19,12 +20,12 @@ describe('shared control accessibility', () => {
     expect(button.props.accessibilityState).toEqual({ disabled: true, busy: true });
     expect(StyleSheet.flatten(button.props.style).minHeight).toBeGreaterThanOrEqual(44);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('announces selected budget and preserves its action', () => {
     const onSelect = jest.fn();
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <BudgetSelector
         options={[
           { label: 'Dưới 50.000đ', value: 50000 },
@@ -44,14 +45,14 @@ describe('shared control accessibility', () => {
     });
 
     expect(onSelect).toHaveBeenCalledWith(100000);
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('announces category and time selection with 44-point targets', () => {
-    const categoryRenderer = TestRenderer.create(
+    const categoryRenderer = renderWithAct(
       <CategoryChip label="Món chay" isActive onClick={jest.fn()} />,
     );
-    const timeRenderer = TestRenderer.create(
+    const timeRenderer = renderWithAct(
       <TimeFilter
         filters={[{ label: 'Dưới 30 phút', value: 30 }]}
         selectedTime={30}
@@ -69,12 +70,12 @@ describe('shared control accessibility', () => {
       expect(StyleSheet.flatten(control.props.style).minHeight).toBeGreaterThanOrEqual(44);
     });
 
-    categoryRenderer.unmount();
-    timeRenderer.unmount();
+    unmountWithAct(categoryRenderer);
+    unmountWithAct(timeRenderer);
   });
 
   it('exposes multi-select tools as checked checkboxes', () => {
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <ToolSelector
         tools={[
           { name: 'Nồi chiên', icon: '🍳' },
@@ -91,6 +92,6 @@ describe('shared control accessibility', () => {
     expect(tools[1].props.accessibilityState).toEqual({ checked: false });
     expect(StyleSheet.flatten(tools[0].props.style).minHeight).toBeGreaterThanOrEqual(44);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });
