@@ -140,6 +140,13 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
     }
   }
 
+  function handleNotificationsPress() {
+    Alert.alert(
+      'Thông báo đang được hoàn thiện',
+      'FooKit sẽ hiển thị cập nhật dành cho bạn khi tính năng này sẵn sàng. Hiện tại bạn vẫn có thể khám phá và lưu các món ăn yêu thích.',
+    );
+  }
+
   const suggestedRecipes = [...suggestions.breakfast, ...suggestions.lunch, ...suggestions.dinner];
   const featuredRecipe = suggestedRecipes[0];
   const mealSections = [
@@ -162,9 +169,15 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
         </View>
 
         <View style={styles.headerRight}>
-          <Pressable style={styles.iconButton} android_ripple={{ color: '#D1FAE5' }}>
+          <Pressable
+            style={styles.iconButton}
+            onPress={handleNotificationsPress}
+            android_ripple={{ color: '#D1FAE5' }}
+            accessibilityRole="button"
+            accessibilityLabel="Thông báo"
+            accessibilityHint="Xem trạng thái tính năng thông báo"
+          >
             <Bell color="#FFFFFF" size={20} />
-            <View style={styles.notificationDot} />
           </Pressable>
           <Image
             source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop' }}
@@ -418,21 +431,13 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   iconButton: {
+    width: 44,
+    height: 44,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    padding: 10,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12
-  },
-  notificationDot: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FBBF24'
   },
   avatar: {
     width: 44,

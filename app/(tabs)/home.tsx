@@ -10,6 +10,7 @@ import { dishService } from '../../src/services/dishService';
 import { FavoritesScreen } from '../../src/components/FavoritesScreen';
 import { applyRecipeDetail } from '../../src/mappers/recipeMapper';
 import { RECIPE_DETAIL_COPY } from '../../src/utils/userFacingCopy';
+import { PlannerEmptyState } from '../../src/components/PlannerEmptyState';
 
 const NAV_TABS = ['home', 'discover', 'favorites', 'planner'];
 
@@ -104,10 +105,7 @@ export default function App() {
         )}
 
         {currentView === 'home' && activeTab === 'planner' && (
-          <ScrollView contentContainerStyle={styles.placeholderContent}>
-            <Text style={styles.placeholderTitle}>Lên kế hoạch bữa ăn</Text>
-            <Text style={styles.placeholderText}>Sắp xếp thực đơn hằng tuần của bạn tại đây.</Text>
-          </ScrollView>
+          <PlannerEmptyState onExplore={() => handleTabChange('home')} />
         )}
 
         {activeTab === 'profile' && (
@@ -141,17 +139,6 @@ const styles = StyleSheet.create({
   placeholderContent: {
     padding: 24,
     paddingBottom: 140,
-  },
-  placeholderTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    marginBottom: 12,
-    color: '#064E3B',
-  },
-  placeholderText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#475569',
   },
   profileHeader: {
     alignItems: 'center',
