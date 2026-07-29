@@ -27,6 +27,9 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             style={styles.tabButton}
             onPress={() => onTabChange(tab.id)}
             android_ripple={{ color: '#E5F3DA' }}
+            accessibilityRole="tab"
+            accessibilityLabel={tab.label}
+            accessibilityState={{ selected: isActive }}
           >
             <Icon size={23} color={isActive ? COLORS.primary : COLORS.textGray} />
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
@@ -62,6 +65,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 6,
     minWidth: 62,
+    minHeight: 44,
   },
   tabLabel: {
     marginTop: 4,
