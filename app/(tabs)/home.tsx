@@ -5,7 +5,7 @@ import { HomeScreen } from '../../src/components/HomeScreen';
 import { RecipeDetailScreen } from '../../src/components/RecipeDetailScreen';
 import { BottomNav } from '../../src/components/BottomNav';
 import SubscriptionDashboard from '../../src/components/subscription/SubscriptionDashboard';
-import { Recipe } from '../../src/data/recipes';
+import { Recipe } from '../../src/types/recipe';
 import { dishService } from '../../src/services/dishService';
 import { FavoritesScreen } from '../../src/components/FavoritesScreen';
 import { applyRecipeDetail } from '../../src/mappers/recipeMapper';

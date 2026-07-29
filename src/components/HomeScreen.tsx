@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, StyleSheet, View, Text, TextInput, ScrollView, Image, Pressable, ImageBackground } from 'react-native';
 import { Bell, Sparkles, Sunrise, Sun, Moon, ChefHat, Crown, LockKeyhole } from 'lucide-react-native';
 import { RecipeCard } from './RecipeCard';
-import { recipes, Recipe } from '../data/recipes';
+import { Recipe } from '../types/recipe';
 import { homepageService } from '../services/homepageService';
 import { dishService } from '../services/dishService';
 import { useFavorites } from '../context/FavoritesContext';
@@ -27,11 +27,6 @@ const MEAL_LABELS: Record<MealKey, string> = {
   lunch: 'bữa trưa',
   dinner: 'bữa tối',
 };
-
-function getFallbackRecipes(meal: MealKey) {
-  const category = meal === 'breakfast' ? 'Bữa sáng' : meal === 'lunch' ? 'Bữa trưa' : 'Bữa tối';
-  return recipes.filter(recipe => recipe.category.includes(category)).slice(0, 3);
-}
 
 interface HomeScreenProps {
   onRecipeClick: (recipe: Recipe) => void;
@@ -70,29 +65,24 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
       setIsPremiumExpired(result.isPremiumExpired);
       setSuggestions(current => ({
         breakfast: failedMeals.has('breakfast')
-          ? current.breakfast.length ? current.breakfast : getFallbackRecipes('breakfast')
+          ? current.breakfast
           : result.breakfast.map((dish, index) => mapHomepageDishToRecipe(dish, 'breakfast', index)),
         lunch: failedMeals.has('lunch')
-          ? current.lunch.length ? current.lunch : getFallbackRecipes('lunch')
+          ? current.lunch
           : result.lunch.map((dish, index) => mapHomepageDishToRecipe(dish, 'lunch', index)),
         dinner: failedMeals.has('dinner')
-          ? current.dinner.length ? current.dinner : getFallbackRecipes('dinner')
+          ? current.dinner
           : result.dinner.map((dish, index) => mapHomepageDishToRecipe(dish, 'dinner', index)),
       }));
 
       if (result.failedMeals.length > 0) {
         const failedLabels = result.failedMeals.map(meal => MEAL_LABELS[meal]).join(', ');
-        setSuggestionsError(`Không thể tải ${failedLabels}. Các bữa còn lại vẫn được cập nhật. Kéo xuống để thử lại.`);
+        setSuggestionsError(`Không thể cập nhật ${failedLabels}. Dữ liệu đã tải trước đó, nếu có, vẫn được giữ lại. Kéo xuống để thử lại.`);
       }
     } catch {
       if (requestId !== suggestionsRequestId.current) return;
 
-      setSuggestionsError('Không thể tải thực đơn hôm nay. Đang hiển thị công thức mẫu để bạn tham khảo.');
-      setSuggestions({
-        breakfast: getFallbackRecipes('breakfast'),
-        lunch: getFallbackRecipes('lunch'),
-        dinner: getFallbackRecipes('dinner'),
-      });
+      setSuggestionsError('Không thể tải thực đơn hôm nay. Dữ liệu đã tải trước đó, nếu có, vẫn được giữ lại. Kéo xuống để thử lại.');
     } finally {
       if (requestId === suggestionsRequestId.current) {
         setSuggestionsLoading(false);
@@ -151,7 +141,7 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
   }
 
   const suggestedRecipes = [...suggestions.breakfast, ...suggestions.lunch, ...suggestions.dinner];
-  const featuredRecipe = suggestedRecipes[0] ?? recipes.find((r) => r.id === '3');
+  const featuredRecipe = suggestedRecipes[0];
   const mealSections = [
     { key: 'breakfast' as const, title: 'Bữa sáng', subtitle: 'Nhẹ bụng, đủ năng lượng mở đầu ngày mới.', icon: Sunrise, data: suggestions.breakfast },
     { key: 'lunch' as const, title: 'Bữa trưa', subtitle: 'Cân bằng dinh dưỡng để giữ nhịp làm việc.', icon: Sun, data: suggestions.lunch },
@@ -183,20 +173,55 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
         </View>
       </View>
 
-      <ImageBackground
-        source={{ uri: featuredRecipe?.image ?? '' }}
-        style={styles.featuredCard}
-        imageStyle={styles.featuredImage}
-      >
-        <View style={styles.featuredOverlay} />
-        <View style={styles.featuredContent}>
-          <Text style={styles.featuredLabel}>Công thức hôm nay</Text>
-          <Text style={styles.featuredTitle}>{featuredRecipe?.name}</Text>
-          <Pressable style={styles.primaryButton} onPress={() => featuredRecipe && onRecipeClick(featuredRecipe)} android_ripple={{ color: '#D1FAE5' }}>
-            <Text style={styles.primaryButtonText}>Nấu ngay</Text>
-          </Pressable>
+      {featuredRecipe ? (
+        featuredRecipe.image ? (
+          <ImageBackground
+            source={{ uri: featuredRecipe.image }}
+            style={styles.featuredCard}
+            imageStyle={styles.featuredImage}
+          >
+            <View style={styles.featuredOverlay} />
+            <View style={styles.featuredContent}>
+              <Text style={styles.featuredLabel}>Công thức hôm nay</Text>
+              <Text style={styles.featuredTitle}>{featuredRecipe.name}</Text>
+              <Pressable style={styles.primaryButton} onPress={() => onRecipeClick(featuredRecipe)} android_ripple={{ color: '#D1FAE5' }}>
+                <Text style={styles.primaryButtonText}>Nấu ngay</Text>
+              </Pressable>
+            </View>
+          </ImageBackground>
+        ) : (
+          <View style={[styles.featuredCard, styles.featuredPlaceholder]}>
+            <View style={styles.featuredContent}>
+              <Text style={styles.featuredLabel}>Công thức hôm nay</Text>
+              <Text style={styles.featuredTitle}>{featuredRecipe.name}</Text>
+              <Text style={styles.featuredEmptyText}>Chưa có ảnh món ăn</Text>
+              <Pressable style={styles.primaryButton} onPress={() => onRecipeClick(featuredRecipe)} android_ripple={{ color: '#D1FAE5' }}>
+                <Text style={styles.primaryButtonText}>Xem công thức</Text>
+              </Pressable>
+            </View>
+          </View>
+        )
+      ) : (
+        <View style={[styles.featuredCard, styles.featuredPlaceholder]}>
+          <View style={styles.featuredContent}>
+            <Text style={styles.featuredLabel}>Công thức hôm nay</Text>
+            <Text style={styles.featuredEmptyTitle}>Thực đơn đang được cập nhật</Text>
+            <Text style={styles.featuredEmptyText}>Chưa có món để hiển thị lúc này.</Text>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => void loadSuggestions()}
+              disabled={suggestionsLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Thử tải lại thực đơn hôm nay"
+              accessibilityState={{ busy: suggestionsLoading, disabled: suggestionsLoading }}
+            >
+              <Text style={styles.primaryButtonText}>
+                {suggestionsLoading ? 'Đang tải...' : 'Thử tải lại'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
-      </ImageBackground>
+      )}
 
       <View style={styles.section}>
         <View style={styles.sectionHeaderLarge}>
@@ -426,6 +451,9 @@ const styles = StyleSheet.create({
   featuredImage: {
     opacity: 0.9
   },
+  featuredPlaceholder: {
+    backgroundColor: '#166534'
+  },
   featuredOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(15, 23, 42, 0.35)'
@@ -444,6 +472,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '800',
+    marginBottom: 12
+  },
+  featuredEmptyTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 6
+  },
+  featuredEmptyText: {
+    color: '#D1FAE5',
+    fontSize: 13,
     marginBottom: 12
   },
   primaryButton: {

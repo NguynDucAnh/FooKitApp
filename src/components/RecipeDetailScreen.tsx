@@ -1,6 +1,6 @@
 import { Alert, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
-import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2 } from 'lucide-react-native';
-import { Recipe } from '../data/recipes';
+import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2, ImageOff } from 'lucide-react-native';
+import { Recipe } from '../types/recipe';
 import { useFavorites } from '../context/FavoritesContext';
 import { openExternalHttpsUrl } from '../utils/externalUrl';
 
@@ -30,39 +30,57 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
     }
   }
 
+  const heroContent = (
+    <>
+      <View style={styles.heroOverlay} />
+      {!recipe.image && (
+        <View style={styles.heroImagePlaceholderContent}>
+          <ImageOff size={32} color="#E2E8F0" />
+          <Text style={styles.heroImagePlaceholderText}>Chưa có ảnh món ăn</Text>
+        </View>
+      )}
+      <Pressable style={styles.backButton} onPress={onBack} android_ripple={{ color: '#E5E7EB' }}>
+        <ArrowLeft size={20} color="#111827" />
+      </Pressable>
+      <View style={styles.heroActions}>
+        <Pressable style={[styles.iconButton, styles.heroActionButton]} onPress={() => toggleFavorite(recipe)} android_ripple={{ color: '#E5E7EB' }}>
+          <Heart size={20} color={favorited ? '#DC2626' : '#111827'} fill={favorited ? '#DC2626' : 'transparent'} />
+        </Pressable>
+        <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
+          <Share2 size={20} color="#111827" />
+        </Pressable>
+      </View>
+      <View style={styles.heroFooter}>
+        <View style={styles.categoriesRow}>
+          {recipe.category.slice(0, 2).map((cat, index) => (
+            <View key={cat} style={[styles.categoryBadge, index > 0 && styles.categoryBadgeSpacing]}>
+              <Text style={styles.categoryBadgeText}>{cat}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={styles.recipeTitle}>{recipe.name}</Text>
+        <View style={styles.ratingRow}>
+          <Star size={18} color="#F59E0B" />
+          <Text style={styles.ratingText}>{hasRating ? recipe.rating : 'Chưa có đánh giá'}</Text>
+          {hasReviewCount && (
+            <Text style={styles.ratingSubtext}>({recipe.reviewCount} đánh giá)</Text>
+          )}
+        </View>
+      </View>
+    </>
+  );
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-      <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
-        <View style={styles.heroOverlay} />
-        <Pressable style={styles.backButton} onPress={onBack} android_ripple={{ color: '#E5E7EB' }}>
-          <ArrowLeft size={20} color="#111827" />
-        </Pressable>
-        <View style={styles.heroActions}>
-          <Pressable style={[styles.iconButton, styles.heroActionButton]} onPress={() => toggleFavorite(recipe)} android_ripple={{ color: '#E5E7EB' }}>
-            <Heart size={20} color={favorited ? '#DC2626' : '#111827'} fill={favorited ? '#DC2626' : 'transparent'} />
-          </Pressable>
-          <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
-            <Share2 size={20} color="#111827" />
-          </Pressable>
+      {recipe.image ? (
+        <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
+          {heroContent}
+        </ImageBackground>
+      ) : (
+        <View style={[styles.heroImage, styles.heroImagePlaceholder]}>
+          {heroContent}
         </View>
-        <View style={styles.heroFooter}>
-          <View style={styles.categoriesRow}>
-            {recipe.category.slice(0, 2).map((cat, index) => (
-              <View key={cat} style={[styles.categoryBadge, index > 0 && styles.categoryBadgeSpacing]}>
-                <Text style={styles.categoryBadgeText}>{cat}</Text>
-              </View>
-            ))}
-          </View>
-          <Text style={styles.recipeTitle}>{recipe.name}</Text>
-          <View style={styles.ratingRow}>
-            <Star size={18} color="#F59E0B" />
-            <Text style={styles.ratingText}>{hasRating ? recipe.rating : 'Chưa có đánh giá'}</Text>
-            {hasReviewCount && (
-              <Text style={styles.ratingSubtext}>({recipe.reviewCount} đánh giá)</Text>
-            )}
-          </View>
-        </View>
-      </ImageBackground>
+      )}
 
       <View style={styles.body}>
         {loadingRemoteDetail && (
@@ -213,6 +231,20 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 260,
     justifyContent: 'space-between'
+  },
+  heroImagePlaceholder: {
+    backgroundColor: '#334155'
+  },
+  heroImagePlaceholderContent: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  heroImagePlaceholderText: {
+    color: '#E2E8F0',
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 8
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,

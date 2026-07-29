@@ -1,14 +1,8 @@
-import { Recipe } from '../data/recipes';
+import { Recipe } from '../types/recipe';
 import { SuggestedDishResult, DishRecipeResponse } from '../types/dish';
 import { SuggestedDish } from '../types/homepage';
 
 export type MealKey = 'breakfast' | 'lunch' | 'dinner';
-
-const MEAL_IMAGES: Record<MealKey, string> = {
-  breakfast: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=600&fit=crop',
-  lunch: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop',
-  dinner: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop',
-};
 
 const MEAL_LABELS: Record<MealKey, string> = {
   breakfast: 'Bữa sáng',
@@ -76,7 +70,7 @@ export function mapHomepageDishToRecipe(
     id: dish.id || dishCacheId || stableFallbackId(meal, name),
     dishCacheId,
     name,
-    image: dish.image || dish.imageUrl || dish.thumbnailUrl || MEAL_IMAGES[meal],
+    image: dish.image || dish.imageUrl || dish.thumbnailUrl || null,
     rating: toFiniteNumber(dish.rating),
     reviewCount: toFiniteNumber(dish.reviewCount),
     time: toFiniteNumber(dish.time ?? dish.cookingTime ?? dish.cookingTimeMinutes),
@@ -114,7 +108,7 @@ export function mapSuggestedDishToRecipe(
     id: dishCacheId || stableFallbackId('suggest', name),
     dishCacheId,
     name,
-    image: dish.imageUrl || MEAL_IMAGES.dinner,
+    image: dish.imageUrl || null,
     rating: null,
     reviewCount: null,
     time: null,
