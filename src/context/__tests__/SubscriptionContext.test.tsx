@@ -131,6 +131,138 @@ describe('SubscriptionProvider session ownership', () => {
     renderer.unmount();
   });
 
+  it('reuses one in-flight refresh for concurrent calls in the same session', async () => {
+    const request = createDeferred<MySubscription>();
+    setAuthSession('session-a');
+    mockedGetMySubscription.mockReturnValue(request.promise);
+
+    const renderer = await renderProvider();
+    let firstRefresh!: Promise<void>;
+    let secondRefresh!: Promise<void>;
+
+    act(() => {
+      firstRefresh = latestState!.refreshSubscription();
+      secondRefresh = latestState!.refreshSubscription();
+    });
+
+    expect(firstRefresh).toBe(secondRefresh);
+    expect(mockedGetMySubscription).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      request.resolve({
+        isPremium: true,
+        planName: 'Premium',
+      });
+      await firstRefresh;
+    });
+
+    expect(latestState).toMatchObject({
+      subscription: {
+        isPremium: true,
+        planName: 'Premium',
+      },
+      loading: false,
+      error: null,
+    });
+
+    renderer.unmount();
+  });
+
+  it('releases the single-flight slot after a failed refresh', async () => {
+    const firstRequest = createDeferred<MySubscription>();
+    setAuthSession('session-a');
+    mockedGetMySubscription
+      .mockReturnValueOnce(firstRequest.promise)
+      .mockResolvedValueOnce({
+        isPremium: false,
+        planName: 'Free',
+      });
+
+    const renderer = await renderProvider();
+    let failedRefresh!: Promise<void>;
+
+    act(() => {
+      failedRefresh = latestState!.refreshSubscription();
+    });
+
+    await act(async () => {
+      firstRequest.reject(new Error('network unavailable'));
+      await failedRefresh;
+    });
+
+    expect(latestState).toMatchObject({
+      loading: false,
+      error: 'network unavailable',
+    });
+
+    await act(async () => {
+      await latestState!.refreshSubscription();
+    });
+
+    expect(mockedGetMySubscription).toHaveBeenCalledTimes(2);
+    expect(latestState).toMatchObject({
+      subscription: {
+        isPremium: false,
+        planName: 'Free',
+      },
+      loading: false,
+      error: null,
+    });
+
+    renderer.unmount();
+  });
+
+  it('starts a new authoritative refresh after a subscription mutation', async () => {
+    const beforeMutation = createDeferred<MySubscription>();
+    const afterMutation = createDeferred<MySubscription>();
+    setAuthSession('session-a');
+    mockedGetMySubscription
+      .mockReturnValueOnce(beforeMutation.promise)
+      .mockReturnValueOnce(afterMutation.promise);
+
+    const renderer = await renderProvider();
+    let forcedRefresh!: Promise<void>;
+
+    await act(async () => {
+      forcedRefresh = latestState!.refreshSubscription({ force: true });
+      await Promise.resolve();
+    });
+
+    expect(mockedGetMySubscription).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      beforeMutation.resolve({
+        isPremium: true,
+        planName: 'Old plan',
+      });
+      await beforeMutation.promise;
+    });
+
+    expect(latestState).toMatchObject({
+      subscription: null,
+      loading: true,
+    });
+
+    await act(async () => {
+      afterMutation.resolve({
+        isPremium: false,
+        planName: 'Free',
+      });
+      await forcedRefresh;
+    });
+
+    expect(latestState).toMatchObject({
+      subscription: {
+        isPremium: false,
+        planName: 'Free',
+      },
+      loading: false,
+      error: null,
+    });
+
+    renderer.unmount();
+  });
+
   it('ignores an older response after the authenticated session changes', async () => {
     const firstRequest = createDeferred<MySubscription>();
     const secondRequest = createDeferred<MySubscription>();
