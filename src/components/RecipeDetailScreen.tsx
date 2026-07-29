@@ -1,8 +1,10 @@
-import { Alert, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable } from 'react-native';
-import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkPlus, Share2, ImageOff } from 'lucide-react-native';
+import { useRef, useState } from 'react';
+import { Alert, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable, Share } from 'react-native';
+import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkCheck, BookmarkPlus, Share2, ImageOff } from 'lucide-react-native';
 import { Recipe } from '../types/recipe';
 import { useFavorites } from '../context/FavoritesContext';
 import { openExternalHttpsUrl } from '../utils/externalUrl';
+import { buildRecipeShareMessage } from '../utils/recipeActions';
 
 interface RecipeDetailScreenProps {
   recipe: Recipe;
@@ -13,6 +15,10 @@ interface RecipeDetailScreenProps {
 
 export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false, remoteDetailError = '' }: RecipeDetailScreenProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const bodyOffsetRef = useRef(0);
+  const instructionsOffsetRef = useRef(0);
+  const [sharing, setSharing] = useState(false);
   const favorited = isFavorite(recipe);
   const hasRating = typeof recipe.rating === 'number';
   const hasReviewCount = typeof recipe.reviewCount === 'number';
@@ -29,6 +35,40 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
       );
     }
   }
+  async function handleShare() {
+    if (sharing) {
+      return;
+    }
+
+    setSharing(true);
+    try {
+      await Share.share({
+        title: recipe.name,
+        message: buildRecipeShareMessage(recipe),
+      });
+    } catch {
+      Alert.alert(
+        'Không thể chia sẻ công thức',
+        'Thiết bị chưa thể mở bảng chia sẻ. Vui lòng thử lại.',
+      );
+    } finally {
+      setSharing(false);
+    }
+  }
+  function handleStartCooking() {
+    if (recipe.instructions.length === 0) {
+      Alert.alert(
+        'Chưa có hướng dẫn nấu',
+        'Công thức này chưa có các bước thực hiện. Vui lòng thử lại sau.',
+      );
+      return;
+    }
+
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, bodyOffsetRef.current + instructionsOffsetRef.current - 16),
+      animated: true,
+    });
+  }
 
   const heroContent = (
     <>
@@ -39,7 +79,13 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           <Text style={styles.heroImagePlaceholderText}>Chưa có ảnh món ăn</Text>
         </View>
       )}
-      <Pressable style={styles.backButton} onPress={onBack} android_ripple={{ color: '#E5E7EB' }}>
+      <Pressable
+        style={styles.backButton}
+        onPress={onBack}
+        android_ripple={{ color: '#E5E7EB' }}
+        accessibilityRole="button"
+        accessibilityLabel="Quay lại"
+      >
         <ArrowLeft size={20} color="#111827" />
       </Pressable>
       <View style={styles.heroActions}>
@@ -55,7 +101,16 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
         >
           <Heart size={20} color={favorited ? '#DC2626' : '#111827'} fill={favorited ? '#DC2626' : 'transparent'} />
         </Pressable>
-        <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
+        <Pressable
+          style={[styles.iconButton, sharing && styles.disabledButton]}
+          onPress={() => void handleShare()}
+          disabled={sharing}
+          android_ripple={{ color: '#E5E7EB' }}
+          accessibilityRole="button"
+          accessibilityLabel={`Chia sẻ công thức ${recipe.name}`}
+          accessibilityHint="Mở bảng chia sẻ của thiết bị"
+          accessibilityState={{ disabled: sharing }}
+        >
           <Share2 size={20} color="#111827" />
         </Pressable>
       </View>
@@ -80,7 +135,12 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      ref={scrollViewRef}
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={false}
+    >
       {recipe.image ? (
         <ImageBackground source={{ uri: recipe.image }} style={styles.heroImage}>
           {heroContent}
@@ -91,7 +151,13 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
         </View>
       )}
 
-      <View style={styles.body}>
+      <View
+        style={styles.body}
+        testID="recipe-detail-body"
+        onLayout={(event) => {
+          bodyOffsetRef.current = event.nativeEvent.layout.y;
+        }}
+      >
         {loadingRemoteDetail && (
           <View style={styles.remoteDetailNotice}>
             <Text style={styles.remoteDetailNoticeText}>Đang tải công thức chi tiết...</Text>
@@ -203,24 +269,53 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           ))}
         </View>
 
-        <View style={styles.section}>
+        <View
+          style={styles.section}
+          testID="recipe-instructions"
+          onLayout={(event) => {
+            instructionsOffsetRef.current = event.nativeEvent.layout.y;
+          }}
+        >
           <Text style={styles.sectionTitle}>Cách thực hiện</Text>
-          {recipe.instructions.map((instruction, index) => (
-            <View key={index} style={styles.instructionRow}>
-              <View style={styles.instructionIndex}>
-                <Text style={styles.instructionIndexText}>{index + 1}</Text>
+          {recipe.instructions.length > 0 ? (
+            recipe.instructions.map((instruction, index) => (
+              <View key={index} style={styles.instructionRow}>
+                <View style={styles.instructionIndex}>
+                  <Text style={styles.instructionIndexText}>{index + 1}</Text>
+                </View>
+                <Text style={styles.instructionText}>{instruction}</Text>
               </View>
-              <Text style={styles.instructionText}>{instruction}</Text>
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.emptySectionText}>Chưa có hướng dẫn nấu cho món này.</Text>
+          )}
         </View>
 
         <View style={styles.bottomBar}>
-          <Pressable style={[styles.actionButton, styles.actionButtonMargin]} android_ripple={{ color: '#D1FAE5' }}>
+          <Pressable
+            style={[styles.actionButton, styles.actionButtonMargin]}
+            onPress={handleStartCooking}
+            android_ripple={{ color: '#D1FAE5' }}
+            accessibilityRole="button"
+            accessibilityLabel="Bắt đầu nấu"
+            accessibilityHint="Di chuyển đến các bước thực hiện"
+          >
             <Text style={styles.actionButtonText}>Bắt đầu nấu</Text>
           </Pressable>
-          <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>
-            <BookmarkPlus size={20} color="#111827" />
+          <Pressable
+            style={[styles.iconButton, favorited && styles.savedButton]}
+            onPress={() => void toggleFavorite(recipe)}
+            android_ripple={{ color: '#E5E7EB' }}
+            accessibilityRole="button"
+            accessibilityLabel={favorited
+              ? `Bỏ món ${recipe.name} khỏi danh sách yêu thích`
+              : `Lưu món ${recipe.name} vào danh sách yêu thích`}
+            accessibilityHint={favorited ? 'Bỏ lưu công thức này' : 'Lưu công thức để xem lại sau'}
+            accessibilityState={{ selected: favorited }}
+          >
+            {favorited
+              ? <BookmarkCheck size={20} color="#047857" />
+              : <BookmarkPlus size={20} color="#111827" />}
           </Pressable>
         </View>
       </View>
@@ -284,6 +379,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.92)',
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  disabledButton: {
+    opacity: 0.55
+  },
+  savedButton: {
+    backgroundColor: '#D1FAE5'
   },
   heroFooter: {
     margin: 20
@@ -523,6 +624,10 @@ const styles = StyleSheet.create({
   instructionText: {
     flex: 1,
     color: '#374151',
+    lineHeight: 22
+  },
+  emptySectionText: {
+    color: '#64748B',
     lineHeight: 22
   },
   bottomBar: {
