@@ -10,7 +10,7 @@ import {
 import { Leaf, ShieldCheck, Utensils, Wallet } from 'lucide-react-native';
 import { COLORS } from '../../constants';
 
-const coverImage = require('../../../img/auth-cover.png');
+const coverImage = require('../../../img/auth-cover.jpg');
 const logoImage = require('../../../img/fookit-logo.jpg');
 
 interface Props {
