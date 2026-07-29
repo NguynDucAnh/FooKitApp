@@ -9,6 +9,7 @@ import { Recipe } from '../../src/types/recipe';
 import { dishService } from '../../src/services/dishService';
 import { FavoritesScreen } from '../../src/components/FavoritesScreen';
 import { applyRecipeDetail } from '../../src/mappers/recipeMapper';
+import { RECIPE_DETAIL_COPY } from '../../src/utils/userFacingCopy';
 
 const NAV_TABS = ['home', 'discover', 'favorites', 'planner'];
 
@@ -35,7 +36,7 @@ export default function App() {
     setRecipeDetailError('');
 
     if (!recipe.dishCacheId) {
-      setRecipeDetailError('Món này chưa có dishCacheId từ API gợi ý, nên chưa thể tải công thức đầy đủ.');
+      setRecipeDetailError(RECIPE_DETAIL_COPY.missingReference);
       return;
     }
 
@@ -49,10 +50,10 @@ export default function App() {
     } catch (error: any) {
       const status = error?.response?.status;
       setRecipeDetailError(status === 404
-        ? 'Công thức này không còn trong cache hoặc dishCacheId không tồn tại. Hãy tải lại gợi ý để nhận món mới.'
+        ? RECIPE_DETAIL_COPY.notFound
         : status === 401
-          ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tải công thức.'
-          : 'Chưa thể tải công thức chi tiết. Dữ liệu gợi ý ban đầu vẫn đang được hiển thị.');
+          ? RECIPE_DETAIL_COPY.expiredSession
+          : RECIPE_DETAIL_COPY.unavailable);
     } finally {
       setLoadingRecipeDetail(false);
     }
