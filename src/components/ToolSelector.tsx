@@ -1,4 +1,4 @@
-﻿import { ScrollView, Pressable, Text, StyleSheet, View } from 'react-native';
+import { ScrollView, Pressable, Text, StyleSheet } from 'react-native';
 
 interface ToolSelectorProps {
   tools: { name: string; icon: string }[];
@@ -17,6 +17,9 @@ export function ToolSelector({ tools, selectedTools, onToggle }: ToolSelectorPro
             onPress={() => onToggle(tool.name)}
             style={[styles.toolButton, isSelected ? styles.toolButtonActive : styles.toolButtonInactive]}
             android_ripple={{ color: '#D1FAE5' }}
+            accessibilityRole="checkbox"
+            accessibilityLabel={tool.name}
+            accessibilityState={{ checked: isSelected }}
           >
             <Text style={styles.toolIcon}>{tool.icon}</Text>
             <Text style={[styles.toolLabel, isSelected && styles.toolLabelActive]}>{tool.name}</Text>
@@ -32,6 +35,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6
   },
   toolButton: {
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,

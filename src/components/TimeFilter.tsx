@@ -1,4 +1,4 @@
-﻿import { ScrollView, Pressable, Text, StyleSheet } from 'react-native';
+import { ScrollView, Pressable, Text, StyleSheet } from 'react-native';
 
 interface TimeFilterProps {
   filters: { label: string; value: number }[];
@@ -17,6 +17,9 @@ export function TimeFilter({ filters, selectedTime, onSelect }: TimeFilterProps)
             onPress={() => onSelect(filter.value)}
             style={[styles.filterButton, isSelected ? styles.filterButtonActive : styles.filterButtonInactive]}
             android_ripple={{ color: '#D1FAE5' }}
+            accessibilityRole="button"
+            accessibilityLabel={filter.label}
+            accessibilityState={{ selected: isSelected }}
           >
             <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>{filter.label}</Text>
           </Pressable>
@@ -31,6 +34,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6
   },
   filterButton: {
+    minHeight: 44,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 999,
