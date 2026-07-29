@@ -13,7 +13,7 @@ interface RecipeDetailScreenProps {
 
 export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false, remoteDetailError = '' }: RecipeDetailScreenProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const favorited = isFavorite(recipe.id);
+  const favorited = isFavorite(recipe);
   const hasRating = typeof recipe.rating === 'number';
   const hasReviewCount = typeof recipe.reviewCount === 'number';
   const formatNutrition = (value: number | null | undefined) => (
@@ -43,7 +43,16 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
         <ArrowLeft size={20} color="#111827" />
       </Pressable>
       <View style={styles.heroActions}>
-        <Pressable style={[styles.iconButton, styles.heroActionButton]} onPress={() => toggleFavorite(recipe)} android_ripple={{ color: '#E5E7EB' }}>
+        <Pressable
+          style={[styles.iconButton, styles.heroActionButton]}
+          onPress={() => void toggleFavorite(recipe)}
+          android_ripple={{ color: '#E5E7EB' }}
+          accessibilityRole="button"
+          accessibilityLabel={favorited
+            ? `Bỏ món ${recipe.name} khỏi danh sách yêu thích`
+            : `Lưu món ${recipe.name} vào danh sách yêu thích`}
+          accessibilityState={{ selected: favorited }}
+        >
           <Heart size={20} color={favorited ? '#DC2626' : '#111827'} fill={favorited ? '#DC2626' : 'transparent'} />
         </Pressable>
         <Pressable style={styles.iconButton} android_ripple={{ color: '#E5E7EB' }}>

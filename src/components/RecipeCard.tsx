@@ -1,10 +1,11 @@
 import { StyleSheet, View, Text, Image, Pressable } from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
 import { Clock, Flame, Heart, ChevronRight, ImageOff } from 'lucide-react-native';
 import { Recipe } from '../types/recipe';
 
 interface RecipeCardProps {
   recipe: Recipe;
-  onFavoriteToggle?: (id: string) => void;
+  onFavoriteToggle?: () => void;
   onClick?: () => void;
 }
 
@@ -17,7 +18,13 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
     : 'Chưa có dữ liệu';
 
   return (
-    <Pressable style={styles.card} onPress={onClick} android_ripple={{ color: '#F3F4F6' }}>
+    <Pressable
+      style={styles.card}
+      onPress={onClick}
+      android_ripple={{ color: '#F3F4F6' }}
+      accessibilityRole="button"
+      accessibilityLabel={`Xem chi tiết món ${recipe.name}`}
+    >
       <View style={styles.imageWrapper}>
         {recipe.image ? (
           <Image source={{ uri: recipe.image }} style={styles.image} />
@@ -29,8 +36,16 @@ export function RecipeCard({ recipe, onFavoriteToggle, onClick }: RecipeCardProp
         )}
         <Pressable
           style={styles.favoriteButton}
-          onPress={() => onFavoriteToggle?.(recipe.id)}
+          onPress={(event: GestureResponderEvent) => {
+            event.stopPropagation();
+            onFavoriteToggle?.();
+          }}
           android_ripple={{ color: '#E5E7EB' }}
+          accessibilityRole="button"
+          accessibilityLabel={recipe.isFavorite
+            ? `Bỏ món ${recipe.name} khỏi danh sách yêu thích`
+            : `Lưu món ${recipe.name} vào danh sách yêu thích`}
+          accessibilityState={{ selected: recipe.isFavorite }}
         >
           <Heart size={18} color={recipe.isFavorite ? '#DC2626' : '#4B5563'} fill={recipe.isFavorite ? '#DC2626' : 'transparent'} />
         </Pressable>
@@ -106,9 +121,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.92)',
     justifyContent: 'center',
     alignItems: 'center'

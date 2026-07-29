@@ -67,7 +67,7 @@ export function mapHomepageDishToRecipe(
   const cost = dish.budget ?? dish.estimatedCost ?? dish.totalCost ?? dish.price;
 
   return {
-    id: dish.id || dishCacheId || stableFallbackId(meal, name),
+    id: dishCacheId || dish.id || stableFallbackId(meal, name),
     dishCacheId,
     name,
     image: dish.image || dish.imageUrl || dish.thumbnailUrl || null,

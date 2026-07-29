@@ -94,6 +94,16 @@ describe('recipeMapper', () => {
       expect(mapHomepageDishToRecipe(dish, 'dinner', 0).id)
         .toBe(mapHomepageDishToRecipe(dish, 'dinner', 9).id);
     });
+
+    it('prefers dishCacheId over a generic dish record id', () => {
+      const recipe = mapHomepageDishToRecipe({
+        id: 'dish-record-id',
+        dishCacheId: 'stable-cache-id',
+        name: 'Món ổn định',
+      }, 'dinner', 0);
+
+      expect(recipe.id).toBe('stable-cache-id');
+    });
   });
 
   describe('mapSuggestedDishToRecipe', () => {

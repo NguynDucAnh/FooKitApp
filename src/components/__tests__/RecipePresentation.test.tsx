@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ImageBackground, Text } from 'react-native';
+import { Image, ImageBackground, Pressable, Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { Recipe } from '../../types/recipe';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -89,6 +89,37 @@ describe('recipe presentation data integrity', () => {
 
     expect(renderer.root.findAllByType(Image)).toHaveLength(0);
     expect(hasExactText(renderer, 'Chưa có ảnh món ăn')).toBe(true);
+
+    renderer.unmount();
+  });
+
+  it('keeps the nested favorite action separate from opening the recipe card', () => {
+    const onClick = jest.fn();
+    const onFavoriteToggle = jest.fn();
+    const stopPropagation = jest.fn();
+    const recipe = createRecipe({ name: 'Canh rau', isFavorite: true });
+    const renderer = TestRenderer.create(
+      <RecipeCard
+        recipe={recipe}
+        onClick={onClick}
+        onFavoriteToggle={onFavoriteToggle}
+      />,
+    );
+    const favoriteButton = renderer.root.findAllByType(Pressable).find(
+      node => node.props.accessibilityLabel === 'Bỏ món Canh rau khỏi danh sách yêu thích',
+    );
+
+    expect(favoriteButton).toBeDefined();
+    expect(favoriteButton!.props.accessibilityRole).toBe('button');
+    expect(favoriteButton!.props.accessibilityState).toEqual({ selected: true });
+
+    act(() => {
+      favoriteButton!.props.onPress({ stopPropagation });
+    });
+
+    expect(stopPropagation).toHaveBeenCalledTimes(1);
+    expect(onFavoriteToggle).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
 
     renderer.unmount();
   });
