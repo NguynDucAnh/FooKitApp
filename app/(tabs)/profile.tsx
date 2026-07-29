@@ -82,6 +82,9 @@ export default function ProfileScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const hasCurrentUser = Boolean(currentUser);
+  const currentUserId = currentUser?.id;
+  const currentUsername = currentUser?.username;
 
   useEffect(() => {
     const nextUser = { ...EMPTY_USER, ...(currentUser ?? {}) };
@@ -93,7 +96,7 @@ export default function ProfileScreen() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!hasCurrentUser) return;
 
     async function loadDietaryProfile() {
       setLoadingFoodProfile(true);
@@ -113,7 +116,7 @@ export default function ProfileScreen() {
     }
 
     loadDietaryProfile();
-  }, [currentUser?.id, currentUser?.username]);
+  }, [currentUserId, currentUsername, hasCurrentUser]);
 
   const avatarSource = useMemo(() => {
     return form.avatarUrl?.trim() ? { uri: form.avatarUrl.trim() } : brandLogo;

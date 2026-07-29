@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -98,6 +98,7 @@ export default function AdminDashboardScreen() {
   const [planForm, setPlanForm] = useState(emptyPlanForm);
   const [affiliateForm, setAffiliateForm] = useState(emptyAffiliateForm);
   const { loadingBySection, runWithSectionLoading } = useAdminSectionLoading();
+  const initialAdminLoadKeyRef = useRef<string | null>(null);
 
   const userTotalPages = Math.max(1, Math.ceil(usersTotal / PAGE_SIZE));
   const planTotalPages = Math.max(1, Math.ceil(plansTotal / PAGE_SIZE));
@@ -119,7 +120,7 @@ export default function AdminDashboardScreen() {
     [premiumPlanId, premiumPlanOptions]
   );
 
-  async function loadOverview() {
+  const loadOverview = useCallback(async () => {
     return runWithSectionLoading('overview', async () => {
       try {
         setOverview(await adminService.getOverview());
@@ -127,9 +128,9 @@ export default function AdminDashboardScreen() {
         Alert.alert('Không thể tải tổng quan', getAuthErrorMessage(error));
       }
     });
-  }
+  }, [runWithSectionLoading]);
 
-  async function loadUsers(page = usersPage) {
+  const loadUsers = useCallback(async (page = usersPage) => {
     return runWithSectionLoading('users', async () => {
       try {
         const result = await adminService.getUsers({ page, size: PAGE_SIZE, search: userSearch.trim() || undefined });
@@ -141,9 +142,9 @@ export default function AdminDashboardScreen() {
         Alert.alert('Không thể tải người dùng', getAuthErrorMessage(error));
       }
     });
-  }
+  }, [runWithSectionLoading, userSearch, usersPage]);
 
-  async function loadPlans(page = plansPage) {
+  const loadPlans = useCallback(async (page = plansPage) => {
     return runWithSectionLoading('plans', async () => {
       try {
         const result = await adminService.getPlans({
@@ -159,9 +160,9 @@ export default function AdminDashboardScreen() {
         Alert.alert('Không thể tải gói cước', getAuthErrorMessage(error));
       }
     });
-  }
+  }, [planActiveFilter, planSearch, plansPage, runWithSectionLoading]);
 
-  async function loadAffiliateLinks(page = affiliatePage) {
+  const loadAffiliateLinks = useCallback(async (page = affiliatePage) => {
     return runWithSectionLoading('affiliate', async () => {
       try {
         const result = await adminService.getAffiliateLinks({
@@ -177,9 +178,14 @@ export default function AdminDashboardScreen() {
         Alert.alert('Không thể tải liên kết tiếp thị', getAuthErrorMessage(error));
       }
     });
-  }
+  }, [
+    affiliateActiveFilter,
+    affiliateIngredientId,
+    affiliatePage,
+    runWithSectionLoading,
+  ]);
 
-  async function loadUsage() {
+  const loadUsage = useCallback(async () => {
     return runWithSectionLoading('usage', async () => {
       try {
         setUsage(await adminService.getApiUsage({
@@ -190,17 +196,33 @@ export default function AdminDashboardScreen() {
         Alert.alert('Không thể tải số liệu sử dụng', getAuthErrorMessage(error));
       }
     });
-  }
+  }, [runWithSectionLoading, usageEndDate, usageStartDate]);
+
+  const adminLoadKey = currentUser?.isAdmin
+    ? currentUser.id ?? currentUser.username ?? currentUser.email ?? 'authenticated-admin'
+    : null;
 
   useEffect(() => {
-    if (!currentUser?.isAdmin) return;
+    if (!adminLoadKey) {
+      initialAdminLoadKeyRef.current = null;
+      return;
+    }
+    if (initialAdminLoadKeyRef.current === adminLoadKey) return;
+    initialAdminLoadKeyRef.current = adminLoadKey;
 
-    loadOverview();
-    loadUsers(1);
-    loadPlans(1);
-    loadAffiliateLinks(1);
-    loadUsage();
-  }, [currentUser?.isAdmin]);
+    void loadOverview();
+    void loadUsers(1);
+    void loadPlans(1);
+    void loadAffiliateLinks(1);
+    void loadUsage();
+  }, [
+    adminLoadKey,
+    loadAffiliateLinks,
+    loadOverview,
+    loadPlans,
+    loadUsage,
+    loadUsers,
+  ]);
 
   if (authLoading) {
     return (
