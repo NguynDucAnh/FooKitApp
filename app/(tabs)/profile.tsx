@@ -25,7 +25,7 @@ import { AuthUser } from '../../src/types/auth';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
 import { PROFILE_DIET_OPTIONS } from '../../src/constants/dietary';
 
-const brandLogo = require('../../img/logo fookit 2.jpg');
+const brandLogo = require('../../img/fookit-logo.jpg');
 
 const EMPTY_USER: AuthUser = {
   username: '',
