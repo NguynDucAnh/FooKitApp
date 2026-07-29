@@ -266,9 +266,9 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
                   {section.data.map((recipe) => (
                     <View key={recipe.id} style={styles.cardWidth}>
                       <RecipeCard
-                        recipe={{ ...recipe, isFavorite: isFavorite(recipe.id) }}
-                        onFavoriteToggle={() => toggleFavorite(recipe)}
-                        onClick={() => onRecipeClick({ ...recipe, isFavorite: isFavorite(recipe.id) })}
+                        recipe={{ ...recipe, isFavorite: isFavorite(recipe) }}
+                        onFavoriteToggle={() => void toggleFavorite(recipe)}
+                        onClick={() => onRecipeClick({ ...recipe, isFavorite: isFavorite(recipe) })}
                       />
                     </View>
                   ))}
@@ -373,9 +373,9 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
             {suggestedDishes.map((recipe) => (
               <View key={recipe.id} style={styles.cardWidth}>
                 <RecipeCard
-                  recipe={{ ...recipe, isFavorite: isFavorite(recipe.id) }}
-                  onFavoriteToggle={() => toggleFavorite(recipe)}
-                  onClick={() => onRecipeClick({ ...recipe, isFavorite: isFavorite(recipe.id) })}
+                  recipe={{ ...recipe, isFavorite: isFavorite(recipe) }}
+                  onFavoriteToggle={() => void toggleFavorite(recipe)}
+                  onClick={() => onRecipeClick({ ...recipe, isFavorite: isFavorite(recipe) })}
                 />
               </View>
             ))}

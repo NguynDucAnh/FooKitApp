@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFavorites } from '../context/FavoritesContext';
 import { Recipe } from '../types/recipe';
+import { getFavoriteIdentity } from '../utils/favoriteIdentity';
 import { RecipeCard } from './RecipeCard';
 
 interface Props {
@@ -48,7 +49,7 @@ export function FavoritesScreen({ onRecipeClick, onExplore }: Props) {
       ) : (
         <View style={styles.list}>
           {filtered.map(recipe => (
-            <RecipeCard key={recipe.id} recipe={{ ...recipe, isFavorite: isFavorite(recipe.id) }} onFavoriteToggle={() => toggleFavorite(recipe)} onClick={() => onRecipeClick(recipe)} />
+            <RecipeCard key={getFavoriteIdentity(recipe)} recipe={{ ...recipe, isFavorite: isFavorite(recipe) }} onFavoriteToggle={() => void toggleFavorite(recipe)} onClick={() => onRecipeClick(recipe)} />
           ))}
         </View>
       )}
