@@ -33,7 +33,12 @@ export default function PaymentHistoryTable({ items, loading, error, sortKey, on
       <View style={styles.card}>
         <Text style={styles.title}>Lịch sử thanh toán</Text>
         <Text style={styles.emptyText}>{error}</Text>
-        <TouchableOpacity onPress={onRetry} style={styles.retryBtn}>
+        <TouchableOpacity
+          onPress={onRetry}
+          style={styles.retryBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Thử tải lại lịch sử thanh toán"
+        >
           <Text style={styles.retryText}>Thử lại</Text>
         </TouchableOpacity>
       </View>
@@ -52,6 +57,9 @@ export default function PaymentHistoryTable({ items, loading, error, sortKey, on
             key={key}
             style={[styles.sortChip, sortKey === key && styles.sortChipActive]}
             onPress={() => onSortChange(key)}
+            accessibilityRole="button"
+            accessibilityLabel={`Sắp xếp theo ${key === 'date' ? 'ngày' : key === 'amount' ? 'số tiền' : 'trạng thái'}`}
+            accessibilityState={{ selected: sortKey === key }}
           >
             <Text style={[styles.sortText, sortKey === key && styles.sortTextActive]}>
               {key === 'date' ? 'Ngày' : key === 'amount' ? 'Số tiền' : 'Trạng thái'}
@@ -114,10 +122,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sortChip: {
+    minHeight: 44,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 7,
     backgroundColor: COLORS.surface,
+    justifyContent: 'center',
   },
   sortChipActive: {
     backgroundColor: COLORS.primary,
@@ -144,7 +154,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   retryBtn: {
+    minHeight: 44,
     marginTop: 12,
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
   },
   retryText: {
     color: COLORS.primary,

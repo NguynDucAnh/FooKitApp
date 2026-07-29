@@ -55,8 +55,14 @@ export default function PaymentResultScreen() {
           {state === 'loading' ? <ActivityIndicator color={COLORS.primary} /> : <Icon size={44} color={iconColor} />}
         </View>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.message}>{message}</Text>
-        <Pressable style={styles.button} onPress={() => router.replace({ pathname: '/(tabs)/home', params: { tab: 'discover' } })}>
+        <Text style={styles.message} accessibilityLiveRegion="polite">{message}</Text>
+        <Pressable
+          style={styles.button}
+          onPress={() => router.replace({ pathname: '/(tabs)/home', params: { tab: 'discover' } })}
+          accessibilityRole="button"
+          accessibilityLabel="Về gói Premium"
+          accessibilityHint="Mở màn hình quản lý gói Premium"
+        >
           <Text style={styles.buttonText}>Về gói Premium</Text>
         </Pressable>
       </View>
@@ -70,6 +76,6 @@ const styles = StyleSheet.create({
   iconBox: { width: 88, height: 88, borderRadius: 8, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   title: { color: COLORS.text, fontSize: 24, fontWeight: '900', textAlign: 'center' },
   message: { color: COLORS.textGray, fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 12, maxWidth: 340 },
-  button: { backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: 22, paddingVertical: 14, marginTop: 28 },
+  button: { minHeight: 44, backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: 22, paddingVertical: 14, marginTop: 28, justifyContent: 'center' },
   buttonText: { color: COLORS.white, fontWeight: '800', fontSize: 15 },
 });
