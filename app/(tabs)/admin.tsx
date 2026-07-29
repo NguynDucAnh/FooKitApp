@@ -16,10 +16,21 @@ import {
   getGrantPremiumNotFoundMessage,
 } from '../../src/utils/userFacingCopy';
 import { useAuth } from '../../src/hooks/useAuth';
+import {
+  type AdminDataSection,
+  useAdminSectionLoading,
+} from '../../src/features/admin/useAdminSectionLoading';
 
-type AdminTab = 'overview' | 'users' | 'plans' | 'affiliate' | 'usage';
+type AdminTab = AdminDataSection;
 
 const PAGE_SIZE = 8;
+const LOADING_LABELS: Record<AdminTab, string> = {
+  overview: 'Đang tải tổng quan...',
+  users: 'Đang tải danh sách người dùng...',
+  plans: 'Đang tải danh sách gói cước...',
+  affiliate: 'Đang tải liên kết tiếp thị...',
+  usage: 'Đang tải số liệu sử dụng...',
+};
 
 const emptyUserForm = {
   username: '',
@@ -80,19 +91,19 @@ export default function AdminDashboardScreen() {
   const [forceSyncAll, setForceSyncAll] = useState(false);
   const [usageStartDate, setUsageStartDate] = useState('');
   const [usageEndDate, setUsageEndDate] = useState('');
-  const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [userForm, setUserForm] = useState(emptyUserForm);
   const [premiumPlanId, setPremiumPlanId] = useState('');
   const [premiumReason, setPremiumReason] = useState('Tặng quà event');
   const [planForm, setPlanForm] = useState(emptyPlanForm);
   const [affiliateForm, setAffiliateForm] = useState(emptyAffiliateForm);
+  const { loadingBySection, runWithSectionLoading } = useAdminSectionLoading();
 
   const userTotalPages = Math.max(1, Math.ceil(usersTotal / PAGE_SIZE));
   const planTotalPages = Math.max(1, Math.ceil(plansTotal / PAGE_SIZE));
   const affiliateTotalPages = Math.max(1, Math.ceil(affiliateTotal / PAGE_SIZE));
 
-  const safeUsage = Array.isArray(usage) ? usage : [];
+  const safeUsage = useMemo(() => Array.isArray(usage) ? usage : [], [usage]);
 
   const usageTotals = useMemo(() => safeUsage.reduce(
     (acc, item) => ({
@@ -109,81 +120,76 @@ export default function AdminDashboardScreen() {
   );
 
   async function loadOverview() {
-    setLoading(true);
-    try {
-      setOverview(await adminService.getOverview());
-    } catch (error) {
-      Alert.alert('Không thể tải tổng quan', getAuthErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
+    return runWithSectionLoading('overview', async () => {
+      try {
+        setOverview(await adminService.getOverview());
+      } catch (error) {
+        Alert.alert('Không thể tải tổng quan', getAuthErrorMessage(error));
+      }
+    });
   }
 
   async function loadUsers(page = usersPage) {
-    setLoading(true);
-    try {
-      const result = await adminService.getUsers({ page, size: PAGE_SIZE, search: userSearch.trim() || undefined });
-      setUsers(result.items);
-      setUsersTotal(result.totalCount);
-      setUsersPage(page);
-      return result;
-    } catch (error) {
-      Alert.alert('Không thể tải người dùng', getAuthErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
+    return runWithSectionLoading('users', async () => {
+      try {
+        const result = await adminService.getUsers({ page, size: PAGE_SIZE, search: userSearch.trim() || undefined });
+        setUsers(result.items);
+        setUsersTotal(result.totalCount);
+        setUsersPage(page);
+        return result;
+      } catch (error) {
+        Alert.alert('Không thể tải người dùng', getAuthErrorMessage(error));
+      }
+    });
   }
 
   async function loadPlans(page = plansPage) {
-    setLoading(true);
-    try {
-      const result = await adminService.getPlans({
-        page,
-        size: PAGE_SIZE,
-        search: planSearch.trim() || undefined,
-        isActive: planActiveFilter === 'all' ? undefined : planActiveFilter === 'active',
-      });
-      setPlans(result.items);
-      setPlansTotal(result.totalCount);
-      setPlansPage(page);
-    } catch (error) {
-      Alert.alert('Không thể tải gói cước', getAuthErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
+    return runWithSectionLoading('plans', async () => {
+      try {
+        const result = await adminService.getPlans({
+          page,
+          size: PAGE_SIZE,
+          search: planSearch.trim() || undefined,
+          isActive: planActiveFilter === 'all' ? undefined : planActiveFilter === 'active',
+        });
+        setPlans(result.items);
+        setPlansTotal(result.totalCount);
+        setPlansPage(page);
+      } catch (error) {
+        Alert.alert('Không thể tải gói cước', getAuthErrorMessage(error));
+      }
+    });
   }
 
   async function loadAffiliateLinks(page = affiliatePage) {
-    setLoading(true);
-    try {
-      const result = await adminService.getAffiliateLinks({
-        page,
-        size: PAGE_SIZE,
-        is_active: affiliateActiveFilter === 'all' ? undefined : affiliateActiveFilter === 'active',
-        ingredient_id: affiliateIngredientId.trim() || undefined,
-      });
-      setAffiliateLinks(result.items);
-      setAffiliateTotal(result.totalCount);
-      setAffiliatePage(page);
-    } catch (error) {
-      Alert.alert('Không thể tải liên kết tiếp thị', getAuthErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
+    return runWithSectionLoading('affiliate', async () => {
+      try {
+        const result = await adminService.getAffiliateLinks({
+          page,
+          size: PAGE_SIZE,
+          is_active: affiliateActiveFilter === 'all' ? undefined : affiliateActiveFilter === 'active',
+          ingredient_id: affiliateIngredientId.trim() || undefined,
+        });
+        setAffiliateLinks(result.items);
+        setAffiliateTotal(result.totalCount);
+        setAffiliatePage(page);
+      } catch (error) {
+        Alert.alert('Không thể tải liên kết tiếp thị', getAuthErrorMessage(error));
+      }
+    });
   }
 
   async function loadUsage() {
-    setLoading(true);
-    try {
-      setUsage(await adminService.getApiUsage({
-        start_date: usageStartDate.trim() || undefined,
-        end_date: usageEndDate.trim() || undefined,
-      }));
-    } catch (error) {
-      Alert.alert('Không thể tải số liệu sử dụng', getAuthErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
+    return runWithSectionLoading('usage', async () => {
+      try {
+        setUsage(await adminService.getApiUsage({
+          start_date: usageStartDate.trim() || undefined,
+          end_date: usageEndDate.trim() || undefined,
+        }));
+      } catch (error) {
+        Alert.alert('Không thể tải số liệu sử dụng', getAuthErrorMessage(error));
+      }
+    });
   }
 
   useEffect(() => {
@@ -472,7 +478,7 @@ export default function AdminDashboardScreen() {
     }
   }
 
-  const tabs: Array<{ id: AdminTab; label: string }> = [
+  const tabs: { id: AdminTab; label: string }[] = [
     { id: 'overview', label: 'Tổng quan' },
     { id: 'users', label: 'Người dùng' },
     { id: 'plans', label: 'Gói cước' },
@@ -502,7 +508,15 @@ export default function AdminDashboardScreen() {
           ))}
         </View>
 
-        {loading && <Text style={styles.loadingText}>Đang tải dữ liệu...</Text>}
+        {loadingBySection[activeTab] && (
+          <Text
+            style={styles.loadingText}
+            accessibilityRole="progressbar"
+            accessibilityLiveRegion="polite"
+          >
+            {LOADING_LABELS[activeTab]}
+          </Text>
+        )}
 
         {activeTab === 'overview' && (
           <View>
@@ -519,7 +533,7 @@ export default function AdminDashboardScreen() {
               <Text style={styles.cardSub}>Đồng bộ gần nhất: {overview?.lastAffiliateSync ? new Date(overview.lastAffiliateSync).toLocaleString('vi-VN') : 'Chưa có dữ liệu'}</Text>
               <Text style={styles.cardSub}>Cập nhật: {overview?.timestamp ? new Date(overview.timestamp).toLocaleString('vi-VN') : 'Vừa tải'}</Text>
             </View>
-            <Button title="Tải lại tổng quan" onPress={loadOverview} outline />
+            <Button title="Tải lại tổng quan" onPress={loadOverview} loading={loadingBySection.overview} outline />
           </View>
         )}
 
@@ -528,7 +542,7 @@ export default function AdminDashboardScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Tìm kiếm người dùng</Text>
               <Input label="Từ khóa" value={userSearch} onChangeText={setUserSearch} placeholder="Tên đăng nhập, email, họ tên..." autoCapitalize="none" />
-              <Button title="Tìm kiếm" onPress={() => loadUsers(1)} />
+              <Button title="Tìm kiếm" onPress={() => loadUsers(1)} loading={loadingBySection.users} />
             </View>
 
             <View style={styles.section}>
@@ -596,7 +610,7 @@ export default function AdminDashboardScreen() {
                 </View>
               </View>
             ))}
-            <Pager page={usersPage} totalPages={userTotalPages} onPrev={() => loadUsers(Math.max(1, usersPage - 1))} onNext={() => loadUsers(Math.min(userTotalPages, usersPage + 1))} />
+            <Pager page={usersPage} totalPages={userTotalPages} loading={loadingBySection.users} onPrev={() => loadUsers(Math.max(1, usersPage - 1))} onNext={() => loadUsers(Math.min(userTotalPages, usersPage + 1))} />
           </View>
         )}
 
@@ -634,7 +648,7 @@ export default function AdminDashboardScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
-              <Button title="Áp dụng lọc" onPress={() => loadPlans(1)} outline />
+              <Button title="Áp dụng lọc" onPress={() => loadPlans(1)} loading={loadingBySection.plans} outline />
             </View>
 
             <Text style={styles.listTitle}>Danh sách gói ({plansTotal})</Text>
@@ -661,7 +675,7 @@ export default function AdminDashboardScreen() {
                 </View>
               </View>
             ))}
-            <Pager page={plansPage} totalPages={planTotalPages} onPrev={() => loadPlans(Math.max(1, plansPage - 1))} onNext={() => loadPlans(Math.min(planTotalPages, plansPage + 1))} />
+            <Pager page={plansPage} totalPages={planTotalPages} loading={loadingBySection.plans} onPrev={() => loadPlans(Math.max(1, plansPage - 1))} onNext={() => loadPlans(Math.min(planTotalPages, plansPage + 1))} />
           </View>
         )}
 
@@ -711,7 +725,7 @@ export default function AdminDashboardScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
-              <Button title="Áp dụng lọc" onPress={() => loadAffiliateLinks(1)} outline />
+              <Button title="Áp dụng lọc" onPress={() => loadAffiliateLinks(1)} loading={loadingBySection.affiliate} outline />
             </View>
 
             <Text style={styles.listTitle}>Liên kết tiếp thị ({affiliateTotal})</Text>
@@ -737,7 +751,7 @@ export default function AdminDashboardScreen() {
                 </View>
               </View>
             ))}
-            <Pager page={affiliatePage} totalPages={affiliateTotalPages} onPrev={() => loadAffiliateLinks(Math.max(1, affiliatePage - 1))} onNext={() => loadAffiliateLinks(Math.min(affiliateTotalPages, affiliatePage + 1))} />
+            <Pager page={affiliatePage} totalPages={affiliateTotalPages} loading={loadingBySection.affiliate} onPrev={() => loadAffiliateLinks(Math.max(1, affiliatePage - 1))} onNext={() => loadAffiliateLinks(Math.min(affiliateTotalPages, affiliatePage + 1))} />
           </View>
         )}
 
@@ -747,7 +761,7 @@ export default function AdminDashboardScreen() {
               <Text style={styles.sectionTitle}>Khoảng thời gian</Text>
               <Input label="Từ ngày" value={usageStartDate} onChangeText={setUsageStartDate} placeholder="2026-06-01T00:00:00Z" autoCapitalize="none" />
               <Input label="Đến ngày" value={usageEndDate} onChangeText={setUsageEndDate} placeholder="2026-06-10T23:59:59Z" autoCapitalize="none" />
-              <Button title="Tải số liệu sử dụng" onPress={loadUsage} />
+              <Button title="Tải số liệu sử dụng" onPress={loadUsage} loading={loadingBySection.usage} />
             </View>
             <View style={styles.metricsGrid}>
               <Metric icon={Activity} label="Yêu cầu" value={usageTotals.total.toLocaleString('vi-VN')} />
@@ -784,12 +798,12 @@ function StatusPill({ active }: { active: boolean }) {
   );
 }
 
-function Pager({ page, totalPages, onPrev, onNext }: { page: number; totalPages: number; onPrev: () => void; onNext: () => void }) {
+function Pager({ page, totalPages, loading, onPrev, onNext }: { page: number; totalPages: number; loading: boolean; onPrev: () => void; onNext: () => void }) {
   return (
     <View style={styles.pager}>
-      <Button title="Trước" onPress={onPrev} disabled={page <= 1} outline style={styles.pagerBtn} />
+      <Button title="Trước" onPress={onPrev} disabled={loading || page <= 1} outline style={styles.pagerBtn} />
       <Text style={styles.pagerText}>{page}/{totalPages}</Text>
-      <Button title="Sau" onPress={onNext} disabled={page >= totalPages} outline style={styles.pagerBtn} />
+      <Button title="Sau" onPress={onNext} disabled={loading || page >= totalPages} outline style={styles.pagerBtn} />
     </View>
   );
 }
