@@ -1,4 +1,13 @@
-import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MySubscription } from '../types/subscription';
 import { subscriptionService } from '../services/subscriptionService';
@@ -14,66 +23,83 @@ interface SubscriptionContextValue {
 }
 
 const SubscriptionContext = createContext<SubscriptionContextValue | null>(null);
-const PREMIUM_STATUS_KEY = 'premiumStatus';
+const LEGACY_PREMIUM_STATUS_KEY = 'premiumStatus';
+
+interface SubscriptionSnapshot {
+  session: object;
+  value: MySubscription;
+}
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { accessToken, loading: authLoading } = useAuth();
-  const [subscription, setSubscriptionState] = useState<MySubscription | null>(null);
+  const session = useMemo(() => ({ authenticated: !!accessToken }), [accessToken]);
+  const activeSessionRef = useRef(session);
+  const latestRequestRef = useRef(0);
+  const [snapshot, setSnapshot] = useState<SubscriptionSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  activeSessionRef.current = session;
 
-  const setSubscription = useCallback((nextSubscription: MySubscription | null) => {
-    setSubscriptionState(nextSubscription);
-    AsyncStorage.setItem(PREMIUM_STATUS_KEY, JSON.stringify({
-      isPremium: !!nextSubscription?.isPremium,
-      planName: nextSubscription?.planName ?? 'Free',
-    })).catch(() => undefined);
+  useEffect(() => {
+    AsyncStorage.removeItem(LEGACY_PREMIUM_STATUS_KEY).catch(() => undefined);
   }, []);
 
+  const setSubscription = useCallback((nextSubscription: MySubscription | null) => {
+    setSnapshot(nextSubscription ? { session, value: nextSubscription } : null);
+  }, [session]);
+
   const refreshSubscription = useCallback(async () => {
+    if (!accessToken) return;
+
+    const requestId = ++latestRequestRef.current;
+    const requestSession = session;
     setLoading(true);
     setError(null);
+
     try {
       const data = await subscriptionService.getMySubscription();
-      setSubscription(data);
+      if (
+        activeSessionRef.current === requestSession
+        && latestRequestRef.current === requestId
+      ) {
+        setSnapshot({ session: requestSession, value: data });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể tải thông tin gói hiện tại.');
+      if (
+        activeSessionRef.current === requestSession
+        && latestRequestRef.current === requestId
+      ) {
+        setError(err instanceof Error ? err.message : 'Không thể tải thông tin gói hiện tại.');
+      }
     } finally {
-      setLoading(false);
+      if (
+        activeSessionRef.current === requestSession
+        && latestRequestRef.current === requestId
+      ) {
+        setLoading(false);
+      }
     }
-  }, [setSubscription]);
+  }, [accessToken, session]);
 
   useEffect(() => {
     if (authLoading) return;
 
     if (!accessToken) {
-      setSubscriptionState(null);
-      AsyncStorage.removeItem(PREMIUM_STATUS_KEY).catch(() => undefined);
+      latestRequestRef.current += 1;
+      setSnapshot(null);
+      setLoading(false);
+      setError(null);
       return;
     }
 
-    let cancelled = false;
-    async function hydrateAndRefreshPremiumStatus() {
-      const rawStatus = await AsyncStorage.getItem(PREMIUM_STATUS_KEY);
-      if (rawStatus && !cancelled) {
-        try {
-          const parsedStatus = JSON.parse(rawStatus);
-          setSubscriptionState({
-            isPremium: !!parsedStatus.isPremium,
-            planName: parsedStatus.planName ?? 'Free',
-          });
-        } catch {
-          await AsyncStorage.removeItem(PREMIUM_STATUS_KEY);
-        }
-      }
+    void refreshSubscription();
 
-      if (!cancelled) await refreshSubscription();
-    }
-
-    hydrateAndRefreshPremiumStatus();
-    return () => { cancelled = true; };
+    return () => {
+      latestRequestRef.current += 1;
+    };
   }, [accessToken, authLoading, refreshSubscription]);
 
+  const subscription = snapshot?.session === session ? snapshot.value : null;
   const value = useMemo<SubscriptionContextValue>(() => ({
     subscription,
     isPremium: !!subscription?.isPremium,
