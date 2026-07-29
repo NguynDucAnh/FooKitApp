@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
+import { renderWithAct, unmountWithAct } from '../../test-utils/reactTestRenderer';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useSubscriptionStore } from '../../context/SubscriptionContext';
 import { homepageService } from '../../services/homepageService';
@@ -61,7 +62,7 @@ describe('form and screen accessibility', () => {
   });
 
   it('connects input labels, errors and disabled state', () => {
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <Input
         label="Email"
         error="Email không hợp lệ"
@@ -80,12 +81,12 @@ describe('form and screen accessibility', () => {
     expect(StyleSheet.flatten(input.props.style).minHeight).toBeGreaterThanOrEqual(44);
     expect(error).toBeDefined();
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('keeps the Favorites empty-state action semantic and actionable', () => {
     const onExplore = jest.fn();
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <FavoritesScreen onRecipeClick={jest.fn()} onExplore={onExplore} />,
     );
     const exploreButton = renderer.root.findByProps({
@@ -100,7 +101,7 @@ describe('form and screen accessibility', () => {
     });
 
     expect(onExplore).toHaveBeenCalledTimes(1);
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('announces Home filters, Premium requirements and submit state', async () => {
@@ -139,6 +140,6 @@ describe('form and screen accessibility', () => {
     });
 
     expect(onUpgradePremium).toHaveBeenCalledTimes(1);
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

@@ -1,5 +1,6 @@
 import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act } from 'react-test-renderer';
+import { renderWithAct, unmountWithAct } from '../../test-utils/reactTestRenderer';
 import { useSubscriptionStore } from '../../context/SubscriptionContext';
 import { subscriptionService } from '../../services/subscriptionService';
 import { useSubscription } from '../useSubscription';
@@ -41,7 +42,7 @@ describe('useSubscription', () => {
       setSubscription: jest.fn(),
     });
     let controller!: SubscriptionController;
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <HookHarness onRender={value => {
         controller = value;
       }} />,
@@ -57,6 +58,6 @@ describe('useSubscription', () => {
       refreshSubscription.mock.invocationCallOrder[0],
     );
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

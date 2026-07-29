@@ -2,13 +2,14 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { router } from 'expo-router';
+import { renderWithAct, unmountWithAct } from '../../test-utils/reactTestRenderer';
 import PaymentResultScreen from '../../../app/payment/result';
 import CancelSubscriptionModal from '../subscription/CancelSubscriptionModal';
 import PaymentHistoryTable from '../subscription/PaymentHistoryTable';
 
 describe('screen control accessibility', () => {
   it('announces the cancel-subscription modal secondary action state', () => {
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <CancelSubscriptionModal
         visible
         loading
@@ -25,11 +26,11 @@ describe('screen control accessibility', () => {
     expect(keepPlanButton?.props.accessibilityState).toEqual({ disabled: true });
     expect(StyleSheet.flatten(keepPlanButton?.props.style).minHeight).toBeGreaterThanOrEqual(44);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('exposes payment history retry and selected sort controls', () => {
-    const retryRenderer = TestRenderer.create(
+    const retryRenderer = renderWithAct(
       <PaymentHistoryTable
         items={[]}
         loading={false}
@@ -45,9 +46,9 @@ describe('screen control accessibility', () => {
 
     expect(retryButton.props.accessibilityRole).toBe('button');
     expect(StyleSheet.flatten(retryButton.props.style).minHeight).toBeGreaterThanOrEqual(44);
-    retryRenderer.unmount();
+    unmountWithAct(retryRenderer);
 
-    const sortRenderer = TestRenderer.create(
+    const sortRenderer = renderWithAct(
       <PaymentHistoryTable
         items={[]}
         loading={false}
@@ -65,7 +66,7 @@ describe('screen control accessibility', () => {
     expect(sortButtons).toHaveLength(3);
     expect(amountSort?.props.accessibilityState).toEqual({ selected: true });
     expect(StyleSheet.flatten(amountSort?.props.style).minHeight).toBeGreaterThanOrEqual(44);
-    sortRenderer.unmount();
+    unmountWithAct(sortRenderer);
   });
 
   it('announces payment result updates and preserves navigation', () => {
@@ -93,6 +94,6 @@ describe('screen control accessibility', () => {
       pathname: '/(tabs)/home',
       params: { tab: 'discover' },
     });
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

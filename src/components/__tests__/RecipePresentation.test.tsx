@@ -1,6 +1,7 @@
 import React from 'react';
 import { Alert, Image, ImageBackground, Pressable, ScrollView, Share, Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
+import { renderWithAct, unmountWithAct } from '../../test-utils/reactTestRenderer';
 import { Recipe } from '../../types/recipe';
 import { useFavorites } from '../../context/FavoritesContext';
 import { useSubscriptionStore } from '../../context/SubscriptionContext';
@@ -85,14 +86,14 @@ describe('recipe presentation data integrity', () => {
   });
 
   it('renders an explicit image fallback on a recipe card', () => {
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <RecipeCard recipe={createRecipe()} />,
     );
 
     expect(renderer.root.findAllByType(Image)).toHaveLength(0);
     expect(hasExactText(renderer, 'Chưa có ảnh món ăn')).toBe(true);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('keeps the nested favorite action separate from opening the recipe card', () => {
@@ -100,7 +101,7 @@ describe('recipe presentation data integrity', () => {
     const onFavoriteToggle = jest.fn();
     const stopPropagation = jest.fn();
     const recipe = createRecipe({ name: 'Canh rau', isFavorite: true });
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <RecipeCard
         recipe={recipe}
         onClick={onClick}
@@ -123,23 +124,23 @@ describe('recipe presentation data integrity', () => {
     expect(onFavoriteToggle).toHaveBeenCalledTimes(1);
     expect(onClick).not.toHaveBeenCalled();
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('renders an explicit image fallback on recipe detail', () => {
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <RecipeDetailScreen recipe={createRecipe()} onBack={jest.fn()} />,
     );
 
     expect(renderer.root.findAllByType(ImageBackground)).toHaveLength(0);
     expect(hasExactText(renderer, 'Chưa có ảnh món ăn')).toBe(true);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('explains that notifications are not available without showing fake unread state', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <HomeScreen onRecipeClick={jest.fn()} onUpgradePremium={jest.fn()} />,
     );
     const notificationButton = renderer.root.findAllByType(Pressable).find(
@@ -157,12 +158,12 @@ describe('recipe presentation data integrity', () => {
       'FooKit sẽ hiển thị cập nhật dành cho bạn khi tính năng này sẵn sàng. Hiện tại bạn vẫn có thể khám phá và lưu các món ăn yêu thích.',
     );
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('provides an honest planner empty state with a path back to meal discovery', () => {
     const onExplore = jest.fn();
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <PlannerEmptyState onExplore={onExplore} />,
     );
     const exploreButton = renderer.root.findAllByType(Pressable).find(
@@ -182,7 +183,7 @@ describe('recipe presentation data integrity', () => {
 
     expect(onExplore).toHaveBeenCalledTimes(1);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('shares only available recipe details through the native share sheet', async () => {
@@ -195,7 +196,7 @@ describe('recipe presentation data integrity', () => {
       budget: 45000,
       instructions: ['Rửa rau', 'Đun nước', 'Nêm gia vị', 'Bày ra bát'],
     });
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <RecipeDetailScreen recipe={recipe} onBack={jest.fn()} />,
     );
     const shareButton = renderer.root.findAllByType(Pressable).find(
@@ -219,7 +220,7 @@ describe('recipe presentation data integrity', () => {
       ].join('\n\n'),
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('uses the shared favorites state for the bottom bookmark action', () => {
@@ -230,7 +231,7 @@ describe('recipe presentation data integrity', () => {
       isFavorite: jest.fn(() => true),
       toggleFavorite,
     });
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <RecipeDetailScreen recipe={recipe} onBack={jest.fn()} />,
     );
     const bookmarkButton = renderer.root.findAllByType(Pressable).find(
@@ -246,13 +247,13 @@ describe('recipe presentation data integrity', () => {
 
     expect(toggleFavorite).toHaveBeenCalledWith(recipe);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('scrolls to the instructions when cooking starts', () => {
     const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(jest.fn());
     const recipe = createRecipe({ instructions: ['Sơ chế', 'Nấu chín'] });
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <RecipeDetailScreen recipe={recipe} onBack={jest.fn()} />,
     );
 
@@ -270,12 +271,12 @@ describe('recipe presentation data integrity', () => {
 
     expect(scrollTo).toHaveBeenCalledWith({ y: 664, animated: true });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('explains when cooking instructions are unavailable', () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <RecipeDetailScreen recipe={createRecipe()} onBack={jest.fn()} />,
     );
     const startButton = renderer.root.findAllByType(Pressable).find(
@@ -292,7 +293,7 @@ describe('recipe presentation data integrity', () => {
     );
     expect(hasExactText(renderer, 'Chưa có hướng dẫn nấu cho món này.')).toBe(true);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('does not inject sample recipes when homepage suggestions fail', async () => {
@@ -311,6 +312,6 @@ describe('recipe presentation data integrity', () => {
     expect(hasExactText(renderer!, 'Thực đơn đang được cập nhật')).toBe(true);
     expect(mockedGetSuggestions).toHaveBeenCalledTimes(1);
 
-    renderer!.unmount();
+    unmountWithAct(renderer!);
   });
 });

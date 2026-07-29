@@ -1,12 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
-import TestRenderer, { act } from 'react-test-renderer';
+import { act } from 'react-test-renderer';
+import { renderWithAct, unmountWithAct } from '../../test-utils/reactTestRenderer';
 import { BottomNav } from '../BottomNav';
 
 describe('BottomNav accessibility', () => {
   it('exposes every destination as a tab and announces the selected tab', () => {
     const onTabChange = jest.fn();
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <BottomNav activeTab="favorites" onTabChange={onTabChange} />,
     );
     const tabs = renderer.root.findAllByType(Pressable);
@@ -27,11 +28,11 @@ describe('BottomNav accessibility', () => {
     });
 
     expect(onTabChange).toHaveBeenCalledWith('discover');
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('keeps every tab touch target at least 44 points tall', () => {
-    const renderer = TestRenderer.create(
+    const renderer = renderWithAct(
       <BottomNav activeTab="home" onTabChange={jest.fn()} />,
     );
 
@@ -39,6 +40,6 @@ describe('BottomNav accessibility', () => {
       expect(StyleSheet.flatten(tab.props.style).minHeight).toBeGreaterThanOrEqual(44);
     });
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

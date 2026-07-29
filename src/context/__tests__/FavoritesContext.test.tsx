@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect } from 'react';
 import { Alert } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
+import { unmountWithAct } from '../../test-utils/reactTestRenderer';
 import { useAuth } from '../../hooks/useAuth';
 import { Recipe } from '../../types/recipe';
 import { FavoritesProvider, useFavorites } from '../FavoritesContext';
@@ -125,7 +126,7 @@ describe('FavoritesProvider ownership and persistence', () => {
     expect(mockedGetItem).toHaveBeenLastCalledWith('@fookit/favorite-recipes/v2/user-b');
     expect(latestState?.favorites).toEqual([userBFavorite]);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('persists and compares favorites using dishCacheId', async () => {
@@ -147,7 +148,7 @@ describe('FavoritesProvider ownership and persistence', () => {
       dishCacheId: 'shared-cache-id',
     })).toBe(true);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 
   it('does not expose an unsaved favorite when persistence fails', async () => {
@@ -167,6 +168,6 @@ describe('FavoritesProvider ownership and persistence', () => {
       'Thay đổi chưa được lưu. Vui lòng thử lại.',
     );
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });

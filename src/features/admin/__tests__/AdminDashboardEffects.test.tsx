@@ -1,6 +1,7 @@
 import React from 'react';
 import { TextInput, TouchableOpacity } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
+import { unmountWithAct } from '../../../test-utils/reactTestRenderer';
 import AdminDashboardScreen from '../../../../app/(tabs)/admin';
 import { useAuth } from '../../../hooks/useAuth';
 import { adminService } from '../../../services/adminService';
@@ -109,6 +110,6 @@ describe('AdminDashboardScreen data effects', () => {
     expect(mockedAdminService.getAffiliateLinks).toHaveBeenCalledTimes(1);
     expect(mockedAdminService.getApiUsage).toHaveBeenCalledTimes(1);
 
-    renderer.unmount();
+    unmountWithAct(renderer);
   });
 });
