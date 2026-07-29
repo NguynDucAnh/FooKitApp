@@ -14,7 +14,7 @@ export default function CancelSubscriptionModal({ visible, loading, onClose, onC
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.modal}>
+        <View style={styles.modal} accessibilityViewIsModal>
           <Text style={styles.icon}>!</Text>
           <Text style={styles.title}>Hủy gia hạn Premium?</Text>
           <Text style={styles.body}>
@@ -22,7 +22,14 @@ export default function CancelSubscriptionModal({ visible, loading, onClose, onC
           </Text>
 
           <View style={styles.actions}>
-            <TouchableOpacity onPress={onClose} disabled={loading} style={styles.secondary}>
+            <TouchableOpacity
+              onPress={onClose}
+              disabled={loading}
+              style={styles.secondary}
+              accessibilityRole="button"
+              accessibilityLabel="Giữ gói hiện tại"
+              accessibilityState={{ disabled: loading }}
+            >
               <Text style={styles.secondaryText}>Giữ gói hiện tại</Text>
             </TouchableOpacity>
             <Button title="Xác nhận hủy" onPress={onConfirm} loading={loading} style={styles.danger} />
@@ -75,7 +82,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   secondary: {
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 14,
   },
   secondaryText: {

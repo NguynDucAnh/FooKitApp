@@ -280,7 +280,13 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.profileRow}>
-            <Pressable style={styles.avatarWrap} onPress={handlePickAvatar}>
+            <Pressable
+              style={styles.avatarWrap}
+              onPress={handlePickAvatar}
+              accessibilityRole="button"
+              accessibilityLabel="Thay ảnh đại diện"
+              accessibilityHint="Mở thư viện ảnh trên thiết bị"
+            >
               <Image source={avatarSource} style={styles.avatarImage} />
               <View style={styles.cameraBadge}>
                 <Camera size={15} color={COLORS.white} />
@@ -332,7 +338,14 @@ export default function ProfileScreen() {
             {PROFILE_DIET_OPTIONS.map(option => {
               const active = dietForm.diets.includes(option.value);
               return (
-                <Pressable key={option.value} style={[styles.dietChip, active && styles.dietChipActive]} onPress={() => toggleDiet(option.value)}>
+                <Pressable
+                  key={option.value}
+                  style={[styles.dietChip, active && styles.dietChipActive]}
+                  onPress={() => toggleDiet(option.value)}
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={option.label}
+                  accessibilityState={{ checked: active }}
+                >
                   <Text style={[styles.dietChipText, active && styles.dietChipTextActive]}>{option.label}</Text>
                 </Pressable>
               );
@@ -350,7 +363,14 @@ export default function ProfileScreen() {
           {QUICK_LINKS.map(item => {
             const Icon = item.icon;
             return (
-              <TouchableOpacity key={item.label} style={styles.menuRow} onPress={() => openHomeTab(item.tab)}>
+              <TouchableOpacity
+                key={item.label}
+                style={styles.menuRow}
+                onPress={() => openHomeTab(item.tab)}
+                accessibilityRole="button"
+                accessibilityLabel={item.label}
+                accessibilityHint={item.description}
+              >
                 <View style={styles.menuIconBox}>
                   <Icon size={18} color={COLORS.primary} />
                 </View>
@@ -381,7 +401,12 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
+        <Pressable
+          style={styles.logoutBtn}
+          onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Đăng xuất"
+        >
           <LogOut size={18} color={COLORS.error} />
           <Text style={styles.logoutText}>Đăng xuất</Text>
         </Pressable>
@@ -416,7 +441,7 @@ const styles = StyleSheet.create({
   inputLabel: { color: COLORS.text, fontSize: 13, fontWeight: '800', marginBottom: 8 },
   helperText: { color: COLORS.textGray, fontSize: 12, lineHeight: 17, marginBottom: 12 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  dietChip: { borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9 },
+  dietChip: { minHeight: 44, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9, justifyContent: 'center' },
   dietChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   dietChipText: { color: COLORS.text, fontSize: 13, fontWeight: '700' },
   dietChipTextActive: { color: COLORS.white },

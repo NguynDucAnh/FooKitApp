@@ -574,7 +574,14 @@ export default function AdminDashboardScreen() {
                 {premiumPlanOptions.length > 0 ? premiumPlanOptions.map(plan => {
                   const selected = premiumPlanId === plan.id;
                   return (
-                    <TouchableOpacity key={plan.id} style={[styles.planOption, selected && styles.planOptionActive]} onPress={() => setPremiumPlanId(plan.id)}>
+                    <TouchableOpacity
+                      key={plan.id}
+                      style={[styles.planOption, selected && styles.planOptionActive]}
+                      onPress={() => setPremiumPlanId(plan.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Chọn gói ${plan.planName}`}
+                      accessibilityState={{ selected }}
+                    >
                       <Text style={[styles.planOptionTitle, selected && styles.planOptionTitleActive]}>{plan.planName}</Text>
                       <Text style={[styles.planOptionMeta, selected && styles.planOptionMetaActive]}>{formatMoney(plan.price)} / {plan.durationInDays} ngày</Text>
                     </TouchableOpacity>
@@ -612,11 +619,21 @@ export default function AdminDashboardScreen() {
                 </Text>
                 <Text style={styles.cardSub}>Ngày tạo: {user.createdAt ? new Date(user.createdAt).toLocaleString('vi-VN') : 'Chưa có dữ liệu'}</Text>
                 <View style={styles.actionsRow}>
-                  <TouchableOpacity style={styles.smallAction} onPress={() => handleGrantPremium(user)}>
+                  <TouchableOpacity
+                    style={styles.smallAction}
+                    onPress={() => handleGrantPremium(user)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Cấp Premium cho ${user.fullName || user.username || user.email || 'tài khoản này'}`}
+                  >
                     <Crown size={16} color={COLORS.primary} />
                     <Text style={styles.smallActionText}>Cấp Premium</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.smallAction} onPress={() => handleToggleBan(user)}>
+                  <TouchableOpacity
+                    style={styles.smallAction}
+                    onPress={() => handleToggleBan(user)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${user.isActive ? 'Cấm' : 'Bỏ cấm'} ${user.fullName || user.username || user.email || 'tài khoản này'}`}
+                  >
                     <ShieldOff size={16} color={user.isActive ? COLORS.error : COLORS.primary} />
                     <Text style={[styles.smallActionText, user.isActive && styles.dangerText]}>{user.isActive ? 'Cấm' : 'Bỏ cấm'}</Text>
                   </TouchableOpacity>
@@ -643,7 +660,13 @@ export default function AdminDashboardScreen() {
               <Input label="Tiền tệ" value={planForm.currency} onChangeText={currency => setPlanForm(current => ({ ...current, currency }))} />
               <Input label="Tính năng" value={planForm.features} onChangeText={features => setPlanForm(current => ({ ...current, features }))} placeholder="Gợi ý không giới hạn, Không quảng cáo" multiline />
               {planForm.id && (
-                <TouchableOpacity style={styles.toggleLine} onPress={() => setPlanForm(current => ({ ...current, isActive: !current.isActive }))}>
+                <TouchableOpacity
+                  style={styles.toggleLine}
+                  onPress={() => setPlanForm(current => ({ ...current, isActive: !current.isActive }))}
+                  accessibilityRole="switch"
+                  accessibilityLabel="Trạng thái hoạt động của gói"
+                  accessibilityState={{ checked: planForm.isActive }}
+                >
                   <Text style={styles.toggleText}>{planForm.isActive ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Text>
                 </TouchableOpacity>
               )}
@@ -656,7 +679,14 @@ export default function AdminDashboardScreen() {
               <Input label="Tìm kiếm" value={planSearch} onChangeText={setPlanSearch} placeholder="Premium..." />
               <View style={styles.filterRow}>
                 {(['all', 'active', 'inactive'] as const).map(item => (
-                  <TouchableOpacity key={item} style={[styles.filterChip, planActiveFilter === item && styles.filterChipActive]} onPress={() => setPlanActiveFilter(item)}>
+                  <TouchableOpacity
+                    key={item}
+                    style={[styles.filterChip, planActiveFilter === item && styles.filterChipActive]}
+                    onPress={() => setPlanActiveFilter(item)}
+                    accessibilityRole="button"
+                    accessibilityLabel={item === 'all' ? 'Tất cả' : item === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
+                    accessibilityState={{ selected: planActiveFilter === item }}
+                  >
                     <Text style={[styles.filterText, planActiveFilter === item && styles.filterTextActive]}>{item === 'all' ? 'Tất cả' : item === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Text>
                   </TouchableOpacity>
                 ))}
@@ -677,11 +707,21 @@ export default function AdminDashboardScreen() {
                 </View>
                 <Text style={styles.cardMeta}>{plan.features.join(' - ') || 'Chưa có mô tả tính năng'}</Text>
                 <View style={styles.actionsRow}>
-                  <TouchableOpacity style={styles.smallAction} onPress={() => startEditPlan(plan)}>
+                  <TouchableOpacity
+                    style={styles.smallAction}
+                    onPress={() => startEditPlan(plan)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Sửa gói ${plan.planName}`}
+                  >
                     <Edit3 size={16} color={COLORS.primary} />
                     <Text style={styles.smallActionText}>Sửa</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.smallAction} onPress={() => handleDeletePlan(plan)}>
+                  <TouchableOpacity
+                    style={styles.smallAction}
+                    onPress={() => handleDeletePlan(plan)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ngừng gói ${plan.planName}`}
+                  >
                     <Trash2 size={16} color={COLORS.error} />
                     <Text style={[styles.smallActionText, styles.dangerText]}>Ngừng gói</Text>
                   </TouchableOpacity>
@@ -711,7 +751,13 @@ export default function AdminDashboardScreen() {
               </View>
               <Input label="Nền tảng" value={affiliateForm.platform} onChangeText={platform => setAffiliateForm(current => ({ ...current, platform }))} placeholder="Shopee" />
               {affiliateForm.id && (
-                <TouchableOpacity style={styles.toggleLine} onPress={() => setAffiliateForm(current => ({ ...current, isActive: !current.isActive }))}>
+                <TouchableOpacity
+                  style={styles.toggleLine}
+                  onPress={() => setAffiliateForm(current => ({ ...current, isActive: !current.isActive }))}
+                  accessibilityRole="switch"
+                  accessibilityLabel="Trạng thái liên kết tiếp thị"
+                  accessibilityState={{ checked: affiliateForm.isActive }}
+                >
                   <Text style={styles.toggleText}>{affiliateForm.isActive ? 'Đang hoạt động' : 'Đang tắt'}</Text>
                 </TouchableOpacity>
               )}
@@ -722,7 +768,13 @@ export default function AdminDashboardScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Đồng bộ liên kết tiếp thị</Text>
               <Input label="Mã nguyên liệu cần đồng bộ" value={syncIngredientId} onChangeText={setSyncIngredientId} placeholder="Để trống nếu không cần chỉ định" autoCapitalize="none" />
-              <TouchableOpacity style={styles.toggleLine} onPress={() => setForceSyncAll(current => !current)}>
+              <TouchableOpacity
+                style={styles.toggleLine}
+                onPress={() => setForceSyncAll(current => !current)}
+                accessibilityRole="switch"
+                accessibilityLabel="Đồng bộ lại toàn bộ liên kết"
+                accessibilityState={{ checked: forceSyncAll }}
+              >
                 <Text style={styles.toggleText}>{forceSyncAll ? 'Đồng bộ lại toàn bộ: Bật' : 'Đồng bộ lại toàn bộ: Tắt'}</Text>
               </TouchableOpacity>
               <Button title="Bắt đầu đồng bộ" onPress={handleSyncAffiliateLinks} loading={actionLoading} outline />
@@ -733,7 +785,14 @@ export default function AdminDashboardScreen() {
               <Input label="Mã nguyên liệu" value={affiliateIngredientId} onChangeText={setAffiliateIngredientId} placeholder="Nhập mã nguyên liệu" autoCapitalize="none" />
               <View style={styles.filterRow}>
                 {(['all', 'active', 'inactive'] as const).map(item => (
-                  <TouchableOpacity key={item} style={[styles.filterChip, affiliateActiveFilter === item && styles.filterChipActive]} onPress={() => setAffiliateActiveFilter(item)}>
+                  <TouchableOpacity
+                    key={item}
+                    style={[styles.filterChip, affiliateActiveFilter === item && styles.filterChipActive]}
+                    onPress={() => setAffiliateActiveFilter(item)}
+                    accessibilityRole="button"
+                    accessibilityLabel={item === 'all' ? 'Tất cả' : item === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}
+                    accessibilityState={{ selected: affiliateActiveFilter === item }}
+                  >
                     <Text style={[styles.filterText, affiliateActiveFilter === item && styles.filterTextActive]}>{item === 'all' ? 'Tất cả' : item === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Text>
                   </TouchableOpacity>
                 ))}
@@ -753,11 +812,21 @@ export default function AdminDashboardScreen() {
                   <StatusPill active={link.isActive} />
                 </View>
                 <View style={styles.actionsRow}>
-                  <TouchableOpacity style={styles.smallAction} onPress={() => startEditAffiliate(link)}>
+                  <TouchableOpacity
+                    style={styles.smallAction}
+                    onPress={() => startEditAffiliate(link)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Sửa liên kết ${link.productName}`}
+                  >
                     <Edit3 size={16} color={COLORS.primary} />
                     <Text style={styles.smallActionText}>Sửa</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.smallAction} onPress={() => handleToggleAffiliate(link)}>
+                  <TouchableOpacity
+                    style={styles.smallAction}
+                    onPress={() => handleToggleAffiliate(link)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${link.isActive ? 'Tắt' : 'Bật'} liên kết ${link.productName}`}
+                  >
                     <LinkIcon size={16} color={link.isActive ? COLORS.error : COLORS.primary} />
                     <Text style={[styles.smallActionText, link.isActive && styles.dangerText]}>{link.isActive ? 'Tắt' : 'Bật'}</Text>
                   </TouchableOpacity>
@@ -861,25 +930,25 @@ const styles = StyleSheet.create({
   statusTextActive: { color: COLORS.primary },
   statusTextInactive: { color: COLORS.error },
   actionsRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  smallAction: { flexDirection: 'row', gap: 6, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
+  smallAction: { minHeight: 44, flexDirection: 'row', gap: 6, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8 },
   smallActionText: { color: COLORS.primary, fontWeight: '800', fontSize: 12 },
   dangerText: { color: COLORS.error },
   pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 8, marginBottom: 16 },
   pagerBtn: { minWidth: 92, paddingVertical: 10 },
   pagerText: { color: COLORS.text, fontWeight: '900' },
   filterRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  filterChip: { flex: 1, backgroundColor: COLORS.surface, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
+  filterChip: { flex: 1, minHeight: 44, backgroundColor: COLORS.surface, borderRadius: 8, paddingVertical: 9, alignItems: 'center', justifyContent: 'center' },
   filterChipActive: { backgroundColor: COLORS.primary },
   filterText: { color: COLORS.textGray, fontWeight: '800', fontSize: 12 },
   filterTextActive: { color: COLORS.white },
   planOptionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, marginBottom: 12 },
-  planOption: { minWidth: '47%', flexGrow: 1, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, borderRadius: 8, padding: 10 },
+  planOption: { minWidth: '47%', minHeight: 44, flexGrow: 1, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, borderRadius: 8, padding: 10 },
   planOptionActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   planOptionTitle: { color: COLORS.text, fontSize: 13, fontWeight: '900' },
   planOptionTitleActive: { color: COLORS.white },
   planOptionMeta: { color: COLORS.textGray, fontSize: 11, marginTop: 4, fontWeight: '700' },
   planOptionMetaActive: { color: COLORS.white },
-  toggleLine: { backgroundColor: COLORS.surface, borderRadius: 8, padding: 12, marginBottom: 12 },
+  toggleLine: { minHeight: 44, backgroundColor: COLORS.surface, borderRadius: 8, padding: 12, marginBottom: 12, justifyContent: 'center' },
   toggleText: { color: COLORS.primary, fontWeight: '900', textAlign: 'center' },
   mt10: { marginTop: 10 },
   usageRow: { backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, padding: 14, marginBottom: 10 },
