@@ -19,10 +19,10 @@ function getParamsFromUrl(url: string) {
 
 export function assertGoogleClientConfigured() {
   if (!GOOGLE_WEB_CLIENT_ID) {
-    throw new Error('Chưa cấu hình GOOGLE_WEB_CLIENT_ID trong src/constants/index.ts');
+    throw new Error('Chưa cấu hình EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID cho ứng dụng.');
   }
   if (!GOOGLE_REDIRECT_URI) {
-    throw new Error('Chưa cấu hình GOOGLE_REDIRECT_URI trong src/constants/index.ts');
+    throw new Error('Chưa cấu hình EXPO_PUBLIC_GOOGLE_REDIRECT_URI cho ứng dụng.');
   }
 }
 
