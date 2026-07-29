@@ -295,7 +295,7 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
             </View>
             <View style={styles.suggestHeaderText}>
               <Text style={styles.suggestTitle}>Chọn điều kiện nấu</Text>
-              <Text style={styles.suggestSubtitle}>Fookit sẽ tối ưu món theo thiết bị, diet và ngân sách.</Text>
+              <Text style={styles.suggestSubtitle}>Fookit sẽ tối ưu món theo thiết bị, chế độ ăn và ngân sách.</Text>
             </View>
           </View>
 

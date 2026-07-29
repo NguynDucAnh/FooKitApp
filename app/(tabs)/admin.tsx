@@ -9,6 +9,12 @@ import { COLORS } from '../../src/constants';
 import { adminService } from '../../src/services/adminService';
 import { AdminAffiliateLink, AdminOverview, AdminSubscriptionPlan, AdminUser, ApiUsageItem } from '../../src/types/admin';
 import { getAuthErrorMessage } from '../../src/utils/authErrors';
+import {
+  ADMIN_COPY,
+  getBanMismatchMessage,
+  getBanMismatchTitle,
+  getGrantPremiumNotFoundMessage,
+} from '../../src/utils/userFacingCopy';
 import { useAuth } from '../../src/hooks/useAuth';
 
 type AdminTab = 'overview' | 'users' | 'plans' | 'affiliate' | 'usage';
@@ -160,7 +166,7 @@ export default function AdminDashboardScreen() {
       setAffiliateTotal(result.totalCount);
       setAffiliatePage(page);
     } catch (error) {
-      Alert.alert('Không thể tải affiliate links', getAuthErrorMessage(error));
+      Alert.alert('Không thể tải liên kết tiếp thị', getAuthErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -174,7 +180,7 @@ export default function AdminDashboardScreen() {
         end_date: usageEndDate.trim() || undefined,
       }));
     } catch (error) {
-      Alert.alert('Không thể tải thống kê API', getAuthErrorMessage(error));
+      Alert.alert('Không thể tải số liệu sử dụng', getAuthErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -206,7 +212,7 @@ export default function AdminDashboardScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.forbidden}>
           <Text style={styles.forbiddenTitle}>Không có quyền quản trị</Text>
-          <Text style={styles.forbiddenText}>Tài khoản hiện tại không có role Admin để truy cập bảng quản trị.</Text>
+          <Text style={styles.forbiddenText}>Tài khoản hiện tại không có quyền truy cập bảng quản trị.</Text>
           <Button title="Quay lại" onPress={() => router.back()} />
         </View>
       </SafeAreaView>
@@ -215,7 +221,7 @@ export default function AdminDashboardScreen() {
 
   async function handleCreateUser() {
     if (!userForm.username || !userForm.email || !userForm.fullName || !userForm.password) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng nhập đủ username, email, họ tên và mật khẩu.');
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập đủ tên đăng nhập, email, họ tên và mật khẩu.');
       return;
     }
 
@@ -234,13 +240,13 @@ export default function AdminDashboardScreen() {
 
   async function handleGrantPremium(user: AdminUser) {
     if (!user.id) {
-      Alert.alert('Thiếu mã người dùng', 'Không tìm thấy userId trong dữ liệu trả về từ API.');
+      Alert.alert(ADMIN_COPY.missingUserTitle, ADMIN_COPY.missingUserMessage);
       return;
     }
 
     const planId = premiumPlanId.trim();
     if (!planId) {
-      Alert.alert('Thiếu gói Premium', 'Vui lòng nhập plan_id của gói muốn cấp cho người dùng.');
+      Alert.alert('Thiếu gói Premium', 'Vui lòng nhập mã gói Premium muốn cấp cho người dùng.');
       return;
     }
 
@@ -253,8 +259,8 @@ export default function AdminDashboardScreen() {
       const status = (error as any)?.response?.status;
       if (status === 404) {
         Alert.alert(
-          'Không tìm thấy người dùng',
-          `API grant-premium trả 404 cho userId: ${user.id}\nUsername: ${user.username}\nVui lòng kiểm tra BE có tìm user theo đúng id này không.`
+          'Không thể cấp Premium',
+          getGrantPremiumNotFoundMessage(user.username || user.email || 'này')
         );
         return;
       }
@@ -266,7 +272,7 @@ export default function AdminDashboardScreen() {
 
   async function handleToggleBan(user: AdminUser) {
     if (!user.id) {
-      Alert.alert('Thiếu mã người dùng', 'Không tìm thấy userId trong dữ liệu trả về từ API.');
+      Alert.alert(ADMIN_COPY.missingUserTitle, ADMIN_COPY.missingUserMessage);
       return;
     }
 
@@ -284,8 +290,8 @@ export default function AdminDashboardScreen() {
 
       if (!didChange) {
         Alert.alert(
-          nextIsActive ? 'BE chưa bỏ cấm tài khoản' : 'BE chưa cấm tài khoản',
-          `${user.username} đã gọi API thành công nhưng dữ liệu tải lại vẫn là ${refreshedUser?.isActive ? 'Active' : 'Inactive'}. Vui lòng kiểm tra xử lý toggle-ban ở backend.`
+          getBanMismatchTitle(nextIsActive),
+          getBanMismatchMessage(user.username || user.email || 'tài khoản này')
         );
         return;
       }
@@ -303,7 +309,7 @@ export default function AdminDashboardScreen() {
 
   function startEditPlan(plan: AdminSubscriptionPlan) {
     if (!plan.id) {
-      Alert.alert('Thiếu mã gói', 'Không tìm thấy id của gói cước trong dữ liệu trả về từ API.');
+      Alert.alert(ADMIN_COPY.missingPlanTitle, ADMIN_COPY.missingPlanMessage);
       return;
     }
 
@@ -355,17 +361,17 @@ export default function AdminDashboardScreen() {
   }
 
   async function handleDeletePlan(plan: AdminSubscriptionPlan) {
-    Alert.alert('Xóa mềm gói cước', `Chuyển gói ${plan.planName} sang ngưng hoạt động?`, [
+    Alert.alert('Ngừng gói cước', `Chuyển gói ${plan.planName} sang ngưng hoạt động?`, [
       { text: 'Hủy', style: 'cancel' },
       {
-        text: 'Xóa mềm',
+        text: 'Ngừng gói',
         style: 'destructive',
         onPress: async () => {
           setActionLoading(true);
           try {
             await adminService.deletePlan(plan.id);
             await loadPlans(plansPage);
-            Alert.alert('Đã xóa mềm gói cước', `${plan.planName} đã được chuyển sang trạng thái ngưng hoạt động.`);
+            Alert.alert('Đã ngừng gói cước', `${plan.planName} đã được chuyển sang trạng thái ngưng hoạt động.`);
           } catch (error) {
             Alert.alert('Không thể xóa gói', getAuthErrorMessage(error));
           } finally {
@@ -378,7 +384,7 @@ export default function AdminDashboardScreen() {
 
   function startEditAffiliate(link: AdminAffiliateLink) {
     if (!link.id) {
-      Alert.alert('Thiếu mã link', 'Không tìm thấy id của affiliate link trong dữ liệu API.');
+      Alert.alert(ADMIN_COPY.missingAffiliateTitle, ADMIN_COPY.missingAffiliateMessage);
       return;
     }
 
@@ -402,7 +408,7 @@ export default function AdminDashboardScreen() {
 
     const price = Number(affiliateForm.currentPriceAmount);
     if (!price || price <= 0) {
-      Alert.alert('Giá không hợp lệ', 'Giá affiliate phải lớn hơn 0.');
+      Alert.alert('Giá không hợp lệ', 'Giá liên kết tiếp thị phải lớn hơn 0.');
       return;
     }
 
@@ -429,9 +435,9 @@ export default function AdminDashboardScreen() {
       }
       setAffiliateForm(emptyAffiliateForm);
       await loadAffiliateLinks(1);
-      Alert.alert('Đã lưu affiliate link', 'Thông tin link tiếp thị đã được cập nhật.');
+      Alert.alert('Đã lưu liên kết tiếp thị', 'Thông tin liên kết tiếp thị đã được cập nhật.');
     } catch (error) {
-      Alert.alert('Không thể lưu affiliate link', getAuthErrorMessage(error));
+      Alert.alert('Không thể lưu liên kết tiếp thị', getAuthErrorMessage(error));
     } finally {
       setActionLoading(false);
     }
@@ -443,9 +449,9 @@ export default function AdminDashboardScreen() {
     try {
       await adminService.toggleAffiliateLink(link.id, { isActive: nextIsActive });
       await loadAffiliateLinks(affiliatePage);
-      Alert.alert(nextIsActive ? 'Đã bật link' : 'Đã tắt link', `${link.productName} hiện ${nextIsActive ? 'đang hoạt động' : 'đã tạm tắt'}.`);
+      Alert.alert(nextIsActive ? 'Đã bật liên kết' : 'Đã tắt liên kết', `${link.productName} hiện ${nextIsActive ? 'đang hoạt động' : 'đã tạm tắt'}.`);
     } catch (error) {
-      Alert.alert('Không thể đổi trạng thái link', getAuthErrorMessage(error));
+      Alert.alert('Không thể đổi trạng thái liên kết', getAuthErrorMessage(error));
     } finally {
       setActionLoading(false);
     }
@@ -458,9 +464,9 @@ export default function AdminDashboardScreen() {
         forceSyncAll,
         targetIngredientId: syncIngredientId.trim() || undefined,
       });
-      Alert.alert('Đã bắt đầu đồng bộ', 'Job đồng bộ affiliate đã được đưa vào hàng đợi.');
+      Alert.alert('Đã bắt đầu đồng bộ', 'Yêu cầu đồng bộ liên kết tiếp thị đã được tiếp nhận.');
     } catch (error) {
-      Alert.alert('Không thể đồng bộ affiliate', getAuthErrorMessage(error));
+      Alert.alert('Không thể đồng bộ liên kết tiếp thị', getAuthErrorMessage(error));
     } finally {
       setActionLoading(false);
     }
@@ -470,8 +476,8 @@ export default function AdminDashboardScreen() {
     { id: 'overview', label: 'Tổng quan' },
     { id: 'users', label: 'Người dùng' },
     { id: 'plans', label: 'Gói cước' },
-    { id: 'affiliate', label: 'Affiliate' },
-    { id: 'usage', label: 'API' },
+    { id: 'affiliate', label: 'Liên kết' },
+    { id: 'usage', label: 'Mức sử dụng' },
   ];
 
   return (
@@ -484,7 +490,7 @@ export default function AdminDashboardScreen() {
           <View style={styles.headerText}>
             <Text style={styles.eyebrow}>Fookit Admin</Text>
             <Text style={styles.title}>Bảng điều khiển</Text>
-            <Text style={styles.subtitle}>Quản lý người dùng, doanh thu, API và gói thuê bao.</Text>
+            <Text style={styles.subtitle}>Quản lý người dùng, doanh thu, mức sử dụng và gói thuê bao.</Text>
           </View>
         </View>
 
@@ -503,14 +509,14 @@ export default function AdminDashboardScreen() {
             <View style={styles.metricsGrid}>
               <Metric icon={Users} label="Người dùng" value={(overview?.totalUsers ?? 0).toLocaleString('vi-VN')} />
               <Metric icon={Crown} label="Premium" value={(overview?.totalPremiumUsers ?? 0).toLocaleString('vi-VN')} />
-              <Metric icon={Wallet} label="User mới hôm nay" value={(overview?.newUsersToday ?? 0).toLocaleString('vi-VN')} />
+              <Metric icon={Wallet} label="Người dùng mới hôm nay" value={(overview?.newUsersToday ?? 0).toLocaleString('vi-VN')} />
               <Metric icon={Activity} label="Món tạo hôm nay" value={(overview?.totalSuggestionsGenerated ?? 0).toLocaleString('vi-VN')} />
             </View>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Sức khỏe hệ thống</Text>
-              <Text style={styles.cardSub}>Worker: {overview?.isWorkerRunning ? 'Đang chạy' : 'Không hoạt động'}</Text>
-              <Text style={styles.cardSub}>Affiliate links active: {(overview?.totalActiveAffiliateLinks ?? 0).toLocaleString('vi-VN')}</Text>
-              <Text style={styles.cardSub}>Sync gần nhất: {overview?.lastAffiliateSync ? new Date(overview.lastAffiliateSync).toLocaleString('vi-VN') : 'Chưa có dữ liệu'}</Text>
+              <Text style={styles.cardSub}>Tiến trình nền: {overview?.isWorkerRunning ? 'Đang chạy' : 'Không hoạt động'}</Text>
+              <Text style={styles.cardSub}>Liên kết đang hoạt động: {(overview?.totalActiveAffiliateLinks ?? 0).toLocaleString('vi-VN')}</Text>
+              <Text style={styles.cardSub}>Đồng bộ gần nhất: {overview?.lastAffiliateSync ? new Date(overview.lastAffiliateSync).toLocaleString('vi-VN') : 'Chưa có dữ liệu'}</Text>
               <Text style={styles.cardSub}>Cập nhật: {overview?.timestamp ? new Date(overview.timestamp).toLocaleString('vi-VN') : 'Vừa tải'}</Text>
             </View>
             <Button title="Tải lại tổng quan" onPress={loadOverview} outline />
@@ -521,22 +527,22 @@ export default function AdminDashboardScreen() {
           <View>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Tìm kiếm người dùng</Text>
-              <Input label="Từ khóa" value={userSearch} onChangeText={setUserSearch} placeholder="Username, email, họ tên..." autoCapitalize="none" />
+              <Input label="Từ khóa" value={userSearch} onChangeText={setUserSearch} placeholder="Tên đăng nhập, email, họ tên..." autoCapitalize="none" />
               <Button title="Tìm kiếm" onPress={() => loadUsers(1)} />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Tạo người dùng</Text>
-              <Input label="Username" value={userForm.username} onChangeText={username => setUserForm(current => ({ ...current, username }))} placeholder="newuser123" autoCapitalize="none" />
+              <Input label="Tên đăng nhập" value={userForm.username} onChangeText={username => setUserForm(current => ({ ...current, username }))} placeholder="nguoidung123" autoCapitalize="none" />
               <Input label="Email" value={userForm.email} onChangeText={email => setUserForm(current => ({ ...current, email }))} placeholder="newuser@gmail.com" autoCapitalize="none" keyboardType="email-address" />
-              <Input label="Họ tên" value={userForm.fullName} onChangeText={fullName => setUserForm(current => ({ ...current, fullName }))} placeholder="New User Name" />
+              <Input label="Họ tên" value={userForm.fullName} onChangeText={fullName => setUserForm(current => ({ ...current, fullName }))} placeholder="Nguyễn Văn A" />
               <Input label="Mật khẩu" value={userForm.password} onChangeText={password => setUserForm(current => ({ ...current, password }))} placeholder="Password123" secureTextEntry />
               <Button title="Tạo tài khoản" onPress={handleCreateUser} loading={actionLoading} />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Cấp Premium nhanh</Text>
-              <Text style={styles.cardSub}>Chọn gói Premium muốn cấp, sau đó bấm Cấp Premium trên user cần cấp.</Text>
+              <Text style={styles.cardSub}>Chọn gói Premium muốn cấp, sau đó bấm Cấp Premium trên người dùng cần cấp.</Text>
               <View style={styles.planOptionWrap}>
                 {premiumPlanOptions.length > 0 ? premiumPlanOptions.map(plan => {
                   const selected = premiumPlanId === plan.id;
@@ -547,10 +553,10 @@ export default function AdminDashboardScreen() {
                     </TouchableOpacity>
                   );
                 }) : (
-                  <Text style={styles.cardSub}>Chưa tải được gói active. Vui lòng sang tab Gói cước hoặc bấm tải lại danh sách gói.</Text>
+                  <Text style={styles.cardSub}>Chưa tải được gói đang hoạt động. Vui lòng sang mục Gói cước hoặc tải lại danh sách gói.</Text>
                 )}
               </View>
-              {selectedPremiumPlan && <Text style={styles.cardSub}>Đang chọn: {selectedPremiumPlan.planName} - ID: {selectedPremiumPlan.id}</Text>}
+              {selectedPremiumPlan && <Text style={styles.cardSub}>Đang chọn: {selectedPremiumPlan.planName} - Mã: {selectedPremiumPlan.id}</Text>}
               <Input label="Lý do" value={premiumReason} onChangeText={setPremiumReason} />
             </View>
 
@@ -567,15 +573,15 @@ export default function AdminDashboardScreen() {
                   )}
                   <View style={styles.flex}>
                     <Text style={styles.cardTitle}>{user.fullName || user.username || user.email || 'Chưa có tên'}</Text>
-                    <Text style={styles.cardSub}>@{user.username || 'chưa có username'} - {user.email || 'chưa có email'}</Text>
-                    <Text style={styles.cardSub}>ID: {user.id}</Text>
+                    <Text style={styles.cardSub}>@{user.username || 'chưa có tên đăng nhập'} - {user.email || 'chưa có email'}</Text>
+                    <Text style={styles.cardSub}>Mã tài khoản: {user.id}</Text>
                   </View>
                   <StatusPill active={user.isActive} />
                 </View>
                 <Text style={styles.cardMeta}>
                   {user.isPremium
                     ? `Premium${user.subscriptionStatus?.planName ? ` - ${user.subscriptionStatus.planName}` : ''}${user.subscriptionStatus?.endDate ? ` - hết hạn ${new Date(user.subscriptionStatus.endDate).toLocaleDateString('vi-VN')}` : ''}`
-                    : 'Free'}
+                    : 'Miễn phí'}
                 </Text>
                 <Text style={styles.cardSub}>Ngày tạo: {user.createdAt ? new Date(user.createdAt).toLocaleString('vi-VN') : 'Chưa có dữ liệu'}</Text>
                 <View style={styles.actionsRow}>
@@ -624,7 +630,7 @@ export default function AdminDashboardScreen() {
               <View style={styles.filterRow}>
                 {(['all', 'active', 'inactive'] as const).map(item => (
                   <TouchableOpacity key={item} style={[styles.filterChip, planActiveFilter === item && styles.filterChipActive]} onPress={() => setPlanActiveFilter(item)}>
-                    <Text style={[styles.filterText, planActiveFilter === item && styles.filterTextActive]}>{item === 'all' ? 'Tất cả' : item === 'active' ? 'Active' : 'Inactive'}</Text>
+                    <Text style={[styles.filterText, planActiveFilter === item && styles.filterTextActive]}>{item === 'all' ? 'Tất cả' : item === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -638,7 +644,7 @@ export default function AdminDashboardScreen() {
                   <View style={styles.flex}>
                     <Text style={styles.cardTitle}>{plan.planName}</Text>
                     <Text style={styles.cardSub}>{formatMoney(plan.price)} / {plan.durationInDays} ngày</Text>
-                    <Text style={styles.cardSub}>Plan ID: {plan.id}</Text>
+                    <Text style={styles.cardSub}>Mã gói: {plan.id}</Text>
                   </View>
                   <StatusPill active={plan.isActive} />
                 </View>
@@ -650,7 +656,7 @@ export default function AdminDashboardScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.smallAction} onPress={() => handleDeletePlan(plan)}>
                     <Trash2 size={16} color={COLORS.error} />
-                    <Text style={[styles.smallActionText, styles.dangerText]}>Xóa mềm</Text>
+                    <Text style={[styles.smallActionText, styles.dangerText]}>Ngừng gói</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -662,9 +668,9 @@ export default function AdminDashboardScreen() {
         {activeTab === 'affiliate' && (
           <View>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{affiliateForm.id ? 'Cập nhật affiliate link' : 'Thêm affiliate link'}</Text>
+              <Text style={styles.sectionTitle}>{affiliateForm.id ? 'Cập nhật liên kết tiếp thị' : 'Thêm liên kết tiếp thị'}</Text>
               {!affiliateForm.id && (
-                <Input label="Standard Ingredient ID" value={affiliateForm.standardIngredientId} onChangeText={standardIngredientId => setAffiliateForm(current => ({ ...current, standardIngredientId }))} placeholder="b3fc-2c963f66afa6" autoCapitalize="none" />
+                <Input label="Mã nguyên liệu chuẩn" value={affiliateForm.standardIngredientId} onChangeText={standardIngredientId => setAffiliateForm(current => ({ ...current, standardIngredientId }))} placeholder="b3fc-2c963f66afa6" autoCapitalize="none" />
               )}
               <Input label="Tên sản phẩm" value={affiliateForm.productName} onChangeText={productName => setAffiliateForm(current => ({ ...current, productName }))} placeholder="Dầu Oliu Extra Virgin" />
               <Input label="URL sản phẩm" value={affiliateForm.productUrl} onChangeText={productUrl => setAffiliateForm(current => ({ ...current, productUrl }))} placeholder="https://shopee.vn/..." autoCapitalize="none" />
@@ -682,39 +688,39 @@ export default function AdminDashboardScreen() {
                   <Text style={styles.toggleText}>{affiliateForm.isActive ? 'Đang hoạt động' : 'Đang tắt'}</Text>
                 </TouchableOpacity>
               )}
-              <Button title={affiliateForm.id ? 'Lưu link' : 'Tạo link'} onPress={handleSaveAffiliate} loading={actionLoading} />
+              <Button title={affiliateForm.id ? 'Lưu liên kết' : 'Tạo liên kết'} onPress={handleSaveAffiliate} loading={actionLoading} />
               {affiliateForm.id && <Button title="Hủy chỉnh sửa" onPress={() => setAffiliateForm(emptyAffiliateForm)} outline style={styles.mt10} />}
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Đồng bộ affiliate</Text>
-              <Input label="Target Ingredient ID" value={syncIngredientId} onChangeText={setSyncIngredientId} placeholder="Để trống nếu không cần chỉ định" autoCapitalize="none" />
+              <Text style={styles.sectionTitle}>Đồng bộ liên kết tiếp thị</Text>
+              <Input label="Mã nguyên liệu cần đồng bộ" value={syncIngredientId} onChangeText={setSyncIngredientId} placeholder="Để trống nếu không cần chỉ định" autoCapitalize="none" />
               <TouchableOpacity style={styles.toggleLine} onPress={() => setForceSyncAll(current => !current)}>
-                <Text style={styles.toggleText}>{forceSyncAll ? 'Force sync toàn bộ: Bật' : 'Force sync toàn bộ: Tắt'}</Text>
+                <Text style={styles.toggleText}>{forceSyncAll ? 'Đồng bộ lại toàn bộ: Bật' : 'Đồng bộ lại toàn bộ: Tắt'}</Text>
               </TouchableOpacity>
               <Button title="Bắt đầu đồng bộ" onPress={handleSyncAffiliateLinks} loading={actionLoading} outline />
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Lọc affiliate links</Text>
-              <Input label="Ingredient ID" value={affiliateIngredientId} onChangeText={setAffiliateIngredientId} placeholder="Lọc theo ingredient_id" autoCapitalize="none" />
+              <Text style={styles.sectionTitle}>Lọc liên kết tiếp thị</Text>
+              <Input label="Mã nguyên liệu" value={affiliateIngredientId} onChangeText={setAffiliateIngredientId} placeholder="Nhập mã nguyên liệu" autoCapitalize="none" />
               <View style={styles.filterRow}>
                 {(['all', 'active', 'inactive'] as const).map(item => (
                   <TouchableOpacity key={item} style={[styles.filterChip, affiliateActiveFilter === item && styles.filterChipActive]} onPress={() => setAffiliateActiveFilter(item)}>
-                    <Text style={[styles.filterText, affiliateActiveFilter === item && styles.filterTextActive]}>{item === 'all' ? 'Tất cả' : item === 'active' ? 'Active' : 'Inactive'}</Text>
+                    <Text style={[styles.filterText, affiliateActiveFilter === item && styles.filterTextActive]}>{item === 'all' ? 'Tất cả' : item === 'active' ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
               <Button title="Áp dụng lọc" onPress={() => loadAffiliateLinks(1)} outline />
             </View>
 
-            <Text style={styles.listTitle}>Affiliate links ({affiliateTotal})</Text>
+            <Text style={styles.listTitle}>Liên kết tiếp thị ({affiliateTotal})</Text>
             {affiliateLinks.map(link => (
               <View key={link.id || link.productUrl} style={styles.userCard}>
                 <View style={styles.cardTop}>
                   <View style={styles.flex}>
                     <Text style={styles.cardTitle}>{link.productName}</Text>
-                    <Text style={styles.cardSub}>{link.platform} - {formatMoney(link.price || link.currentPriceAmount)} - Ingredient: {link.ingredientId}</Text>
+                    <Text style={styles.cardSub}>{link.platform} - {formatMoney(link.price || link.currentPriceAmount)} - Mã nguyên liệu: {link.ingredientId}</Text>
                     <Text style={styles.cardSub} numberOfLines={1}>{link.productUrl}</Text>
                   </View>
                   <StatusPill active={link.isActive} />
@@ -741,11 +747,11 @@ export default function AdminDashboardScreen() {
               <Text style={styles.sectionTitle}>Khoảng thời gian</Text>
               <Input label="Từ ngày" value={usageStartDate} onChangeText={setUsageStartDate} placeholder="2026-06-01T00:00:00Z" autoCapitalize="none" />
               <Input label="Đến ngày" value={usageEndDate} onChangeText={setUsageEndDate} placeholder="2026-06-10T23:59:59Z" autoCapitalize="none" />
-              <Button title="Tải thống kê API" onPress={loadUsage} />
+              <Button title="Tải số liệu sử dụng" onPress={loadUsage} />
             </View>
             <View style={styles.metricsGrid}>
-              <Metric icon={Activity} label="Requests" value={usageTotals.total.toLocaleString('vi-VN')} />
-              <Metric icon={ShieldOff} label="Failed" value={usageTotals.failed.toLocaleString('vi-VN')} />
+              <Metric icon={Activity} label="Yêu cầu" value={usageTotals.total.toLocaleString('vi-VN')} />
+              <Metric icon={ShieldOff} label="Không thành công" value={usageTotals.failed.toLocaleString('vi-VN')} />
             </View>
             {safeUsage.map(item => (
               <View key={item.date} style={styles.usageRow}>
@@ -773,7 +779,7 @@ function Metric({ icon: Icon, label, value }: { icon: React.ComponentType<any>; 
 function StatusPill({ active }: { active: boolean }) {
   return (
     <View style={[styles.statusPill, active ? styles.statusActive : styles.statusInactive]}>
-      <Text style={[styles.statusText, active ? styles.statusTextActive : styles.statusTextInactive]}>{active ? 'Active' : 'Inactive'}</Text>
+      <Text style={[styles.statusText, active ? styles.statusTextActive : styles.statusTextInactive]}>{active ? 'Đang hoạt động' : 'Ngưng hoạt động'}</Text>
     </View>
   );
 }
