@@ -33,7 +33,14 @@ export function FavoritesScreen({ onRecipeClick, onExplore }: Props) {
       {favorites.length > 0 && (
         <View style={styles.searchBox}>
           <Search size={19} color="#64748B" />
-          <TextInput value={query} onChangeText={setQuery} placeholder="Tìm trong món đã lưu..." placeholderTextColor="#94A3B8" style={styles.searchInput} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Tìm trong món đã lưu..."
+            placeholderTextColor="#94A3B8"
+            style={styles.searchInput}
+            accessibilityLabel="Tìm trong món đã lưu"
+          />
         </View>
       )}
 
@@ -42,7 +49,14 @@ export function FavoritesScreen({ onRecipeClick, onExplore }: Props) {
           <View style={styles.emptyIcon}><Heart size={34} color="#16A34A" /></View>
           <Text style={styles.emptyTitle}>Chưa có món yêu thích</Text>
           <Text style={styles.emptyText}>Chạm vào biểu tượng trái tim trên món ăn bạn thích để lưu vào đây.</Text>
-          <Pressable style={styles.exploreButton} onPress={onExplore}><Text style={styles.exploreButtonText}>Khám phá món ăn</Text></Pressable>
+          <Pressable
+            style={styles.exploreButton}
+            onPress={onExplore}
+            accessibilityRole="button"
+            accessibilityLabel="Khám phá món ăn"
+          >
+            <Text style={styles.exploreButtonText}>Khám phá món ăn</Text>
+          </Pressable>
         </View>
       ) : filtered.length === 0 ? (
         <View style={styles.noResult}><Text style={styles.noResultTitle}>Không tìm thấy món phù hợp</Text><Text style={styles.noResultText}>Thử tìm bằng một tên món khác nhé.</Text></View>
@@ -73,7 +87,7 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 76, height: 76, borderRadius: 38, backgroundColor: '#ECFDF5', alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
   emptyTitle: { color: '#0F172A', fontSize: 20, fontWeight: '800', marginBottom: 8 },
   emptyText: { color: '#64748B', fontSize: 14, lineHeight: 21, textAlign: 'center', marginBottom: 22 },
-  exploreButton: { backgroundColor: '#10B981', borderRadius: 18, paddingVertical: 14, paddingHorizontal: 24 },
+  exploreButton: { minHeight: 44, backgroundColor: '#10B981', borderRadius: 18, paddingVertical: 14, paddingHorizontal: 24, justifyContent: 'center' },
   exploreButtonText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
   noResult: { alignItems: 'center', paddingVertical: 42 },
   noResultTitle: { color: '#0F172A', fontSize: 18, fontWeight: '800', marginBottom: 7 },

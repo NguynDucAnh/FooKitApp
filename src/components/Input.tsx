@@ -4,7 +4,15 @@ import { COLORS } from '../constants';
 
 interface Props extends TextInputProps { label?: string; error?: string; }
 
-export default function Input({ label, error, ...rest }: Props) {
+export default function Input({
+  label,
+  error,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityState,
+  editable,
+  ...rest
+}: Props) {
   const [focus, setFocus] = useState(false);
   return (
     <View style={styles.wrap}>
@@ -14,9 +22,16 @@ export default function Input({ label, error, ...rest }: Props) {
         placeholderTextColor={COLORS.textGray}
         onFocus={() => setFocus(true)}
         onBlur={() => setFocus(false)}
+        editable={editable}
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={error ? `Lỗi: ${error}` : accessibilityHint}
+        accessibilityState={{
+          ...accessibilityState,
+          disabled: Boolean(accessibilityState?.disabled || editable === false),
+        }}
         {...rest}
       />
-      {error && <Text style={styles.err}>{error}</Text>}
+      {error && <Text style={styles.err} accessibilityLiveRegion="polite">{error}</Text>}
     </View>
   );
 }
@@ -24,7 +39,7 @@ export default function Input({ label, error, ...rest }: Props) {
 const styles = StyleSheet.create({
   wrap: { marginBottom: 14 },
   label: { fontSize: 14, fontWeight: '500', color: COLORS.text, marginBottom: 5 },
-  input: { borderWidth: 1.5, borderColor: COLORS.border, borderRadius: 8, padding: 12, fontSize: 14, color: COLORS.text, backgroundColor: COLORS.white },
+  input: { minHeight: 44, borderWidth: 1.5, borderColor: COLORS.border, borderRadius: 8, padding: 12, fontSize: 14, color: COLORS.text, backgroundColor: COLORS.white },
   focused: { borderColor: COLORS.primary },
   errBorder: { borderColor: COLORS.error },
   err: { fontSize: 12, color: COLORS.error, marginTop: 3 },

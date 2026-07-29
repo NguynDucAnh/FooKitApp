@@ -71,7 +71,12 @@ export default function RegisterScreen() {
 
         <Button title="Đăng ký" onPress={handleRegister} loading={loading} style={styles.btn} />
 
-        <TouchableOpacity onPress={() => router.back()} style={styles.link}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.link}
+          accessibilityRole="button"
+          accessibilityLabel="Quay lại đăng nhập"
+        >
           <Text style={styles.linkText}>
             Đã có tài khoản? <Text style={styles.linkStrong}>Đăng nhập</Text>
           </Text>
@@ -84,7 +89,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   btn: { marginTop: 8 },
-  link: { marginTop: 24, alignItems: 'center' },
+  link: { minHeight: 44, marginTop: 24, alignItems: 'center', justifyContent: 'center' },
   linkText: { fontSize: 14, color: COLORS.textGray },
   linkStrong: { color: COLORS.primary, fontWeight: '700' },
 });

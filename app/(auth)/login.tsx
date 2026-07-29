@@ -87,7 +87,12 @@ export default function LoginScreen() {
           style={styles.googleBtn}
         />
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/register')} style={styles.link}>
+        <TouchableOpacity
+          onPress={() => router.push('/(auth)/register')}
+          style={styles.link}
+          accessibilityRole="button"
+          accessibilityLabel="Đăng ký tài khoản"
+        >
           <Text style={styles.linkText}>
             Chưa có tài khoản? <Text style={styles.linkStrong}>Đăng ký ngay</Text>
           </Text>
@@ -104,7 +109,7 @@ const styles = StyleSheet.create({
   divider: { flex: 1, height: 1, backgroundColor: COLORS.border },
   dividerText: { marginHorizontal: 12, color: COLORS.textGray, fontSize: 13 },
   googleBtn: { backgroundColor: COLORS.white },
-  link: { marginTop: 24, alignItems: 'center' },
+  link: { minHeight: 44, marginTop: 24, alignItems: 'center', justifyContent: 'center' },
   linkText: { fontSize: 14, color: COLORS.textGray },
   linkStrong: { color: COLORS.primary, fontWeight: '700' },
 });
