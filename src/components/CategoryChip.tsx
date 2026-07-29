@@ -1,4 +1,4 @@
-﻿import { Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, Text, StyleSheet } from 'react-native';
 
 interface CategoryChipProps {
   label: string;
@@ -12,6 +12,9 @@ export function CategoryChip({ label, isActive, onClick }: CategoryChipProps) {
       onPress={onClick}
       style={[styles.chip, isActive && styles.activeChip]}
       android_ripple={{ color: '#D1FAE5' }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: isActive }}
     >
       <Text style={[styles.chipLabel, isActive && styles.activeChipLabel]}>{label}</Text>
     </Pressable>
@@ -20,6 +23,7 @@ export function CategoryChip({ label, isActive, onClick }: CategoryChipProps) {
 
 const styles = StyleSheet.create({
   chip: {
+    minHeight: 44,
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 999,

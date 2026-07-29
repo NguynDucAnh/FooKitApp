@@ -1,4 +1,4 @@
-﻿import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { View, Pressable, Text, StyleSheet } from 'react-native';
 
 interface BudgetSelectorProps {
   options: { label: string; value: number }[];
@@ -17,6 +17,9 @@ export function BudgetSelector({ options, selectedBudget, onSelect }: BudgetSele
             onPress={() => onSelect(option.value)}
             style={[styles.option, isSelected ? styles.optionActive : styles.optionInactive]}
             android_ripple={{ color: '#D1FAE5' }}
+            accessibilityRole="button"
+            accessibilityLabel={option.label}
+            accessibilityState={{ selected: isSelected }}
           >
             <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>{option.label}</Text>
           </Pressable>
@@ -33,6 +36,7 @@ const styles = StyleSheet.create({
     marginHorizontal: -8
   },
   option: {
+    minHeight: 44,
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 24,

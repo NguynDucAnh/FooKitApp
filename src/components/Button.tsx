@@ -12,12 +12,18 @@ interface Props {
 }
 
 export default function Button({ title, onPress, loading, disabled, outline, style }: Props) {
+  const isDisabled = Boolean(disabled || loading);
+
   return (
     <TouchableOpacity
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={isDisabled}
       activeOpacity={0.8}
-      style={[styles.btn, outline ? styles.outline : styles.filled, (disabled || loading) && styles.dim, style]}>
+      style={[styles.btn, outline ? styles.outline : styles.filled, isDisabled && styles.dim, style]}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: isDisabled, busy: Boolean(loading) }}
+    >
       {loading
         ? <ActivityIndicator color={outline ? COLORS.primary : COLORS.white} />
         : <Text style={[styles.label, outline && styles.labelOutline]}>{title}</Text>}
@@ -26,7 +32,7 @@ export default function Button({ title, onPress, loading, disabled, outline, sty
 }
 
 const styles = StyleSheet.create({
-  btn: { padding: 14, borderRadius: 8, alignItems: 'center' },
+  btn: { minHeight: 44, padding: 14, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   filled: { backgroundColor: COLORS.primary },
   outline: { borderWidth: 1.5, borderColor: COLORS.primary },
   dim: { opacity: 0.5 },
