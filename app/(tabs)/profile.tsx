@@ -151,12 +151,13 @@ export default function ProfileScreen() {
         { fullName, avatarUri: form.avatarUrl?.trim() || null },
         {
           avatarUrl: form.avatarUrl?.trim(),
-          phone: form.phone?.trim(),
-          address: form.address?.trim(),
         }
       );
       setForm({ ...EMPTY_USER, ...nextUser });
-      Alert.alert('Đã cập nhật', 'Thông tin hồ sơ đã được đồng bộ với tài khoản của bạn.');
+      Alert.alert(
+        'Đã cập nhật hồ sơ',
+        'Tên hiển thị và ảnh đại diện đã được đồng bộ với tài khoản của bạn.',
+      );
     } catch (error) {
       Alert.alert('Không thể cập nhật hồ sơ', getAuthErrorMessage(error));
     } finally {
@@ -318,7 +319,8 @@ export default function ProfileScreen() {
           <Input label="Tên hiển thị" value={form.fullName ?? form.name} onChangeText={fullName => setForm(current => ({ ...current, fullName, name: fullName }))} placeholder="Nguyễn Văn A" />
           <Input label="Tên đăng nhập" value={form.username} editable={false} placeholder="tuananh99" autoCapitalize="none" />
           <Input label="Email" value={form.email} editable={false} placeholder="email@example.com" keyboardType="email-address" autoCapitalize="none" />
-          <Input label="Số điện thoại" value={form.phone} onChangeText={phone => setForm(current => ({ ...current, phone }))} placeholder="090..." keyboardType="phone-pad" />
+          <Input label="Số điện thoại" value={form.phone ?? ''} editable={false} placeholder="Chưa có dữ liệu" keyboardType="phone-pad" />
+          <Text style={styles.helperText}>Số điện thoại hiện chỉ để xem và chưa thể cập nhật trong ứng dụng.</Text>
           <Button title="Cập nhật hồ sơ" onPress={handleSaveAccount} loading={savingProfile} style={styles.saveBtn} />
         </View>
 

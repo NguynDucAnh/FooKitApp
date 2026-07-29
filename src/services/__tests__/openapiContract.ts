@@ -42,13 +42,19 @@ function getDocument() {
   return cachedDocument;
 }
 
-export function getJsonRequestFieldNames(route: string, method: string) {
+export function getRequestFieldNames(
+  route: string,
+  method: string,
+  contentType: string,
+) {
   const document = getDocument();
   const operation = document.paths[route]?.[method.toLowerCase()];
-  const schema = operation?.requestBody?.content?.['application/json']?.schema;
+  const schema = operation?.requestBody?.content?.[contentType]?.schema;
 
   if (!schema) {
-    throw new Error(`OpenAPI request schema not found for ${method.toUpperCase()} ${route}`);
+    throw new Error(
+      `OpenAPI ${contentType} request schema not found for ${method.toUpperCase()} ${route}`,
+    );
   }
 
   const resolvedSchema = schema.$ref
@@ -60,4 +66,8 @@ export function getJsonRequestFieldNames(route: string, method: string) {
   }
 
   return Object.keys(resolvedSchema.properties).sort();
+}
+
+export function getJsonRequestFieldNames(route: string, method: string) {
+  return getRequestFieldNames(route, method, 'application/json');
 }
