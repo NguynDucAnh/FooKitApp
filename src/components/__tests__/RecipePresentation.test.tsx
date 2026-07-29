@@ -8,6 +8,7 @@ import { homepageService } from '../../services/homepageService';
 import { HomeScreen } from '../HomeScreen';
 import { RecipeCard } from '../RecipeCard';
 import { RecipeDetailScreen } from '../RecipeDetailScreen';
+import { PlannerEmptyState } from '../PlannerEmptyState';
 
 jest.mock('../../context/FavoritesContext', () => ({
   useFavorites: jest.fn(),
@@ -132,6 +133,54 @@ describe('recipe presentation data integrity', () => {
 
     expect(renderer.root.findAllByType(ImageBackground)).toHaveLength(0);
     expect(hasExactText(renderer, 'Chưa có ảnh món ăn')).toBe(true);
+
+    renderer.unmount();
+  });
+
+  it('explains that notifications are not available without showing fake unread state', () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
+    const renderer = TestRenderer.create(
+      <HomeScreen onRecipeClick={jest.fn()} onUpgradePremium={jest.fn()} />,
+    );
+    const notificationButton = renderer.root.findAllByType(Pressable).find(
+      node => node.props.accessibilityLabel === 'Thông báo',
+    );
+
+    expect(notificationButton).toBeDefined();
+
+    act(() => {
+      notificationButton!.props.onPress();
+    });
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Thông báo đang được hoàn thiện',
+      'FooKit sẽ hiển thị cập nhật dành cho bạn khi tính năng này sẵn sàng. Hiện tại bạn vẫn có thể khám phá và lưu các món ăn yêu thích.',
+    );
+
+    renderer.unmount();
+  });
+
+  it('provides an honest planner empty state with a path back to meal discovery', () => {
+    const onExplore = jest.fn();
+    const renderer = TestRenderer.create(
+      <PlannerEmptyState onExplore={onExplore} />,
+    );
+    const exploreButton = renderer.root.findAllByType(Pressable).find(
+      node => node.props.accessibilityLabel === 'Khám phá món ăn',
+    );
+
+    expect(hasExactText(renderer, 'Kế hoạch bữa ăn')).toBe(true);
+    expect(hasExactText(
+      renderer,
+      'Tính năng lập thực đơn theo tuần đang được hoàn thiện và chưa lưu dữ liệu của bạn.',
+    )).toBe(true);
+    expect(exploreButton).toBeDefined();
+
+    act(() => {
+      exploreButton!.props.onPress();
+    });
+
+    expect(onExplore).toHaveBeenCalledTimes(1);
 
     renderer.unmount();
   });
