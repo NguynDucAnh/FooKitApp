@@ -24,6 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check mobile environment
+        run: npm run check:env
+
       - name: Run TypeScript check
         run: npm run typecheck
 
