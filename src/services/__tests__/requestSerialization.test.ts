@@ -1,7 +1,8 @@
 import axiosClient from '../axiosClient';
 import { adminService } from '../adminService';
 import { homepageService } from '../homepageService';
-import { getJsonRequestFieldNames } from './openapiContract';
+import { userService } from '../userService';
+import { getJsonRequestFieldNames, getRequestFieldNames } from './openapiContract';
 
 jest.mock('../axiosClient');
 
@@ -75,5 +76,45 @@ describe('service request serialization', () => {
     expect(Object.keys(expectedBody)).toEqual(
       getJsonRequestFieldNames('/api/Homepage/clear-cache', 'post')
     );
+  });
+
+  test('serializes profile updates without an unsupported phone field', async () => {
+    mockedAxiosClient.put.mockResolvedValueOnce({
+      data: {
+        id: 'user-1',
+        username: 'test-user',
+        email: 'test@example.test',
+        fullName: 'Người dùng thử',
+      },
+    });
+
+    await userService.updateProfile({
+      fullName: 'Người dùng thử',
+      avatarUri: 'file:///data/user/0/app/avatar.png',
+    });
+
+    const [route, requestBody, config] = mockedAxiosClient.put.mock.calls.at(-1)!;
+    const formData = requestBody as FormData & {
+      _parts?: [string, unknown][];
+    };
+    const serializedFields: string[] = [];
+    if (formData._parts) {
+      serializedFields.push(...formData._parts.map(([field]) => field));
+    } else {
+      formData.forEach((_value, field) => serializedFields.push(field));
+    }
+    serializedFields.sort();
+    const contractFields = getRequestFieldNames(
+      '/api/Users/profile',
+      'put',
+      'application/x-www-form-urlencoded',
+    );
+
+    expect(route).toBe('/api/Users/profile');
+    expect(serializedFields).toEqual(contractFields);
+    expect(serializedFields).not.toContain('phone');
+    expect(config).toMatchObject({
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   });
 });
