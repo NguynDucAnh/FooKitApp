@@ -18,7 +18,7 @@ interface SubscriptionContextValue {
   isPremium: boolean;
   loading: boolean;
   error: string | null;
-  refreshSubscription: () => Promise<void>;
+  refreshSubscription: (options?: RefreshSubscriptionOptions) => Promise<void>;
   setSubscription: (subscription: MySubscription | null) => void;
 }
 
@@ -30,11 +30,22 @@ interface SubscriptionSnapshot {
   value: MySubscription;
 }
 
+interface RefreshSubscriptionOptions {
+  force?: boolean;
+}
+
+interface InFlightSubscriptionRefresh {
+  session: object;
+  requestId: number;
+  promise: Promise<void>;
+}
+
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { accessToken, loading: authLoading } = useAuth();
   const session = useMemo(() => ({ authenticated: !!accessToken }), [accessToken]);
   const activeSessionRef = useRef(session);
   const latestRequestRef = useRef(0);
+  const inFlightRefreshRef = useRef<InFlightSubscriptionRefresh | null>(null);
   const [snapshot, setSnapshot] = useState<SubscriptionSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,37 +59,59 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     setSnapshot(nextSubscription ? { session, value: nextSubscription } : null);
   }, [session]);
 
-  const refreshSubscription = useCallback(async () => {
-    if (!accessToken) return;
+  const refreshSubscription = useCallback((options: RefreshSubscriptionOptions = {}) => {
+    if (!accessToken) return Promise.resolve();
+
+    const inFlightRefresh = inFlightRefreshRef.current;
+    if (!options.force && inFlightRefresh?.session === session) {
+      return inFlightRefresh.promise;
+    }
 
     const requestId = ++latestRequestRef.current;
     const requestSession = session;
     setLoading(true);
     setError(null);
 
-    try {
-      const data = await subscriptionService.getMySubscription();
-      if (
-        activeSessionRef.current === requestSession
-        && latestRequestRef.current === requestId
-      ) {
-        setSnapshot({ session: requestSession, value: data });
+    const promise = Promise.resolve().then(async () => {
+      try {
+        const data = await subscriptionService.getMySubscription();
+        if (
+          activeSessionRef.current === requestSession
+          && latestRequestRef.current === requestId
+        ) {
+          setSnapshot({ session: requestSession, value: data });
+        }
+      } catch (err) {
+        if (
+          activeSessionRef.current === requestSession
+          && latestRequestRef.current === requestId
+        ) {
+          setError(err instanceof Error ? err.message : 'Không thể tải thông tin gói hiện tại.');
+        }
+      } finally {
+        if (
+          activeSessionRef.current === requestSession
+          && latestRequestRef.current === requestId
+        ) {
+          setLoading(false);
+        }
+
+        if (
+          inFlightRefreshRef.current?.session === requestSession
+          && inFlightRefreshRef.current.requestId === requestId
+        ) {
+          inFlightRefreshRef.current = null;
+        }
       }
-    } catch (err) {
-      if (
-        activeSessionRef.current === requestSession
-        && latestRequestRef.current === requestId
-      ) {
-        setError(err instanceof Error ? err.message : 'Không thể tải thông tin gói hiện tại.');
-      }
-    } finally {
-      if (
-        activeSessionRef.current === requestSession
-        && latestRequestRef.current === requestId
-      ) {
-        setLoading(false);
-      }
-    }
+    });
+
+    inFlightRefreshRef.current = {
+      session: requestSession,
+      requestId,
+      promise,
+    };
+
+    return promise;
   }, [accessToken, session]);
 
   useEffect(() => {
@@ -86,6 +119,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     if (!accessToken) {
       latestRequestRef.current += 1;
+      inFlightRefreshRef.current = null;
       setSnapshot(null);
       setLoading(false);
       setError(null);
@@ -96,6 +130,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     return () => {
       latestRequestRef.current += 1;
+      inFlightRefreshRef.current = null;
     };
   }, [accessToken, authLoading, refreshSubscription]);
 

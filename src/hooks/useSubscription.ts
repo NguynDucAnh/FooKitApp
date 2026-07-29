@@ -7,7 +7,7 @@ export function useSubscription() {
 
   const cancelSubscription = useCallback(async () => {
     await subscriptionService.cancelSubscription();
-    await store.refreshSubscription();
+    await store.refreshSubscription({ force: true });
   }, [store]);
 
   return {

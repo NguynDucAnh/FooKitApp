@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { CreditCard, ShieldCheck } from 'lucide-react-native';
@@ -14,10 +14,6 @@ import CancelSubscriptionModal from './CancelSubscriptionModal';
 import CurrentPlanCard from './CurrentPlanCard';
 import PaymentHistoryTable from './PaymentHistoryTable';
 import PricingCard from './PricingCard';
-
-function getPlanLabel(planName: string) {
-  return planName.toLowerCase() === 'free' ? 'miễn phí' : planName;
-}
 
 function getPlanId(plan: SubscriptionPlan) {
   return plan.id ?? plan.planId;
@@ -37,7 +33,7 @@ export default function SubscriptionDashboard() {
 
   async function refreshPaymentState() {
     await Promise.all([
-      refreshSubscription(),
+      refreshSubscription({ force: true }),
       paymentHistory.refetch(),
     ]);
   }
@@ -133,7 +129,14 @@ export default function SubscriptionDashboard() {
         <View style={styles.errorBox}>
           <Text style={styles.errorTitle}>Không thể tải gói hiện tại</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <Text style={styles.retryText} onPress={refreshSubscription}>Thử lại</Text>
+          <Pressable
+            style={styles.retryButton}
+            onPress={() => void refreshSubscription()}
+            accessibilityRole="button"
+            accessibilityLabel="Thử tải lại gói hiện tại"
+          >
+            <Text style={styles.retryText}>Thử lại</Text>
+          </Pressable>
         </View>
       )}
 
@@ -152,7 +155,14 @@ export default function SubscriptionDashboard() {
       {plansError && (
         <View style={styles.notice}>
           <Text style={styles.noticeText}>Đang hiển thị gói dự phòng. {plansError}</Text>
-          <Text style={styles.retryText} onPress={refetchPlans}>Tải lại</Text>
+          <Pressable
+            style={styles.retryButton}
+            onPress={() => void refetchPlans()}
+            accessibilityRole="button"
+            accessibilityLabel="Tải lại bảng giá"
+          >
+            <Text style={styles.retryText}>Tải lại</Text>
+          </Pressable>
         </View>
       )}
 
@@ -225,7 +235,8 @@ const styles = StyleSheet.create({
   errorBox: { backgroundColor: '#FEF2F2', borderRadius: 8, padding: 14, marginBottom: 14 },
   errorTitle: { color: '#991B1B', fontWeight: '800', marginBottom: 4 },
   errorText: { color: '#991B1B', lineHeight: 20 },
-  retryText: { color: COLORS.primary, fontWeight: '800', marginTop: 8 },
+  retryButton: { minHeight: 44, alignSelf: 'flex-start', justifyContent: 'center', marginTop: 4 },
+  retryText: { color: COLORS.primary, fontWeight: '800' },
   sectionHeader: { marginBottom: 12 },
   sectionTitle: { color: COLORS.text, fontSize: 22, fontWeight: '900' },
   sectionSub: { color: COLORS.textGray, marginTop: 4 },
