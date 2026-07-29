@@ -490,7 +490,13 @@ export default function AdminDashboardScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Quay lại"
+            accessibilityHint="Trở về màn hình trước"
+          >
             <ArrowLeft size={20} color={COLORS.white} />
           </TouchableOpacity>
           <View style={styles.headerText}>
@@ -502,7 +508,14 @@ export default function AdminDashboardScreen() {
 
         <View style={styles.tabBar}>
           {tabs.map(tab => (
-            <TouchableOpacity key={tab.id} style={[styles.tab, activeTab === tab.id && styles.tabActive]} onPress={() => setActiveTab(tab.id)}>
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.tab, activeTab === tab.id && styles.tabActive]}
+              onPress={() => setActiveTab(tab.id)}
+              accessibilityRole="tab"
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected: activeTab === tab.id }}
+            >
               <Text style={[styles.tabText, activeTab === tab.id && styles.tabTextActive]}>{tab.label}</Text>
             </TouchableOpacity>
           ))}
@@ -812,13 +825,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   content: { padding: 18, paddingBottom: 32 },
   header: { backgroundColor: COLORS.primaryDark, borderRadius: 8, padding: 18, marginBottom: 14, flexDirection: 'row', gap: 12 },
-  backButton: { width: 38, height: 38, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  backButton: { width: 44, height: 44, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
   headerText: { flex: 1 },
   eyebrow: { color: '#FFE0B8', fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
   title: { color: COLORS.white, fontSize: 28, fontWeight: '900', marginTop: 4 },
   subtitle: { color: '#E8F4DF', fontSize: 13, lineHeight: 19, marginTop: 6 },
   tabBar: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  tab: { flex: 1, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  tab: { flex: 1, minHeight: 44, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, paddingVertical: 10, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   tabActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   tabText: { color: COLORS.textGray, fontSize: 12, fontWeight: '800' },
   tabTextActive: { color: COLORS.white },
