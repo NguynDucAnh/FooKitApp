@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ImageBackground, Pressable, Text } from 'react-native';
+import { Alert, Image, ImageBackground, Pressable, ScrollView, Share, Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { Recipe } from '../../types/recipe';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -67,6 +67,7 @@ function hasExactText(renderer: TestRenderer.ReactTestRenderer, expected: string
 
 describe('recipe presentation data integrity', () => {
   beforeEach(() => {
+    jest.restoreAllMocks();
     mockedUseFavorites.mockReturnValue({
       favorites: [],
       isFavorite: jest.fn(() => false),
@@ -131,6 +132,116 @@ describe('recipe presentation data integrity', () => {
 
     expect(renderer.root.findAllByType(ImageBackground)).toHaveLength(0);
     expect(hasExactText(renderer, 'Chưa có ảnh món ăn')).toBe(true);
+
+    renderer.unmount();
+  });
+
+  it('shares only available recipe details through the native share sheet', async () => {
+    const shareSpy = jest.spyOn(Share, 'share').mockResolvedValue({
+      action: Share.sharedAction,
+    });
+    const recipe = createRecipe({
+      name: 'Canh rau',
+      time: 20,
+      budget: 45000,
+      instructions: ['Rửa rau', 'Đun nước', 'Nêm gia vị', 'Bày ra bát'],
+    });
+    const renderer = TestRenderer.create(
+      <RecipeDetailScreen recipe={recipe} onBack={jest.fn()} />,
+    );
+    const shareButton = renderer.root.findAllByType(Pressable).find(
+      node => node.props.accessibilityLabel === 'Chia sẻ công thức Canh rau',
+    );
+
+    expect(shareButton).toBeDefined();
+
+    await act(async () => {
+      shareButton!.props.onPress();
+      await Promise.resolve();
+    });
+
+    expect(shareSpy).toHaveBeenCalledWith({
+      title: 'Canh rau',
+      message: [
+        'Canh rau - gợi ý từ FooKit',
+        'Thời gian: 20 phút',
+        'Chi phí dự kiến: 45.000 đ',
+        'Các bước chính:\n1. Rửa rau\n2. Đun nước\n3. Nêm gia vị',
+      ].join('\n\n'),
+    });
+
+    renderer.unmount();
+  });
+
+  it('uses the shared favorites state for the bottom bookmark action', () => {
+    const toggleFavorite = jest.fn();
+    const recipe = createRecipe({ name: 'Canh rau' });
+    mockedUseFavorites.mockReturnValue({
+      favorites: [recipe],
+      isFavorite: jest.fn(() => true),
+      toggleFavorite,
+    });
+    const renderer = TestRenderer.create(
+      <RecipeDetailScreen recipe={recipe} onBack={jest.fn()} />,
+    );
+    const bookmarkButton = renderer.root.findAllByType(Pressable).find(
+      node => node.props.accessibilityHint === 'Bỏ lưu công thức này',
+    );
+
+    expect(bookmarkButton).toBeDefined();
+    expect(bookmarkButton!.props.accessibilityState).toEqual({ selected: true });
+
+    act(() => {
+      bookmarkButton!.props.onPress();
+    });
+
+    expect(toggleFavorite).toHaveBeenCalledWith(recipe);
+
+    renderer.unmount();
+  });
+
+  it('scrolls to the instructions when cooking starts', () => {
+    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(jest.fn());
+    const recipe = createRecipe({ instructions: ['Sơ chế', 'Nấu chín'] });
+    const renderer = TestRenderer.create(
+      <RecipeDetailScreen recipe={recipe} onBack={jest.fn()} />,
+    );
+
+    act(() => {
+      renderer.root.findByProps({ testID: 'recipe-detail-body' }).props.onLayout({
+        nativeEvent: { layout: { y: 260 } },
+      });
+      renderer.root.findByProps({ testID: 'recipe-instructions' }).props.onLayout({
+        nativeEvent: { layout: { y: 420 } },
+      });
+      renderer.root.findAllByType(Pressable).find(
+        node => node.props.accessibilityLabel === 'Bắt đầu nấu',
+      )!.props.onPress();
+    });
+
+    expect(scrollTo).toHaveBeenCalledWith({ y: 664, animated: true });
+
+    renderer.unmount();
+  });
+
+  it('explains when cooking instructions are unavailable', () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
+    const renderer = TestRenderer.create(
+      <RecipeDetailScreen recipe={createRecipe()} onBack={jest.fn()} />,
+    );
+    const startButton = renderer.root.findAllByType(Pressable).find(
+      node => node.props.accessibilityLabel === 'Bắt đầu nấu',
+    );
+
+    act(() => {
+      startButton!.props.onPress();
+    });
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Chưa có hướng dẫn nấu',
+      'Công thức này chưa có các bước thực hiện. Vui lòng thử lại sau.',
+    );
+    expect(hasExactText(renderer, 'Chưa có hướng dẫn nấu cho món này.')).toBe(true);
 
     renderer.unmount();
   });
