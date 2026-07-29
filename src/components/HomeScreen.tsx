@@ -197,7 +197,13 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
             <View style={styles.featuredContent}>
               <Text style={styles.featuredLabel}>Công thức hôm nay</Text>
               <Text style={styles.featuredTitle}>{featuredRecipe.name}</Text>
-              <Pressable style={styles.primaryButton} onPress={() => onRecipeClick(featuredRecipe)} android_ripple={{ color: '#D1FAE5' }}>
+              <Pressable
+                style={styles.primaryButton}
+                onPress={() => onRecipeClick(featuredRecipe)}
+                android_ripple={{ color: '#D1FAE5' }}
+                accessibilityRole="button"
+                accessibilityLabel={`Nấu món ${featuredRecipe.name}`}
+              >
                 <Text style={styles.primaryButtonText}>Nấu ngay</Text>
               </Pressable>
             </View>
@@ -208,7 +214,13 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
               <Text style={styles.featuredLabel}>Công thức hôm nay</Text>
               <Text style={styles.featuredTitle}>{featuredRecipe.name}</Text>
               <Text style={styles.featuredEmptyText}>Chưa có ảnh món ăn</Text>
-              <Pressable style={styles.primaryButton} onPress={() => onRecipeClick(featuredRecipe)} android_ripple={{ color: '#D1FAE5' }}>
+              <Pressable
+                style={styles.primaryButton}
+                onPress={() => onRecipeClick(featuredRecipe)}
+                android_ripple={{ color: '#D1FAE5' }}
+                accessibilityRole="button"
+                accessibilityLabel={`Xem công thức ${featuredRecipe.name}`}
+              >
                 <Text style={styles.primaryButtonText}>Xem công thức</Text>
               </Pressable>
             </View>
@@ -319,6 +331,9 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
                 key={option.value}
                 style={[styles.optionChip, suggestEquipment === option.value && styles.optionChipActive]}
                 onPress={() => setSuggestEquipment(option.value)}
+                accessibilityRole="button"
+                accessibilityLabel={option.label}
+                accessibilityState={{ selected: suggestEquipment === option.value }}
               >
                 <Text style={[styles.optionChipText, suggestEquipment === option.value && styles.optionChipTextActive]}>{option.label}</Text>
               </Pressable>
@@ -340,6 +355,10 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
                   setLockedDietLabel('');
                   setSuggestError('');
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={option.label}
+                accessibilityHint={option.value !== 0 && !isPremium ? 'Yêu cầu gói Premium' : undefined}
+                accessibilityState={{ selected: suggestDiet === option.value }}
               >
                 <Text style={[styles.optionChipText, suggestDiet === option.value && styles.optionChipTextActive]}>{option.label}</Text>
                 {option.value !== 0 && !isPremium && <LockKeyhole size={12} color="#B45309" />}
@@ -348,14 +367,28 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
           </View>
 
           {!!lockedDietLabel && !isPremium && (
-            <View style={styles.premiumPrompt}>
+            <View style={styles.premiumPrompt} accessibilityLiveRegion="polite">
               <View style={styles.premiumPromptIcon}><Crown size={22} color="#B45309" /></View>
               <View style={styles.premiumPromptContent}>
                 <Text style={styles.premiumPromptTitle}>{lockedDietLabel} là lựa chọn Premium</Text>
                 <Text style={styles.premiumPromptText}>Nâng cấp để nhận gợi ý món ăn đúng chế độ, khẩu vị và mục tiêu dinh dưỡng của bạn.</Text>
                 <View style={styles.premiumPromptActions}>
-                  <Pressable style={styles.upgradeButton} onPress={onUpgradePremium}><Text style={styles.upgradeButtonText}>Xem gói Premium</Text></Pressable>
-                  <Pressable style={styles.laterButton} onPress={() => setLockedDietLabel('')}><Text style={styles.laterButtonText}>Để sau</Text></Pressable>
+                  <Pressable
+                    style={styles.upgradeButton}
+                    onPress={onUpgradePremium}
+                    accessibilityRole="button"
+                    accessibilityLabel="Xem gói Premium"
+                  >
+                    <Text style={styles.upgradeButtonText}>Xem gói Premium</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.laterButton}
+                    onPress={() => setLockedDietLabel('')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Để sau"
+                  >
+                    <Text style={styles.laterButtonText}>Để sau</Text>
+                  </Pressable>
                 </View>
               </View>
             </View>
@@ -370,13 +403,22 @@ export function HomeScreen({ onRecipeClick, onUpgradePremium }: HomeScreenProps)
               placeholder="100000"
               placeholderTextColor="#94A3B8"
               style={styles.budgetInput}
+              accessibilityLabel="Ngân sách tối đa"
             />
             <Text style={styles.currencyText}>VND</Text>
           </View>
 
           {!!suggestError && <Text style={styles.suggestError}>{suggestError}</Text>}
 
-          <Pressable style={styles.suggestButton} onPress={handleSuggestDishes} disabled={suggestLoading} android_ripple={{ color: '#D1FAE5' }}>
+          <Pressable
+            style={styles.suggestButton}
+            onPress={handleSuggestDishes}
+            disabled={suggestLoading}
+            android_ripple={{ color: '#D1FAE5' }}
+            accessibilityRole="button"
+            accessibilityLabel="Gợi ý món ăn"
+            accessibilityState={{ busy: suggestLoading, disabled: suggestLoading }}
+          >
             {suggestLoading ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.suggestButtonText}>Gợi ý món ăn</Text>}
           </Pressable>
         </View>
@@ -491,6 +533,7 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   primaryButton: {
+    minHeight: 44,
     alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 18,
@@ -580,6 +623,7 @@ const styles = StyleSheet.create({
     marginBottom: 14
   },
   optionChip: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -627,9 +671,9 @@ const styles = StyleSheet.create({
   premiumPromptTitle: { color: '#92400E', fontSize: 15, fontWeight: '800', marginBottom: 5 },
   premiumPromptText: { color: '#78350F', fontSize: 13, lineHeight: 19 },
   premiumPromptActions: { flexDirection: 'row', alignItems: 'center', marginTop: 13 },
-  upgradeButton: { backgroundColor: '#F59E0B', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10 },
+  upgradeButton: { minHeight: 44, backgroundColor: '#F59E0B', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, justifyContent: 'center' },
   upgradeButtonText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
-  laterButton: { paddingHorizontal: 8, paddingVertical: 10 },
+  laterButton: { minHeight: 44, paddingHorizontal: 8, paddingVertical: 10, justifyContent: 'center' },
   laterButtonText: { color: '#92400E', fontSize: 12, fontWeight: '700' },
   budgetInputRow: {
     flexDirection: 'row',
