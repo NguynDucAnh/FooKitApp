@@ -24,12 +24,19 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Fookit cần quyền truy cập thư viện ảnh để bạn chọn ảnh đại diện."
+          "photosPermission": "Fookit cần quyền truy cập thư viện ảnh để bạn chọn ảnh đại diện.",
+          "microphonePermission": false
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c2152670-3c7e-4c31-96d3-630691da2d25"
+      }
+    },
+    "owner": "ducanh152004"
   }
 }
