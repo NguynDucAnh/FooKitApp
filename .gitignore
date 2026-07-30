@@ -3,8 +3,11 @@ node_modules/
 dist/
 coverage/
 *.jks
+*.keystore
 *.p12
 *.key
+credentials.json
+android/keystore.properties
 web-build/
 .env
 .env.*

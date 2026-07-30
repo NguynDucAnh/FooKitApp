@@ -81,6 +81,25 @@ def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInRelea
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def hasLocalReleaseSigning = keystorePropertiesFile.exists()
+
+if (hasLocalReleaseSigning) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+
+    def requiredSigningProperties = ["storeFile", "storePassword", "keyAlias", "keyPassword"]
+    def missingSigningProperties = requiredSigningProperties.findAll {
+        !keystoreProperties.getProperty(it)?.trim()
+    }
+
+    if (!missingSigningProperties.isEmpty()) {
+        throw new GradleException(
+            "android/keystore.properties is missing: ${missingSigningProperties.join(', ')}"
+        )
+    }
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -102,15 +121,23 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (hasLocalReleaseSigning) {
+            release {
+                storeFile rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword keystoreProperties.getProperty("storePassword")
+                keyAlias keystoreProperties.getProperty("keyAlias")
+                keyPassword keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            if (hasLocalReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
@@ -124,6 +151,21 @@ android {
     }
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    def localReleaseTaskRequested = taskGraph.allTasks.any {
+        it.path == ":app:assembleRelease" || it.path == ":app:bundleRelease"
+    }
+    def isEasBuild = System.getenv("EAS_BUILD") == "true"
+
+    if (localReleaseTaskRequested && !hasLocalReleaseSigning && !isEasBuild) {
+        throw new GradleException(
+            "Release signing is not configured. Copy android/keystore.properties.example " +
+            "to android/keystore.properties and provide the upload-key credentials, " +
+            "or build with an EAS profile that uses remote credentials."
+        )
     }
 }
 
