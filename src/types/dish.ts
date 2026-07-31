@@ -23,6 +23,8 @@ export interface DishRecipeIngredient {
   rawIngredientName?: string | null;
   standardIngredientId?: string | null;
   standardIngredientName?: string | null;
+  quantity?: number | string | null;
+  unit?: string | null;
   isMatched?: boolean;
   isPriced?: boolean;
   affiliateUrl?: string | null;
@@ -33,6 +35,19 @@ export interface DishRecipeResponse {
   dishCacheId?: string;
   dishName?: string;
   imageUrl?: string | null;
+  description?: string | null;
+  cookingTimeMinutes?: number | null;
+  servings?: number | null;
+  calories?: number | null;
+  difficulty?: string | null;
+  categories?: string[] | null;
+  tools?: string[] | null;
+  nutrition?: {
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    fiber?: number | null;
+  } | null;
   cookingSteps?: string[];
   ingredients?: DishRecipeIngredient[];
   totalCost?: number | string | null;

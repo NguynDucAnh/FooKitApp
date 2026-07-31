@@ -150,12 +150,28 @@ export function applyRecipeDetail(recipe: Recipe, detail: DishRecipeResponse): R
     ? pricedIngredients.reduce((sum, price) => sum + price, 0)
     : null;
   const detailTotal = toMoney(detail.totalCost);
+  const detailDifficulty = normalizeDifficulty(detail.difficulty ?? undefined);
 
   return {
     ...recipe,
     dishCacheId: detail.dishCacheId || recipe.dishCacheId,
     name: detail.dishName || recipe.name,
     image: detail.imageUrl || recipe.image,
+    description: detail.description?.trim() || null,
+    time: toFiniteNumber(detail.cookingTimeMinutes),
+    servings: toFiniteNumber(detail.servings),
+    calories: toFiniteNumber(detail.calories),
+    difficulty: detailDifficulty,
+    category: Array.isArray(detail.categories) ? detail.categories.filter(Boolean) : [],
+    tools: Array.isArray(detail.tools) ? detail.tools.filter(Boolean) : [],
+    nutrition: detail.nutrition
+      ? {
+        protein: toFiniteNumber(detail.nutrition.protein),
+        carbs: toFiniteNumber(detail.nutrition.carbs),
+        fat: toFiniteNumber(detail.nutrition.fat),
+        fiber: toFiniteNumber(detail.nutrition.fiber),
+      }
+      : null,
     budget: detailTotal ?? ingredientTotal ?? recipe.budget,
     ingredients: Array.isArray(detail.ingredients) && detail.ingredients.length
       ? detail.ingredients.map(ingredient => ({
@@ -164,6 +180,13 @@ export function applyRecipeDetail(recipe: Recipe, detail: DishRecipeResponse): R
           || 'Nguyên liệu',
         rawIngredientName: ingredient.rawIngredientName?.trim() || undefined,
         standardIngredientId: ingredient.standardIngredientId,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit?.trim() || null,
+        amount: Number(ingredient.quantity) > 0
+          && ingredient.unit?.trim()
+          && ingredient.unit.trim().toLowerCase() !== 'none'
+          ? `${ingredient.quantity} ${ingredient.unit.trim()}`
+          : undefined,
         isMatched: !!ingredient.isMatched,
         isPriced: !!ingredient.isPriced,
         estimatedPrice: toMoney(ingredient.estimatedPrice),

@@ -12,9 +12,11 @@ function createRecipe(overrides: Partial<Recipe> = {}): Recipe {
     dishCacheId: 'cache-1',
     name: 'Món thử',
     image: 'https://example.test/dish.jpg',
+    description: null,
     rating: null,
     reviewCount: null,
     time: null,
+    servings: null,
     calories: null,
     difficulty: null,
     category: [],
@@ -141,6 +143,37 @@ describe('recipeMapper', () => {
   });
 
   describe('applyRecipeDetail', () => {
+    it('maps the extended recipe detail fields returned by BE', () => {
+      const recipe = applyRecipeDetail(createRecipe(), {
+        description: 'Món cuốn thanh mát.',
+        cookingTimeMinutes: 30,
+        servings: 2,
+        calories: 350,
+        difficulty: 'Dễ',
+        categories: ['Món Việt'],
+        tools: ['Nồi', 'Dao'],
+        nutrition: { protein: 25, carbs: 40, fat: 12, fiber: 5 },
+        ingredients: [{
+          rawIngredientName: '200g thịt ba chỉ',
+          standardIngredientName: 'Thịt lợn',
+          quantity: 200,
+          unit: 'g',
+        }],
+      });
+
+      expect(recipe).toMatchObject({
+        description: 'Món cuốn thanh mát.',
+        time: 30,
+        servings: 2,
+        calories: 350,
+        difficulty: 'Dễ',
+        category: ['Món Việt'],
+        tools: ['Nồi', 'Dao'],
+        nutrition: { protein: 25, carbs: 40, fat: 12, fiber: 5 },
+      });
+      expect(recipe.ingredients[0]).toMatchObject({ amount: '200 g', quantity: 200, unit: 'g' });
+    });
+
     it('preserves an explicit zero total from the detail response', () => {
       const recipe = applyRecipeDetail(createRecipe({ budget: 99_000 }), {
         totalCost: 0,

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Alert, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable, Share } from 'react-native';
-import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkCheck, BookmarkPlus, Share2, ImageOff } from 'lucide-react-native';
+import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkCheck, BookmarkPlus, Share2, ImageOff, UsersRound } from 'lucide-react-native';
 import { Recipe } from '../types/recipe';
 import { useFavorites } from '../context/FavoritesContext';
 import { openExternalHttpsUrl } from '../utils/externalUrl';
@@ -164,6 +164,9 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
           </View>
         )}
         {!!remoteDetailError && <Text style={styles.remoteDetailError}>{remoteDetailError}</Text>}
+        <Text style={styles.description}>
+          {recipe.description || 'BE chưa cung cấp mô tả cho món ăn này.'}
+        </Text>
         <View style={styles.statsGrid}>
           <View style={styles.statsCard}>
             <Clock size={18} color="#16A34A" />
@@ -193,6 +196,13 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
             <Text style={styles.statsLabel}>Độ khó</Text>
             <Text style={styles.statsValue}>{recipe.difficulty ?? 'Chưa có dữ liệu'}</Text>
           </View>
+          <View style={styles.statsCard}>
+            <UsersRound size={18} color="#16A34A" />
+            <Text style={styles.statsLabel}>Khẩu phần</Text>
+            <Text style={styles.statsValue}>
+              {typeof recipe.servings === 'number' ? `${recipe.servings} người` : 'Chưa có dữ liệu'}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -203,6 +213,9 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
                 <Text style={styles.tagText}>{tool}</Text>
               </View>
             ))}
+            {recipe.tools.length === 0 && (
+              <Text style={styles.emptySectionText}>BE chưa cung cấp dụng cụ.</Text>
+            )}
           </View>
         </View>
 
@@ -267,6 +280,9 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
               </View>
             </View>
           ))}
+          {recipe.ingredients.length === 0 && (
+            <Text style={styles.emptySectionText}>BE chưa cung cấp danh sách nguyên liệu.</Text>
+          )}
         </View>
 
         <View
@@ -450,6 +466,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 13,
     lineHeight: 18,
+  },
+  description: {
+    color: '#475569',
+    fontSize: 15,
+    lineHeight: 23,
+    marginBottom: 18,
   },
   statsGrid: {
     flexDirection: 'row',
