@@ -174,6 +174,26 @@ describe('recipeMapper', () => {
       expect(recipe.ingredients[0]).toMatchObject({ amount: '200 g', quantity: 200, unit: 'g' });
     });
 
+    it('uses the raw ingredient name when BE marks the standard name as unmatched', () => {
+      const recipe = applyRecipeDetail(createRecipe(), {
+        ingredients: [{
+          rawIngredientName: '1 teaspoon of chili powder',
+          standardIngredientName: 'Khác',
+          quantity: 0,
+          unit: 'none',
+          isMatched: false,
+          isPriced: false,
+          estimatedPrice: 0,
+        }],
+      });
+
+      expect(recipe.ingredients[0]).toMatchObject({
+        name: '1 teaspoon of chili powder',
+        amount: undefined,
+        estimatedPrice: 0,
+      });
+    });
+
     it('preserves an explicit zero total from the detail response', () => {
       const recipe = applyRecipeDetail(createRecipe({ budget: 99_000 }), {
         totalCost: 0,

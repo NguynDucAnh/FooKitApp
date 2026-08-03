@@ -174,10 +174,16 @@ export function applyRecipeDetail(recipe: Recipe, detail: DishRecipeResponse): R
       : null,
     budget: detailTotal ?? ingredientTotal ?? recipe.budget,
     ingredients: Array.isArray(detail.ingredients) && detail.ingredients.length
-      ? detail.ingredients.map(ingredient => ({
-        name: ingredient.standardIngredientName?.trim()
-          || ingredient.rawIngredientName?.trim()
-          || 'Nguyên liệu',
+      ? detail.ingredients.map(ingredient => {
+        const standardName = ingredient.standardIngredientName?.trim();
+        const rawName = ingredient.rawIngredientName?.trim();
+        const hasUsefulStandardName = !!standardName
+          && standardName.toLocaleLowerCase('vi') !== 'khác';
+
+        return {
+        name: ingredient.isMatched && hasUsefulStandardName
+          ? standardName
+          : rawName || standardName || 'Nguyên liệu',
         rawIngredientName: ingredient.rawIngredientName?.trim() || undefined,
         standardIngredientId: ingredient.standardIngredientId,
         quantity: ingredient.quantity,
@@ -200,7 +206,7 @@ export function applyRecipeDetail(recipe: Recipe, detail: DishRecipeResponse): R
             price: toMoney(ingredient.estimatedPrice),
           }
           : null,
-      }))
+      }})
       : recipe.ingredients,
     instructions: Array.isArray(detail.cookingSteps) && detail.cookingSteps.length
       ? detail.cookingSteps
