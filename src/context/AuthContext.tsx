@@ -2,6 +2,7 @@ import React, { createContext, ReactNode, useEffect, useMemo, useState } from 'r
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
 import { authService } from '../services/authService';
+import { refreshAccessToken } from '../services/axiosClient';
 import { userService } from '../services/userService';
 import { AuthUser, ChangePasswordRequest, GoogleLoginRequest, LoginRequest, RegisterRequest, SetCredentialsRequest, UpdateProfileRequest } from '../types/auth';
 import {
@@ -22,7 +23,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   loading: boolean;
   login: (payload: LoginRequest) => Promise<void>;
-  register: (payload: RegisterRequest) => Promise<void>;
+  register: (payload: RegisterRequest) => Promise<boolean>;
   googleLogin: (payload: GoogleLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   setCredentials: (payload: SetCredentialsRequest) => Promise<void>;
@@ -51,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ]);
         if (!isActive) return;
 
-        if (!token || !refreshToken || isJwtExpired(token, undefined, AUTH_CLOCK_SKEW_SECONDS)) {
+        if (!token || !refreshToken) {
           await clearAuthStorage();
           if (!isActive) return;
           setAccessToken(null);
@@ -59,8 +60,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const roles = user?.roles?.length ? user.roles : getRolesFromJwt(token);
-        setAccessToken(token);
+        let activeToken = token;
+        if (isJwtExpired(token, undefined, AUTH_CLOCK_SKEW_SECONDS)) {
+          activeToken = await refreshAccessToken() ?? '';
+          if (!activeToken) {
+            await clearAuthStorage();
+            if (!isActive) return;
+            setAccessToken(null);
+            setCurrentUser(null);
+            return;
+          }
+        }
+
+        const roles = user?.roles?.length ? user.roles : getRolesFromJwt(activeToken);
+        setAccessToken(activeToken);
         setCurrentUser(user ? {
           ...user,
           roles,
@@ -97,8 +110,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async register(payload) {
       const result = await authService.register(payload);
+      if (!result) return false;
+
       setAccessToken(result.tokens.accessToken);
       setCurrentUser(result.user);
+      return true;
     },
 
     async googleLogin(payload) {

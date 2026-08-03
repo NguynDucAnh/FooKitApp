@@ -13,6 +13,12 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 }
 
 const AUTH_REQUEST_TIMEOUT_MS = 10_000;
+const PUBLIC_AUTH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/google-login',
+  '/api/auth/refresh-token',
+];
 
 let refreshPromise: Promise<string | null> | null = null;
 let terminalSessionPromise: Promise<void> | null = null;
@@ -25,7 +31,14 @@ const axiosClient = axios.create({
   },
 });
 
-async function refreshAccessToken() {
+function isPublicAuthRequest(url?: string) {
+  if (!url) return false;
+
+  const normalizedUrl = url.split('?')[0].replace(/\/+$/, '').toLowerCase();
+  return PUBLIC_AUTH_PATHS.some(path => normalizedUrl.endsWith(path));
+}
+
+export async function refreshAccessToken() {
   const accessToken = await getAccessToken();
   const refreshToken = await getRefreshToken();
 
@@ -72,6 +85,8 @@ function terminateSessionOnce() {
 }
 
 axiosClient.interceptors.request.use(async (config) => {
+  if (isPublicAuthRequest(config.url)) return config;
+
   const accessToken = await getAccessToken();
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
@@ -84,7 +99,12 @@ axiosClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryConfig | undefined;
 
-    if (error.response?.status !== 401 || !originalRequest || originalRequest._retry) {
+    if (
+      error.response?.status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      isPublicAuthRequest(originalRequest.url)
+    ) {
       return Promise.reject(error);
     }
 

@@ -68,3 +68,4 @@ export interface AffiliateProduct {
   currentPriceCurrency?: string;
   platform?: string;
 }
+  

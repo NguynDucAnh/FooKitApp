@@ -12,6 +12,7 @@ import { clearAuthStorage, saveStoredUser, saveTokens } from '../utils/tokenStor
 import { getRolesFromJwt, hasAdminRole } from '../utils/jwt';
 
 const AUTH_BASE = '/api/Auth';
+const LOGIN_REQUEST_TIMEOUT_MS = 20_000;
 
 function getResponseData(response: AuthResponse) {
   return response.data && typeof response.data === 'object' ? response.data : response;
@@ -119,7 +120,7 @@ export const authService = {
     const response = await axiosClient.post<AuthResponse>(`${AUTH_BASE}/login`, {
       username,
       password: payload.password,
-    });
+    }, { timeout: LOGIN_REQUEST_TIMEOUT_MS });
     return persistAuth(response.data, username);
   },
 
@@ -129,12 +130,23 @@ export const authService = {
       username,
       password: payload.password,
       confirmPassword: payload.confirmPassword,
-    });
+    }, { timeout: LOGIN_REQUEST_TIMEOUT_MS });
+
+    const tokens = getTokens(response.data);
+
+    // Registration currently creates an account without always starting a session.
+    // Persist authentication only when BE returns a complete token pair.
+    if (!tokens.accessToken && !tokens.refreshToken) return null;
+
     return persistAuth(response.data, username);
   },
 
   async googleLogin(payload: GoogleLoginRequest) {
-    const response = await axiosClient.post<AuthResponse>(`${AUTH_BASE}/google-login`, payload);
+    const response = await axiosClient.post<AuthResponse>(
+      `${AUTH_BASE}/google-login`,
+      payload,
+      { timeout: LOGIN_REQUEST_TIMEOUT_MS },
+    );
     return persistAuth(response.data, 'google-user');
   },
 

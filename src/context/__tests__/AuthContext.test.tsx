@@ -8,6 +8,13 @@ import {
   getRefreshToken,
   getStoredUser,
 } from '../../utils/tokenStorage';
+import { refreshAccessToken } from '../../services/axiosClient';
+
+jest.mock('../../services/axiosClient', () => ({
+  __esModule: true,
+  default: {},
+  refreshAccessToken: jest.fn(),
+}));
 
 jest.mock('../../utils/tokenStorage', () => ({
   clearAuthStorage: jest.fn(),
@@ -21,6 +28,7 @@ const mockedClearAuthStorage = clearAuthStorage as jest.MockedFunction<typeof cl
 const mockedGetAccessToken = getAccessToken as jest.MockedFunction<typeof getAccessToken>;
 const mockedGetRefreshToken = getRefreshToken as jest.MockedFunction<typeof getRefreshToken>;
 const mockedGetStoredUser = getStoredUser as jest.MockedFunction<typeof getStoredUser>;
+const mockedRefreshAccessToken = refreshAccessToken as jest.MockedFunction<typeof refreshAccessToken>;
 
 type AuthState = NonNullable<React.ContextType<typeof AuthContext>>;
 
@@ -64,6 +72,7 @@ describe('AuthProvider hydration', () => {
   beforeEach(() => {
     latestAuthState = null;
     mockedClearAuthStorage.mockResolvedValue();
+    mockedRefreshAccessToken.mockReset();
   });
 
   it('hydrates a stored session and exits loading', async () => {
@@ -114,7 +123,7 @@ describe('AuthProvider hydration', () => {
     unmountWithAct(renderer);
   });
 
-  it('clears an expired persisted session before exposing auth state', async () => {
+  it('refreshes an expired persisted session before exposing auth state', async () => {
     mockedGetAccessToken.mockResolvedValue(createUnsignedJwt({
       exp: Math.floor(Date.now() / 1000) - 60,
     }));
@@ -124,14 +133,17 @@ describe('AuthProvider hydration', () => {
       name: 'Người dùng hết hạn',
       email: 'expired@example.test',
     });
+    mockedRefreshAccessToken.mockResolvedValue(createUnsignedJwt({
+      exp: Math.floor(Date.now() / 1000) + 3_600,
+    }));
 
     const renderer = await renderAuthProvider();
 
-    expect(mockedClearAuthStorage).toHaveBeenCalledTimes(1);
+    expect(mockedRefreshAccessToken).toHaveBeenCalledTimes(1);
+    expect(mockedClearAuthStorage).not.toHaveBeenCalled();
     expect(getLatestAuthState()).toMatchObject({
-      accessToken: null,
-      currentUser: null,
-      isAuthenticated: false,
+      currentUser: { username: 'expired-user' },
+      isAuthenticated: true,
       loading: false,
     });
 

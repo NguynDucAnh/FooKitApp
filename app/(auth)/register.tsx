@@ -30,9 +30,14 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      await register({ username, password, confirmPassword });
-      Alert.alert('Thành công', 'Đăng ký tài khoản thành công!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)/home') },
+      const isAuthenticated = await register({ username, password, confirmPassword });
+      Alert.alert('Thành công', 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.', [
+        {
+          text: 'ĐĂNG NHẬP',
+          onPress: () => router.replace(
+            isAuthenticated ? '/(tabs)/home' : '/(auth)/login',
+          ),
+        },
       ]);
     } catch (error: any) {
       Alert.alert('Lỗi đăng ký', getAuthErrorMessage(error));

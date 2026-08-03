@@ -35,7 +35,7 @@ describe('authService login contract', () => {
     expect(mockedAxiosClient.post).toHaveBeenCalledWith('/api/Auth/login', {
       username: 'test-user',
       password: 'test-password',
-    });
+    }, { timeout: 20_000 });
     expect(result.tokens.accessToken).toBe('test-access-token');
     expect(mockedSaveTokens).toHaveBeenCalledWith({
       accessToken: 'test-access-token',
@@ -83,6 +83,25 @@ describe('authService login contract', () => {
       password: 'test-password',
     })).rejects.toThrow('Phản hồi đăng nhập không có refresh token');
 
+    expect(mockedSaveTokens).not.toHaveBeenCalled();
+    expect(mockedSaveStoredUser).not.toHaveBeenCalled();
+  });
+
+  it('accepts registration success without tokens and does not persist a session', async () => {
+    mockedAxiosClient.post.mockResolvedValueOnce({
+      data: {
+        success: true,
+        message: 'Đăng ký tài khoản thành công.',
+      },
+    });
+
+    const result = await authService.register({
+      username: 'new-user',
+      password: 'test-password',
+      confirmPassword: 'test-password',
+    });
+
+    expect(result).toBeNull();
     expect(mockedSaveTokens).not.toHaveBeenCalled();
     expect(mockedSaveStoredUser).not.toHaveBeenCalled();
   });

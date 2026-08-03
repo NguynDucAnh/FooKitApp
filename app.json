@@ -3,6 +3,7 @@
     "name": "FooKitApp",
     "slug": "fookitapp",
     "version": "1.0.0",
+    "icon": "./img/fookit-logo.jpg",
     "orientation": "portrait",
     "scheme": "fookitapp",
     "userInterfaceStyle": "light",
@@ -14,7 +15,8 @@
     "android": {
       "package": "com.fookitapp.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#6C63FF"
+        "foregroundImage": "./img/fookit-logo.jpg",
+        "backgroundColor": "#FFF8E8"
       }
     },
     "plugins": [

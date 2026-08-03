@@ -41,11 +41,14 @@ type RejectedInterceptor = (error: {
 const mockedAxios = axios as unknown as {
   __client: jest.Mock & {
     interceptors: {
+      request: { use: jest.Mock };
       response: { use: jest.Mock };
     };
   };
   post: jest.Mock;
 };
+const requestFulfilled = mockedAxios.__client.interceptors.request.use
+  .mock.calls[0][0] as (config: { url: string; headers: Record<string, string> }) => Promise<unknown>;
 const mockedClient = axiosClient as unknown as jest.Mock;
 const responseRejected = mockedAxios.__client.interceptors.response.use
   .mock.calls[0][1] as RejectedInterceptor;
@@ -58,7 +61,7 @@ const mockedRouterReplace = router.replace as jest.Mock;
 function unauthorizedError() {
   return {
     response: { status: 401 },
-    config: { headers: {} as Record<string, string> },
+    config: { url: '/api/Dishes/suggest', headers: {} as Record<string, string> },
   };
 }
 
@@ -69,6 +72,28 @@ describe('axiosClient refresh coordination', () => {
     mockedSaveTokens.mockResolvedValue();
     mockedClearAuthStorage.mockResolvedValue();
     mockedClient.mockImplementation(async config => config);
+  });
+
+  it('does not attach a stale Bearer token to public authentication requests', async () => {
+    const loginConfig = { url: '/api/Auth/google-login', headers: {} as Record<string, string> };
+
+    await requestFulfilled(loginConfig);
+
+    expect(mockedGetAccessToken).not.toHaveBeenCalled();
+    expect(loginConfig.headers.Authorization).toBeUndefined();
+  });
+
+  it('does not refresh or redirect when a public login request returns 401', async () => {
+    const loginError = {
+      response: { status: 401 },
+      config: { url: '/api/Auth/login', headers: {} as Record<string, string> },
+    };
+
+    await expect(responseRejected(loginError)).rejects.toBe(loginError);
+
+    expect(mockedAxios.post).not.toHaveBeenCalled();
+    expect(mockedClearAuthStorage).not.toHaveBeenCalled();
+    expect(mockedRouterReplace).not.toHaveBeenCalled();
   });
 
   it('uses one bounded refresh request for concurrent 401 responses and retries with Bearer', async () => {
