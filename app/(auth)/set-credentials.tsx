@@ -53,9 +53,9 @@ export default function SetCredentialsScreen() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>Thiết lập đăng nhập</Text>
         <Text style={styles.sub}>Tạo tên đăng nhập và mật khẩu riêng cho tài khoản Google.</Text>
-        <Input label="Tên đăng nhập" value={username} onChangeText={setUsername} placeholder="my_new_username" autoCapitalize="none" />
-        <Input label="Mật khẩu" value={password} onChangeText={setPassword} placeholder="MyPassword123" secureTextEntry />
-        <Input label="Xác nhận mật khẩu" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Nhập lại mật khẩu" secureTextEntry />
+        <Input label="Tên đăng nhập" value={username} onChangeText={setUsername} placeholder="Tạo tên đăng nhập" autoCapitalize="none" />
+        <Input label="Mật khẩu" value={password} onChangeText={setPassword} placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)" secureTextEntry />
+        <Input label="Xác nhận mật khẩu" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Nhập lại mật khẩu để xác nhận" secureTextEntry />
         <Button title="Lưu thông tin" onPress={handleSubmit} loading={loading || authLoading} style={styles.btn} />
       </ScrollView>
     </KeyboardAvoidingView>

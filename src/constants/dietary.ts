@@ -17,12 +17,7 @@ export const HOME_DIET_OPTIONS: readonly DietaryOption[] = [
 ];
 
 export const PROFILE_DIET_OPTIONS: readonly DietaryOption[] = [
-  { value: 1, label: 'Cân bằng' },
-  { value: 2, label: 'Ăn chay' },
-  { value: 3, label: 'Thuần chay' },
-  { value: 4, label: 'Ít carb' },
-  { value: 5, label: 'Giàu đạm' },
-  { value: 6, label: 'Keto' },
+  ...HOME_DIET_OPTIONS.filter(option => option.value !== 0),
 ];
 
 export function findDietaryOption(

@@ -2,10 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
 import {
   CalendarDays,
-  Camera,
   ChefHat,
   Heart,
   LogOut,
@@ -56,13 +54,13 @@ function parseList(value: string) {
     .filter(Boolean);
 }
 
-function formatBudget(value: number) {
-  return value > 0 ? value.toLocaleString('vi-VN') : '';
+function formatBudget(value: number | null) {
+  return typeof value === 'number' && value >= 0 ? value.toLocaleString('vi-VN') : '';
 }
 
 function parseBudget(value: string) {
   const normalized = value.replace(/[^\d]/g, '');
-  return normalized ? Number(normalized) : 0;
+  return normalized ? Number(normalized) : null;
 }
 
 export default function ProfileScreen() {
@@ -122,25 +120,6 @@ export default function ProfileScreen() {
     return form.avatarUrl?.trim() ? { uri: form.avatarUrl.trim() } : brandLogo;
   }, [form.avatarUrl]);
 
-  async function handlePickAvatar() {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Cần quyền truy cập ảnh', 'Vui lòng cho phép Fookit truy cập thư viện ảnh để chọn ảnh đại diện.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.85,
-    });
-
-    if (result.canceled || !result.assets[0]?.uri) return;
-
-    setForm(current => ({ ...current, avatarUrl: result.assets[0].uri }));
-  }
-
   async function handleSaveAccount() {
     const fullName = (form.fullName ?? form.name).trim();
     if (!fullName) {
@@ -150,16 +129,11 @@ export default function ProfileScreen() {
 
     setSavingProfile(true);
     try {
-      const nextUser = await updateProfile(
-        { fullName, avatarUri: form.avatarUrl?.trim() || null },
-        {
-          avatarUrl: form.avatarUrl?.trim(),
-        }
-      );
+      const nextUser = await updateProfile({ fullName });
       setForm({ ...EMPTY_USER, ...nextUser });
       Alert.alert(
         'Đã cập nhật hồ sơ',
-        'Tên hiển thị và ảnh đại diện đã được đồng bộ với tài khoản của bạn.',
+        'Tên hiển thị đã được đồng bộ với tài khoản của bạn.',
       );
     } catch (error) {
       Alert.alert('Không thể cập nhật hồ sơ', getAuthErrorMessage(error));
@@ -283,18 +257,9 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.profileRow}>
-            <Pressable
-              style={styles.avatarWrap}
-              onPress={handlePickAvatar}
-              accessibilityRole="button"
-              accessibilityLabel="Thay ảnh đại diện"
-              accessibilityHint="Mở thư viện ảnh trên thiết bị"
-            >
+            <View style={styles.avatarWrap}>
               <Image source={avatarSource} style={styles.avatarImage} />
-              <View style={styles.cameraBadge}>
-                <Camera size={15} color={COLORS.white} />
-              </View>
-            </Pressable>
+            </View>
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{displayName}</Text>
               <Text style={styles.email}>{handle}</Text>
@@ -324,12 +289,9 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Thông tin tài khoản</Text>
-          <Input label="Tên hiển thị" value={form.fullName ?? form.name} onChangeText={fullName => setForm(current => ({ ...current, fullName, name: fullName }))} placeholder="Nguyễn Văn A" />
-          <Input label="Tên đăng nhập" value={form.username} editable={false} placeholder="tuananh99" autoCapitalize="none" />
-          <Input label="Email" value={form.email} editable={false} placeholder="email@example.com" keyboardType="email-address" autoCapitalize="none" />
-          <Input label="Số điện thoại" value={form.phone ?? ''} editable={false} placeholder="Chưa có dữ liệu" keyboardType="phone-pad" />
-          <Text style={styles.helperText}>Số điện thoại hiện chỉ để xem và chưa thể cập nhật trong ứng dụng.</Text>
+          <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
+          <Text style={styles.helperText}>Bạn có thể thay đổi tên được hiển thị trong ứng dụng.</Text>
+          <Input label="Tên hiển thị" value={form.fullName ?? form.name} onChangeText={fullName => setForm(current => ({ ...current, fullName, name: fullName }))} placeholder="Nhập tên của bạn" />
           <Button title="Cập nhật hồ sơ" onPress={handleSaveAccount} loading={savingProfile} style={styles.saveBtn} />
         </View>
 
@@ -354,10 +316,10 @@ export default function ProfileScreen() {
               );
             })}
           </View>
-          <Input label="Dị ứng / món cần tránh" value={dietForm.allergies} onChangeText={allergies => setDietForm(current => ({ ...current, allergies }))} placeholder="Peanut, Dairy, Seafood..." />
-          <Input label="Ẩm thực yêu thích" value={dietForm.favoriteCuisines} onChangeText={favoriteCuisines => setDietForm(current => ({ ...current, favoriteCuisines }))} placeholder="Vietnamese, Japanese..." />
-          <Input label="Ngân sách mỗi tuần" value={dietForm.weeklyBudget} onChangeText={weeklyBudget => setDietForm(current => ({ ...current, weeklyBudget }))} placeholder="500000" keyboardType="number-pad" />
-          <Text style={styles.helperText}>Các danh sách cách nhau bằng dấu phẩy. Dữ liệu này sẽ được dùng để cá nhân hóa gợi ý món ăn.</Text>
+          <Input label="Dị ứng hoặc món cần tránh" value={dietForm.allergies} onChangeText={allergies => setDietForm(current => ({ ...current, allergies }))} placeholder="Ví dụ: đậu phộng, sữa, hải sản" />
+          <Input label="Nền ẩm thực yêu thích" value={dietForm.favoriteCuisines} onChangeText={favoriteCuisines => setDietForm(current => ({ ...current, favoriteCuisines }))} placeholder="Ví dụ: món Việt, món Nhật" />
+          <Input label="Ngân sách ăn uống mỗi tuần" value={dietForm.weeklyBudget} onChangeText={weeklyBudget => setDietForm(current => ({ ...current, weeklyBudget }))} placeholder="Ví dụ: 500.000" keyboardType="number-pad" />
+          <Text style={styles.helperText}>Nếu có nhiều lựa chọn, hãy ngăn cách bằng dấu phẩy. FooKit sẽ dùng thông tin này để gợi ý món ăn phù hợp hơn với bạn.</Text>
           <Button title="Lưu hồ sơ ẩm thực" onPress={handleSaveFoodProfile} loading={savingFoodProfile} outline style={styles.saveBtn} />
         </View>
 
@@ -389,8 +351,8 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bảo mật tài khoản</Text>
-          <Input label="Mật khẩu hiện tại" value={currentPassword} onChangeText={setCurrentPassword} placeholder="OldPassword123" secureTextEntry />
-          <Input label="Mật khẩu mới" value={newPassword} onChangeText={setNewPassword} placeholder="NewPassword123" secureTextEntry />
+          <Input label="Mật khẩu hiện tại" value={currentPassword} onChangeText={setCurrentPassword} placeholder="Nhập mật khẩu hiện tại" secureTextEntry />
+          <Input label="Mật khẩu mới" value={newPassword} onChangeText={setNewPassword} placeholder="Nhập mật khẩu mới" secureTextEntry />
           <Input label="Xác nhận mật khẩu mới" value={confirmNewPassword} onChangeText={setConfirmNewPassword} placeholder="Nhập lại mật khẩu mới" secureTextEntry />
           <Button title="Đổi mật khẩu" onPress={handleChangePassword} loading={changingPassword} style={styles.securityBtn} />
           {canSetGoogleCredentials && (
@@ -430,7 +392,6 @@ const styles = StyleSheet.create({
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatarWrap: { width: 88, height: 88 },
   avatarImage: { width: 88, height: 88, borderRadius: 8, backgroundColor: COLORS.white },
-  cameraBadge: { position: 'absolute', right: -5, bottom: -5, width: 30, height: 30, borderRadius: 15, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLORS.white },
   profileInfo: { flex: 1 },
   name: { fontSize: 22, fontWeight: '900', color: COLORS.white },
   email: { fontSize: 14, color: '#E8F4DF', marginTop: 3 },

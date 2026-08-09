@@ -9,6 +9,11 @@ coverage/
 credentials.json
 android/keystore.properties
 web-build/
+Bao-cao-Timeline-du-an-FooKit.doc
+Bao-cao-Timeline-du-an-FooKit.docx
+Bao-cao-Timeline-du-an-FooKit_files/
+scripts/FooKit-timeline-report.html
+scripts/create-timeline-report.ps1
 .env
 .env.*
 !.env.example

@@ -250,26 +250,29 @@ describe('recipe presentation data integrity', () => {
     unmountWithAct(renderer);
   });
 
-  it('scrolls to the instructions when cooking starts', () => {
-    const scrollTo = jest.spyOn(ScrollView.prototype, 'scrollTo').mockImplementation(jest.fn());
+  it('opens the interactive cooking flow when cooking starts', () => {
     const recipe = createRecipe({ instructions: ['Sơ chế', 'Nấu chín'] });
     const renderer = renderWithAct(
       <RecipeDetailScreen recipe={recipe} onBack={jest.fn()} />,
     );
 
     act(() => {
-      renderer.root.findByProps({ testID: 'recipe-detail-body' }).props.onLayout({
-        nativeEvent: { layout: { y: 260 } },
-      });
-      renderer.root.findByProps({ testID: 'recipe-instructions' }).props.onLayout({
-        nativeEvent: { layout: { y: 420 } },
-      });
       renderer.root.findAllByType(Pressable).find(
         node => node.props.accessibilityLabel === 'Bắt đầu nấu',
       )!.props.onPress();
     });
 
-    expect(scrollTo).toHaveBeenCalledWith({ y: 664, animated: true });
+    expect(renderer.root.findByProps({ testID: 'cooking-mode' })).toBeTruthy();
+    expect(hasExactText(renderer, 'Sẵn sàng vào bếp?')).toBe(true);
+
+    act(() => {
+      renderer.root.findAllByType(Pressable).find(
+        node => node.props.accessibilityLabel === 'Bắt đầu bước đầu tiên',
+      )!.props.onPress();
+    });
+
+    expect(renderer.root.findByProps({ accessibilityLabel: 'Mở bước 1' })).toBeTruthy();
+    expect(hasExactText(renderer, 'Sơ chế')).toBe(true);
 
     unmountWithAct(renderer);
   });

@@ -90,20 +90,11 @@ describe('service request serialization', () => {
 
     await userService.updateProfile({
       fullName: 'Người dùng thử',
-      avatarUri: 'file:///data/user/0/app/avatar.png',
     });
 
     const [route, requestBody, config] = mockedAxiosClient.put.mock.calls.at(-1)!;
-    const formData = requestBody as FormData & {
-      _parts?: [string, unknown][];
-    };
-    const serializedFields: string[] = [];
-    if (formData._parts) {
-      serializedFields.push(...formData._parts.map(([field]) => field));
-    } else {
-      formData.forEach((_value, field) => serializedFields.push(field));
-    }
-    serializedFields.sort();
+    const serialized = new URLSearchParams(requestBody as string);
+    const serializedFields = [...serialized.keys()].sort();
     const contractFields = getRequestFieldNames(
       '/api/Users/profile',
       'put',
@@ -113,8 +104,29 @@ describe('service request serialization', () => {
     expect(route).toBe('/api/Users/profile');
     expect(serializedFields).toEqual(contractFields);
     expect(serializedFields).not.toContain('phone');
+    expect(serialized.get('FullName')).toBe('Người dùng thử');
+    expect(serialized.get('AvatarFile')).toBe('');
     expect(config).toMatchObject({
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
+  });
+
+  test('serializes dietary profile using the exact BE JSON payload', async () => {
+    await userService.updateDietaryProfile({
+      diets: [1, 3],
+      allergies: ['Đậu phộng'],
+      favoriteCuisines: ['Món Việt'],
+      weeklyBudget: null,
+    });
+
+    expect(mockedAxiosClient.put).toHaveBeenCalledWith(
+      '/api/Users/me/dietary-profile',
+      {
+        diets: [1, 3],
+        allergies: ['Đậu phộng'],
+        favoriteCuisines: ['Món Việt'],
+        weeklyBudget: null,
+      },
+    );
   });
 });

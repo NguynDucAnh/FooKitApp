@@ -56,21 +56,21 @@ export default function RegisterScreen() {
           label="Tên người dùng"
           value={username}
           onChangeText={setUsername}
-          placeholder="example_user"
+          placeholder="Tạo tên người dùng"
           autoCapitalize="none"
         />
         <Input
           label="Mật khẩu"
           value={password}
           onChangeText={setPassword}
-          placeholder="Tối thiểu 6 ký tự"
+          placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
           secureTextEntry
         />
         <Input
           label="Xác nhận mật khẩu"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          placeholder="Nhập lại mật khẩu"
+          placeholder="Nhập lại mật khẩu để xác nhận"
           secureTextEntry
         />
 

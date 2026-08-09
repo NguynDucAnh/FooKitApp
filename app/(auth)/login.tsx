@@ -60,14 +60,14 @@ export default function LoginScreen() {
           label="Tên đăng nhập hoặc email"
           value={username}
           onChangeText={setUsername}
-          placeholder="tuananh99"
+          placeholder="Nhập tên đăng nhập hoặc email"
           autoCapitalize="none"
         />
         <Input
           label="Mật khẩu"
           value={password}
           onChangeText={setPassword}
-          placeholder="Password123"
+          placeholder="Nhập mật khẩu"
           secureTextEntry
         />
 

@@ -23,13 +23,10 @@ describe('dietary mappings', () => {
     expect(findDietaryOption(PROFILE_DIET_OPTIONS, 999)).toBeUndefined();
   });
 
-  it('characterizes the unresolved Home/Profile enum conflict', () => {
-    expect(findDietaryMappingConflicts(HOME_DIET_OPTIONS, PROFILE_DIET_OPTIONS)).toEqual([
-      { value: 1, leftLabel: 'Thuần chay', rightLabel: 'Cân bằng' },
-      { value: 3, leftLabel: 'Keto', rightLabel: 'Thuần chay' },
-      { value: 4, leftLabel: 'Eat Clean', rightLabel: 'Ít carb' },
-      { value: 5, leftLabel: 'Paleo', rightLabel: 'Giàu đạm' },
-      { value: 6, leftLabel: 'Không gluten', rightLabel: 'Keto' },
-    ]);
+  it('uses one consistent backend enum mapping across Home and Profile', () => {
+    expect(findDietaryMappingConflicts(HOME_DIET_OPTIONS, PROFILE_DIET_OPTIONS)).toEqual([]);
+    expect(PROFILE_DIET_OPTIONS).toEqual(
+      HOME_DIET_OPTIONS.filter(option => option.value !== 0),
+    );
   });
 });

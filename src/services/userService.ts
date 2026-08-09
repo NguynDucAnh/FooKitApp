@@ -41,39 +41,17 @@ function normalizeProfile(profile: UpdateProfileResponse): UpdateProfileResponse
   };
 }
 
-function getFileName(uri: string) {
-  const name = uri.split('/').pop()?.split('?')[0];
-  return name && name.includes('.') ? name : `avatar-${Date.now()}.jpg`;
-}
-
-function getMimeType(fileName: string) {
-  const extension = fileName.split('.').pop()?.toLowerCase();
-  if (extension === 'png') return 'image/png';
-  if (extension === 'webp') return 'image/webp';
-  if (extension === 'heic') return 'image/heic';
-  return 'image/jpeg';
-}
-
 export const userService = {
   async updateProfile(payload: UpdateProfileRequest) {
-    const formData = new FormData();
-    formData.append('FullName', payload.fullName);
-
-    if (payload.avatarUri && !payload.avatarUri.startsWith('http')) {
-      const fileName = getFileName(payload.avatarUri);
-      formData.append('AvatarFile', {
-        uri: payload.avatarUri,
-        name: fileName,
-        type: getMimeType(fileName),
-      } as any);
-    }
+    const body = new URLSearchParams();
+    body.append('FullName', payload.fullName.trim());
+    body.append('AvatarFile', '');
 
     const response = await axiosClient.put<ApiEnvelope<UpdateProfileResponse> | UpdateProfileResponse>(
       `${BASE_URL}/profile`,
-      formData,
+      body.toString(),
       {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        transformRequest: [data => data],
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       }
     );
     return normalizeProfile(unwrap<UpdateProfileResponse>(response));
@@ -91,7 +69,7 @@ export const userService = {
       diets: Array.isArray(payload?.diets) ? payload.diets : [],
       allergies: Array.isArray(payload?.allergies) ? payload.allergies : [],
       favoriteCuisines: Array.isArray(payload?.favoriteCuisines) ? payload.favoriteCuisines : [],
-      weeklyBudget: typeof payload?.weeklyBudget === 'number' ? payload.weeklyBudget : 0,
+      weeklyBudget: typeof payload?.weeklyBudget === 'number' ? payload.weeklyBudget : null,
     };
   },
 

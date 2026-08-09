@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Alert, StyleSheet, View, Text, ScrollView, ImageBackground, Pressable, Share } from 'react-native';
 import { ArrowLeft, Clock, Flame, DollarSign, Star, Heart, BookmarkCheck, BookmarkPlus, Share2, ImageOff, UsersRound } from 'lucide-react-native';
 import { Recipe } from '../types/recipe';
 import { useFavorites } from '../context/FavoritesContext';
 import { openExternalHttpsUrl } from '../utils/externalUrl';
 import { buildRecipeShareMessage } from '../utils/recipeActions';
+import { CookingMode } from './CookingMode';
 
 interface RecipeDetailScreenProps {
   recipe: Recipe;
@@ -15,10 +16,8 @@ interface RecipeDetailScreenProps {
 
 export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false, remoteDetailError = '' }: RecipeDetailScreenProps) {
   const { isFavorite, toggleFavorite } = useFavorites();
-  const scrollViewRef = useRef<ScrollView>(null);
-  const bodyOffsetRef = useRef(0);
-  const instructionsOffsetRef = useRef(0);
   const [sharing, setSharing] = useState(false);
+  const [cookingMode, setCookingMode] = useState(false);
   const favorited = isFavorite(recipe);
   const hasRating = typeof recipe.rating === 'number';
   const hasReviewCount = typeof recipe.reviewCount === 'number';
@@ -64,10 +63,11 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
       return;
     }
 
-    scrollViewRef.current?.scrollTo({
-      y: Math.max(0, bodyOffsetRef.current + instructionsOffsetRef.current - 16),
-      animated: true,
-    });
+    setCookingMode(true);
+  }
+
+  if (cookingMode) {
+    return <CookingMode recipe={recipe} onExit={() => setCookingMode(false)} />;
   }
 
   const heroContent = (
@@ -136,7 +136,6 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
 
   return (
     <ScrollView
-      ref={scrollViewRef}
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
@@ -154,9 +153,6 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
       <View
         style={styles.body}
         testID="recipe-detail-body"
-        onLayout={(event) => {
-          bodyOffsetRef.current = event.nativeEvent.layout.y;
-        }}
       >
         {loadingRemoteDetail && (
           <View style={styles.remoteDetailNotice}>
@@ -288,9 +284,6 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
         <View
           style={styles.section}
           testID="recipe-instructions"
-          onLayout={(event) => {
-            instructionsOffsetRef.current = event.nativeEvent.layout.y;
-          }}
         >
           <Text style={styles.sectionTitle}>Cách thực hiện</Text>
           {recipe.instructions.length > 0 ? (
@@ -314,7 +307,7 @@ export function RecipeDetailScreen({ recipe, onBack, loadingRemoteDetail = false
             android_ripple={{ color: '#D1FAE5' }}
             accessibilityRole="button"
             accessibilityLabel="Bắt đầu nấu"
-            accessibilityHint="Di chuyển đến các bước thực hiện"
+            accessibilityHint="Mở chế độ hướng dẫn nấu từng bước"
           >
             <Text style={styles.actionButtonText}>Bắt đầu nấu</Text>
           </Pressable>

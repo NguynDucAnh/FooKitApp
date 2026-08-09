@@ -58,7 +58,6 @@ export interface SetCredentialsRequest {
 
 export interface UpdateProfileRequest {
   fullName: string;
-  avatarUri?: string | null;
 }
 
 export interface UpdateProfileResponse {
@@ -89,7 +88,7 @@ export interface DietaryProfile {
   diets: number[];
   allergies: string[];
   favoriteCuisines: string[];
-  weeklyBudget: number;
+  weeklyBudget: number | null;
 }
 
 export interface AuthResponse {
